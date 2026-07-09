@@ -126,20 +126,19 @@
         let uClass = document.getElementById('loginClass').value;
         let uSeat = document.getElementById('loginSeat').value;
         
-        // 🎯 關鍵：把登入狀態加密暫存進瀏覽器
         localStorage.setItem("Active_User_Role", "STUDENT");
         localStorage.setItem("Active_User_Class", uClass);
         localStorage.setItem("Active_User_Seat", uSeat);
         
-        // 🚀 跳轉到同一個資料夾下的遊戲頁面
-        window.location.href = "dashboard.html";
+        // 🎯 修正：跳轉目的地完美對接 Substitution.html
+        window.location.href = "Substitution.html";
     }
 
     function loginGuest() {
         localStorage.setItem("Active_User_Role", "GUEST");
         localStorage.setItem("Active_User_Class", "GUEST");
         localStorage.setItem("Active_User_Seat", "VISITOR");
-        window.location.href = "dashboard.html";
+        window.location.href = "Substitution.html";
     }
 
     function loginTeacher() {
@@ -147,7 +146,7 @@
         if(p === "1007") {
             localStorage.setItem("Active_User_Role", "TEACHER");
             localStorage.setItem("Active_User_TeacherID", id);
-            window.location.href = "dashboard.html";
+            window.location.href = "Substitution.html";
         } else { alert("❌ 密碼錯誤！"); }
     }
 </script>
