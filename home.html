@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>數學智能練習系統 - 中央大廳</title>
+    <style>
+        :root { 
+            --card-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.15), 0 10px 10px -5px rgb(0 0 0 / 0.1); 
+            --glass-bg: rgba(255, 255, 255, 0.12);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.25);
+            --glass-blur: blur(14px);
+        }
+        body { 
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; 
+            background-image: url("https://i.imgur.com/f118Qxn.jpeg"); 
+            background-size: 100% auto; background-repeat: repeat-y; background-attachment: scroll; background-position: top center; background-color: #0b1424; 
+            margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; box-sizing: border-box; 
+        }
+        .top-center-account { position: absolute; top: 28px; left: 50%; transform: translateX(-50%); font-size: 20px; font-weight: 900; color: #ffffff; text-shadow: 1px 1px 4px rgba(0,0,0,0.6); z-index: 100; white-space: nowrap; }
+        .logout-btn { position: absolute; top: 25px; right: 20px; padding: 8px 16px; border-radius: 12px; font-weight: bold; cursor: pointer; z-index: 100; background: #fff1f2; border: 2px solid #fecdd3; color: #ef4444; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.2s; }
+        .logout-btn:hover { transform: scale(1.03); background: #fee2e2; }
+        .container { max-width: 850px; width: 100%; background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: var(--glass-border); padding: 40px; border-radius: 24px; box-shadow: var(--card-shadow); box-sizing: border-box; text-align: center; }
+        h1 { color: #ffffff; font-size: 36px; font-weight: 800; margin-bottom: 10px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .welcome-msg { color: #a78bfa; font-size: 20px; font-weight: 700; margin-bottom: 40px; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; width: 100%; margin-bottom: 20px; }
+        @media(max-width: 600px) { .menu-grid { grid-template-columns: 1fr; } }
+        .game-card { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 20px; padding: 30px 20px; cursor: pointer; transition: all 0.25s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; text-decoration: none; }
+        .game-card:hover { transform: translateY(-5px); border-color: #3b82f6; background: rgba(59, 130, 246, 0.15); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        .game-icon { font-size: 50px; margin-bottom: 15px; }
+        .game-title { color: #ffffff; font-size: 22px; font-weight: 800; margin: 0 0 10px 0; }
+        .game-desc { color: #cbd5e1; font-size: 14px; margin: 0; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+<div id="topCenterAccount" class="top-center-account"></div>
+<button class="logout-btn" onclick="logoutSession()">🚪 登出系統</button>
+
+<div class="container">
+    <h1>🪐 數學智能學習大廳</h1>
+    <div id="welcomeText" class="welcome-msg">歡迎回來</div>
+    
+    <div class="menu-grid">
+        <!-- 傳送門 1：前往多變數代入 -->
+        <a href="Substitution.html" class="game-card">
+            <div class="game-icon">📐</div>
+            <h2 class="game-title">多變數代數式求值</h2>
+            <p class="game-desc">探索跨學科公式代入，啟動隱形括號破譯思維逐步解題！</p>
+        </a>
+        
+        <!-- 傳送門 2：前往多項式練習 -->
+        <a href="Polynomial.html" class="game-card">
+            <div class="game-icon">🔮</div>
+            <h2 class="game-title">多項式化簡與展開</h2>
+            <p class="game-desc">啟動田字格魔法陣，輕鬆攻破去括號與同類項合併！</p>
+        </a>
+    </div>
+</div>
+
+<script>
+    (function checkSecurityGate(){
+        let role = localStorage.getItem("Active_User_Role");
+        let cls = localStorage.getItem("Active_User_Class");
+        let seat = localStorage.getItem("Active_User_Seat");
+
+        if (!role) {
+            alert("⚠️ 偵測到未授權存取，請先完成登入驗證！");
+            window.location.href = "index.html";
+            return;
+        }
+
+        let badge = document.getElementById('topCenterAccount');
+        let welcome = document.getElementById('welcomeText');
+        if(role === 'STUDENT') {
+            let info = `${cls}班${String(seat).padStart(2, '0')}號`;
+            badge.innerText = `挑戰者: ${info}`;
+            welcome.innerText = `👋 準備好接受今日的數學挑戰了嗎，${info} 同學？`;
+        } else if(role === 'GUEST') {
+            badge.innerText = `挑戰者: 訪客體驗`;
+            welcome.innerText = `✨ 目前正在以 [訪客身份] 自由體驗沙盒關卡`;
+        } else if(role === 'TEACHER') {
+            badge.innerText = `管理員: ${localStorage.getItem("Active_User_TeacherID").replace('Teacher_','')}`;
+            welcome.innerText = `👨‍🏫 歡迎回來，管理員教師後台已安全對接`;
+        }
+    })();
+
+    function logoutSession() {
+        if(confirm("確定登出系統嗎？")) {
+            localStorage.clear();
+            window.location.href = "index.html";
+        }
+    }
+</script>
+</body>
+</html>
