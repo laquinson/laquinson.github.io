@@ -1,0 +1,126 @@
+:root { 
+    --primary: #3b82f6; --primary-hover: #1d4ed8; 
+    --success: #10b981; --danger: #ef4444; 
+    --warning: #f59e0b; --info: #06b6d4; 
+    --stage-bg: #0f172a; --bg: #f8fafc; 
+    --teacher-color: #8b5cf6; 
+    --card-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.15), 0 10px 10px -5px rgb(0 0 0 / 0.1); 
+    --glass-bg: rgba(255, 255, 255, 0.12);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.25);
+    --glass-blur: blur(14px);
+}
+
+body { 
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft JhengHei", sans-serif; 
+    background-image: url("https://i.imgur.com/f118Qxn.jpeg"); 
+    background-size: 100% auto; background-repeat: repeat-y; background-attachment: scroll; background-position: top center; background-color: #0b1424; 
+    margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; box-sizing: border-box; 
+}
+
+/* 頂部與帳號列定位元件 */
+.top-center-account { position: absolute; top: 28px; left: 50%; transform: translateX(-50%); font-size: 20px; font-weight: 900; color: #ffffff; text-shadow: 1px 1px 4px rgba(0,0,0,0.6); z-index: 100; font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif; white-space: nowrap; }
+.top-nav-btn { background: #fff; border: 2px solid #cbd5e1; padding: 8px 16px; border-radius: 12px; font-size: 15px; font-weight: bold; color: #475569; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.2s; }
+.top-nav-btn:hover { transform: scale(1.03); border-color: var(--primary); color: var(--primary); }
+.logout-btn-text, .logout-btn { color: var(--danger); border-color: #fecdd3; background: #fff1f2; }
+.logout-btn-text:hover, .logout-btn:hover { background: #fee2e2; border-color: var(--danger); }
+.top-left-nav { position: absolute; top: 25px; left: 20px; z-index: 100; }
+.top-right-nav { position: absolute; top: 25px; right: 20px; z-index: 100; }
+
+/* 主體卡片框體 */
+.container, .screenshot-login-card { max-width: 900px; width: 100%; background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: var(--glass-border); padding: 30px; border-radius: 24px; box-shadow: var(--card-shadow); box-sizing: border-box; transition: all 0.3s ease; }
+.screenshot-login-card { max-width: 640px; padding: 45px 50px; border-radius: 8px; }
+.login-layout-container { width: 100%; max-width: 640px; display: flex; flex-direction: column; align-items: center; padding: 0 20px; box-sizing: border-box; }
+
+/* 文字階層樣式 */
+.brand-logo-title { font-size: 42px; font-weight: 800; color: #ffffff; letter-spacing: 4px; margin-bottom: 35px; text-align: center; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7); }
+h1 { color: #ffffff; font-size: 36px; font-weight: 800; margin-bottom: 10px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); text-align: center; }
+h2, h3, h4 { text-align: center; color: #ffffff; margin-top: 0; font-weight: 800; text-shadow: 1px 1px 4px rgba(0,0,0,0.6); }
+.welcome-msg { color: #a78bfa; font-size: 20px; font-weight: 700; margin-bottom: 40px; text-shadow: 0 1px 2px rgba(0,0,0,0.5); text-align: center; }
+.greeting-text { color: #ffffff; text-shadow: 1px 1px 4px rgba(0,0,0,0.6); font-size: 20px; font-weight: 800; text-align: left; margin-left: 5px; margin-bottom: 25px; }
+
+/* 表單控項結構 */
+.step-panel { display: none; }
+.step-panel.active { display: block; }
+.form-group { margin-bottom: 24px; width: 100%; box-sizing: border-box; }
+.form-group:last-of-type { margin-bottom: 32px; }
+label { display: block; margin-bottom: 12px; font-size: 16px; font-weight: 700; color: #ffffff; text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.9); }
+input[type="text"], input[type="password"], input[type="number"], select { width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.3); border-radius: 12px; font-size: 16px; box-sizing: border-box; background: rgba(255, 255, 255, 0.9); color: #0f172a; transition: all 0.2s; }
+input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4); }
+
+.radio-group { display: flex; gap: 20px; background: #edf2f7; padding: 12px; border-radius: 10px; flex-wrap: wrap; }
+.radio-group label { color: #1e293b; text-shadow: none; margin-bottom: 0; }
+.toggle-login-mode { text-align: center; color: #e2e8f0; font-weight: bold; cursor: pointer; font-size: 14px; margin-top: 25px; transition: color 0.15s; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); display: inline-block; width: 100%; }
+.toggle-login-mode:hover { color: #a78bfa; }
+
+/* 大廳與分流主網格按鈕項目 */
+.dashboard-wrapper { padding-top: 20px; }
+.dashboard-grid, .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; }
+@media(max-width: 600px) { .menu-grid { grid-template-columns: 1fr; } }
+.dash-btn, .game-card { border-radius: 20px; padding: 20px; color: white; cursor: pointer; text-align: left; position: relative; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s; min-height: 130px; display: flex; flex-direction: column; justify-content: space-between; text-decoration: none; box-sizing: border-box; }
+.dash-btn:hover, .game-card:hover { transform: translateY(-4px); box-shadow: 0 15px 20px -5px rgba(0,0,0,0.15); border-color: #3b82f6; background: rgba(59, 130, 246, 0.15); }
+.dash-btn.disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(50%); }
+.dash-icon, .game-icon { font-size: 32px; font-weight: bold; margin-bottom: 5px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+.game-icon { font-size: 50px; margin-bottom: 15px; }
+.dash-title, .game-title { font-size: 20px; font-weight: 800; margin-bottom: 4px; color: #ffffff; }
+.game-title { font-size: 22px; margin: 0 0 10px 0; text-align: center; width: 100%; }
+.dash-desc, .game-desc { font-size: 12px; opacity: 0.9; color: #cbd5e1; }
+.game-desc { font-size: 14px; margin: 0; line-height: 1.5; text-align: center; }
+
+.bg-purple { background: linear-gradient(135deg, #7c3aed, #a855f7); } 
+.bg-orange { background: linear-gradient(135deg, #f59e0b, #fcd34d); } 
+.bg-teal   { background: linear-gradient(135deg, #0d9488, #2dd4bf); } 
+.bg-blue   { background: linear-gradient(135deg, #0284c7, #38bdf8); } 
+.game-card { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.2); padding: 30px 20px; }
+
+/* 拉滿高能見度綠色巨型按鈕樣式 */
+.screenshot-btn { width: 100%; padding: 14px; background: #10b981; color: white; border: none; border-radius: 12px; font-size: 17px; cursor: pointer; font-weight: 700; letter-spacing: 4px; box-sizing: border-box; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4); transition: all 0.2s ease; }
+.screenshot-btn:hover { background: #059669; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(16, 185, 129, 0.5); }
+button:not(.screenshot-btn):not(.top-nav-btn) { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 16px; cursor: pointer; font-weight: bold; transition: all 0.2s; box-sizing: border-box; }
+button:not(.screenshot-btn):not(.top-nav-btn):hover { opacity: 0.9; transform: translateY(-1px); }
+button.btn-success { background: var(--success); }
+button.btn-warning { background: var(--warning); color: #111; }
+button.btn-purple { background: var(--teacher-color); }
+button.btn-secondary { background: #64748b; margin-top: 15px; }
+
+/* 題目與進度橫幅組件 */
+.progress-banner { background: rgba(255,255,255,0.2); padding: 15px 20px; border-radius: 12px; font-weight: bold; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; box-sizing: border-box; color: white; }
+.progress-banner-header { display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box; }
+.progress-bar-container { background: rgba(255,255,255,0.3); width: 100%; height: 10px; border-radius: 10px; overflow: hidden; box-sizing: border-box; }
+.progress-bar-fill { background: var(--success); width: 0%; height: 100%; transition: width 0.4s ease; }
+.stage-box { background: var(--stage-bg); border-radius: 16px; padding: 25px; margin: 20px 0; color: white; text-align: center; font-size: 30px; font-weight: bold; border: 1px solid rgba(255,255,255,0.15); display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 120px; letter-spacing: 1px; line-height: 1.6; }
+
+/* 🛠️ 分數分數分數與動態操作面板 */
+.math-expr-wrapper { display: inline-flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px; vertical-align: middle; }
+.math-fraction { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; vertical-align: middle; padding: 0 4px; font-size: 24px; }
+.fraction-numerator { text-align: center; padding-bottom: 2px; }
+.fraction-denominator { text-align: center; padding-top: 2px; border-top: 2px solid white; width: 100%; }
+
+.feedback { padding: 15px; border-radius: 8px; margin: 20px 0; font-weight: bold; border-left: 6px solid #cbd5e1; }
+.feedback.error { background: #fce8e6; color: var(--danger); border-left-color: var(--danger); }
+.feedback.warning { background: #fffbeb; color: #b45309; border-left-color: var(--warning); }
+.feedback.success { background: #e6f4ea; color: var(--success); border-left-color: var(--success); }
+.teaching-column h3 { text-align: left; }
+.math-step-box { font-family: monospace; background: rgba(15, 23, 42, 0.75); color: #00ff00; padding: 15px; border-radius: 12px; font-size: 14px; line-height: 1.8; border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(4px); box-sizing: border-box; width:100%; }
+.math-step-box .step-line { margin-bottom: 10px; display: block; padding: 4px 8px; }
+.math-step-box .active-line { background: rgba(255, 255, 255, 0.15); color: #fffb00; font-weight: bold; padding: 2px 5px; border-radius: 4px; border-left: 4px solid var(--warning); }
+.math-step-box .fraction-denominator { border-top-color: #00ff00; }
+
+/* 🌌 田字格特有樣式 */
+.grid-table { display: grid; grid-template-columns: 80px 1fr 1fr; gap: 10px; margin: 20px auto; max-width: 420px; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 16px; border: var(--glass-border); backdrop-filter: blur(4px); }
+.grid-cell { background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255,255,255,0.2); height: 65px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; border-radius: 8px; color: #ffffff; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+.grid-input { width: 90%; height: 80%; font-size: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; color: #0f172a; background: rgba(255, 255, 255, 0.9); }
+.grid-input:focus { outline: none; border-color: var(--primary); background: #ffffff; }
+
+.loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11, 20, 36, 0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+.spinner { border: 4px solid rgba(255,255,255,0.1); width: 45px; height: 45px; border-radius: 50%; border-left-color: var(--primary); animation: spin 0.8s linear infinite; }
+
+/* 📊 歷程數據報告表項目 */
+table.stats-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; background: rgba(15, 23, 42, 0.6); border: var(--glass-border); backdrop-filter: blur(8px); border-radius: 12px; overflow: hidden; color: #ffffff; }
+table.stats-table th, table.stats-table td { border: 1px solid rgba(255,255,255,0.15); padding: 10px; text-align: center; }
+table.stats-table th { background: rgba(255,255,255,0.1); }
+table.stats-table tr.section-title th { background: rgba(59, 130, 246, 0.3); color: white; text-align: left; padding-left: 15px; }
+table.stats-table td[style*="background"] { background: rgba(255,255,255,0.05) !important; color: #ffffff !important; }
+
+.timer-badge { background: var(--danger); color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; animation: pulse 1s infinite alternate; display: none; }
+@keyframes pulse { from { transform: scale(1); } to { transform: scale(1.05); } }
+.screenshot-footer { margin-top: 50px; font-size: 14px; font-weight: 600; color: #ffffff; text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.9); text-align: center; letter-spacing: 1px; }
