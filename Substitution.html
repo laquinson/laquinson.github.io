@@ -72,7 +72,6 @@
         h2, h3, h4 { text-align: center; color: #ffffff; margin-top: 0; font-weight: 800; text-shadow: 1px 1px 4px rgba(0,0,0,0.6); }
         .step-panel { display: none; }
         .step-panel.active { display: block; }
-        
         .form-group { margin-bottom: 24px; width: 100%; box-sizing: border-box; }
         .form-group:last-of-type { margin-bottom: 32px; }
         
@@ -81,7 +80,7 @@
             text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.9); 
         }
         
-        input[type="text"], input[type="password"], input[type="number"], select { 
+        input[type="text"], input[type="number"], select { 
             width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; 
             font-size: 16px; box-sizing: border-box; background: rgba(255, 255, 255, 0.9); color: #0f172a; transition: all 0.15s ease; 
         }
@@ -360,19 +359,19 @@
         ]
     };
 
-    // 🛡️ 核心保安閘門：網頁一加載立刻檢查登入憑證
+    // 🛡️ 核心保安閘門：一進網頁立刻檢查傳聲筒憑證
     (function checkSecurityGate(){
         currentRole = localStorage.getItem("Active_User_Role");
         userRawClass = localStorage.getItem("Active_User_Class");
         userRawSeat = localStorage.getItem("Active_User_Seat");
 
         if (!currentRole) {
-            alert("⚠️ 偵測到未授權存取，請先完成登入驗證！");
+            alert("⚠️ 偵測到未授權存取，請先回到入口首頁完成登入驗證！");
             window.location.href = "index.html"; // 踢回登入頁
             return;
         }
 
-        // 成功通關，渲染帳號標籤
+        // 驗證通過，渲染帳號資訊標籤
         let seatStr = String(userRawSeat).padStart(2, '0');
         let badge = document.getElementById('topCenterAccount');
         if(currentRole === 'STUDENT') badge.innerText = `挑戰者: ${userRawClass}班${seatStr}號`;
@@ -420,6 +419,9 @@
         let navLeft = document.getElementById('topLeftNav');
         if (id === 'step1') navLeft.style.display = 'none'; 
         else navLeft.style.display = 'block';
+        
+        // 切換面板時強制畫面置中對齊
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function convertToRichMathHTML(str) {
@@ -667,12 +669,15 @@
         document.getElementById('interactiveStageBox').innerHTML = `${eqData.targetLetter} 的求值結果：<span style='color:#fffb00;'>${eqData.ansStr}</span> 🎯✨`;
         document.getElementById('teachingZone').style.display="none"; document.getElementById('solveBtn').style.display="none"; document.getElementById('nextBtn').style.display="block";
         let f = document.getElementById('feedbackArea'); f.className="feedback success";
+        
         if(session.currentMode==='CHALLENGE') {
             session.score++; document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`; updateProgressBarUI(); 
             if(session.wrongAttemptsThisQuestion===1) { cacheStorage.EQ.stats[session.currentTypeNum].failed--; cacheStorage.EQ.stats[session.currentTypeNum].retryMatch++; }
             f.innerHTML="🎉 恭喜完全正確！你對公式主體代入與運算先後步驟掌握得非常優秀！";
         } else if(session.currentMode==='REVIEW') {
-            cacheStorage.EQ.wrongBook = cacheStorage.EQ.wrongBook.filter(i=>i!==session.questionList[session.currentIdx]); f.innerHTML="🎉 成功擊破多變數錯題！該題已從小本本順利消滅！";
+            let expr = session.questionList[session.currentIdx];
+            cacheStorage.EQ.wrongBook = cacheStorage.EQ.wrongBook.filter(i=>i!==expr);
+            f.innerHTML="🎉 成功擊破多變數錯題！該題已從小本本順利消滅！";
         } else f.innerHTML="🎉 計算完全正確！概念非常精準。";
         cloudSaveData(); setupNextButtonLabel();
     }
@@ -680,45 +685,65 @@
     function executeFinalFailure() {
         document.getElementById('interactiveStageBox').innerHTML = `已知 ${convertToRichMathHTML(eqData.targetLetter + " = " + eqData.formulaName)} <br> ⚖️ 當 ${eqData.variablesText}`;
         document.getElementById('nextBtn').style.display="none"; document.getElementById('solveBtn').style.display="block"; document.getElementById('teachingZone').style.display="none";
+        
         let f=document.getElementById('feedbackArea'); f.className="feedback error";
         let debugBtn = (session.currentMode === 'SOLVER') ? `<br><br><button class='btn-warning' style='width:auto;padding:8px 15px;' onclick='alert("💡 本題精確答案為 " + eqData.ansStr)'>🔓 直接顯示答案</button>` : "";
         f.innerHTML = session.currentMode==='CHALLENGE' ? "❌ 補答依然有些微誤差。<span style='color:red;'>[挑戰失敗] 積分 -1 分！</span>請開啟下方破譯教學。" + debugBtn : "❌ 計算有誤。請點擊下方開啟逐步拆解教學。" + debugBtn;
     }
 
     function checkTeachingWrongCounter(targetAreaId) {
+        let area = document.getElementById(targetAreaId);
         if (session.wrongAttemptsInTeaching >= 3) {
-            document.getElementById(targetAreaId).innerHTML = `<div style="margin-top:10px; padding:10px; background:#fef2f2; border-left:4px solid var(--danger); border-radius:6px; font-weight:bold; color:var(--danger);">💡 防卡死密鑰：<button class='btn-warning' style='width:auto;padding:4px 8px;font-size:12px;margin-left:10px;' onclick='alert("💡 最終結果為 " + eqData.ansStr)'>🔓 直接秀出答案</button></div>`;
-        }
+            area.innerHTML = `<div style="margin-top:10px; padding:10px; background:#fef2f2; border-left:4px solid var(--danger); border-radius:6px; font-weight:bold; color:var(--danger);">💡 如果被正負號或長度卡住了，防卡死密鑰：<button class='btn-warning' style='width:auto;padding:4px 8px;font-size:12px;margin-left:10px;' onclick='alert("💡 最終結果為 " + eqData.ansStr)'>🔓 直接秀出答案</button></div>`;
+        } else { area.innerHTML = ""; }
     }
 
     function executeCampStage() {
         let valRaw = document.getElementById('rightCampInput').value.replace(/\s+/g,'');
-        if (valRaw === eqData.ansStr) { alert("🚀 太優秀了！你心算直通最終數值結果！"); executeDirectSuccess(); return; }
-        if(convertToStandardMath(valRaw) === convertToStandardMath(eqData.targetRightCamp) || eval(convertToStandardMath(valRaw)) === eval(convertToStandardMath(eqData.targetRightCamp))) {
-            alert("🎯 變數括號對號入座完全正確！");
+        if (valRaw === eqData.ansStr) { alert("🚀 太優秀了！你心算直通最終數值結果！系統自動為你秒殺本題！"); executeDirectSuccess(); return; }
+
+        let uR = convertToStandardMath(valRaw);
+        let tR = convertToStandardMath(eqData.targetRightCamp);
+        
+        if(uR === tR || eval(uR) === eval(tR)) {
+            alert("🎯 變數括號對號入座完全正確！代入非常精確！");
             document.getElementById('interactiveStageBox').innerHTML = `${eqData.targetLetter} = ${convertToRichMathHTML(eqData.targetRightCamp)}`;
             document.getElementById('stageCampArea').style.display="none"; document.getElementById('stageCombineArea').style.display="block";
             document.getElementById('rightCombineInput').value = ""; renderMathSteps(2);
-        } else { session.wrongAttemptsInTeaching++; alert(`❌ 結構位置不對哦。提示：請將公式右邊的字母替換為帶括號的數值！`); checkTeachingWrongCounter('teachingWrongArea1'); }
+        } else {
+            session.wrongAttemptsInTeaching++; alert(`❌ 結構位置不對哦。提示：請將公式右邊的字母替換為帶括號的數值！`);
+            checkTeachingWrongCounter('teachingWrongArea1'); 
+        }
     }
 
     function executeCombineStage() {
         let valRaw = document.getElementById('rightCombineInput').value.replace(/\s+/g,'');
-        if (valRaw === eqData.ansStr) { alert("🚀 太優秀了！你直接心算出了最終答案！"); executeDirectSuccess(); return; }
-        if(convertToStandardMath(valRaw) === convertToStandardMath(eqData.midStepStr) || eval(convertToStandardMath(valRaw)) === eval(convertToStandardMath(eqData.midStepStr))) {
-            alert("🎯 乘除與指數部分優先處理正確！");
+        if (valRaw === eqData.ansStr) { alert("🚀 太優秀了！你直接心算出了最終答案！直通判定成功！"); executeDirectSuccess(); return; }
+
+        let uR = convertToStandardMath(valRaw);
+        let tR = convertToStandardMath(eqData.midStepStr);
+
+        if(uR === tR || eval(uR) === eval(tR)) {
+            alert("🎯 乘除與指數部分優先處理正確！即將進行最終合併。");
             document.getElementById('interactiveStageBox').innerHTML = `${eqData.targetLetter} = ${convertToRichMathHTML(eqData.midStepStr)}`;
             document.getElementById('stageCombineArea').style.display="none"; document.getElementById('stageFinalArea').style.display="block";
             document.getElementById('finalAnsInput').value = ""; renderMathSteps(3);
-        } else { session.wrongAttemptsInTeaching++; alert("❌ 中段階段計算有誤，請先仔細算一下乘法、除法或平方的部分。"); checkTeachingWrongCounter('teachingWrongArea2'); }
+        } else {
+            session.wrongAttemptsInTeaching++; alert("❌ 中段階段計算有誤，請先仔細算一下乘法、除法或平方的部分。");
+            checkTeachingWrongCounter('teachingWrongArea2');
+        }
     }
 
     function executeFinal() {
-        if(document.getElementById('finalAnsInput').value.replace(/\s+/g,'') === eqData.ansStr) {
+        let uAns = document.getElementById('finalAnsInput').value.replace(/\s+/g,'');
+        if(uAns === eqData.ansStr) {
             document.getElementById('interactiveStageBox').innerHTML=`多變數破譯大功告成，求得 ${eqData.targetLetter} = <span style='color:#00ff00;'>${eqData.ansStr}</span> 🎯`;
             document.getElementById('stageFinalArea').style.display="none"; document.getElementById('nextBtn').style.display="block";
             setupNextButtonLabel(); renderMathSteps(4);
-        } else { session.wrongAttemptsInTeaching++; alert("最終數值不對，請重新做最後的合併與加減！"); checkTeachingWrongCounter('teachingWrongArea3'); }
+        } else {
+            session.wrongAttemptsInTeaching++; alert("最終數值不對，請重新做最後的合併與加減！");
+            checkTeachingWrongCounter('teachingWrongArea3');
+        }
     }
 
     function setupNextButtonLabel() {
@@ -786,7 +811,8 @@
             localStorage.removeItem("Active_User_Role");
             localStorage.removeItem("Active_User_Class");
             localStorage.removeItem("Active_User_Seat");
-            window.location.href = "index.html"; // 🚀 踢回入口
+            // 🎯 修正：登出時安全剔回同級目錄下的 index.html 入口
+            window.location.href = "index.html"; 
         }
     }
 </script>
