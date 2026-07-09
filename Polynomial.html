@@ -345,7 +345,6 @@
         if(currentRole === 'GUEST') {
             cacheStorage.SIMPLIFY.wrongBook = []; cacheStorage.SIMPLIFY.stats = getInitialStatsObject("SIMPLIFY");
             cacheStorage.MULTIPLY.wrongBook = []; cacheStorage.MULTIPLY.stats = getInitialStatsObject("MULTIPLY");
-            // 🎯 安全修正：移除了對不存在之 welcomeText 節點直接設定 innerText 的死鎖邏輯
             setTimeout(setupLayoutForRole, 50);
         } else if(currentRole === 'TEACHER') {
             setTimeout(setupLayoutForRole, 50);
@@ -353,7 +352,6 @@
             toggleOverlay(true, "連線雲端資料庫中...");
             fetchStudentCloudData(userRawClass, userRawSeat, () => {
                 toggleOverlay(false);
-                updateReviewMenuUI();
                 setupLayoutForRole();
             });
         }
@@ -362,7 +360,7 @@
     function getInitialStatsObject(eng) { return eng === "SIMPLIFY" ? { 1: { name: "(ax + b) + (cx + d) 【單變數加】", total:0, firstMatch:0, retryMatch:0, failed:0 }, 2: { name: "(ax + by) + (cx + dy) 【雙變數加】", total:0, firstMatch:0, retryMatch:0, failed:0 }, 3: { name: "(ax + b) - (cx + d) 【單變數減】", total:0, firstMatch:0, retryMatch:0, failed:0 }, 4: { name: "(ax + by) - (cx + dy) 【雙變數減】", total:0, firstMatch:0, retryMatch:0, failed:0 } } : { 1: { name: "(ax + b)(cx + d) 【全正數型】", total:0, firstMatch:0, retryMatch:0, failed:0 }, 2: { name: "(ax - b)(cx + d) 【單項負數】", total:0, firstMatch:0, retryMatch:0, failed:0 }, 3: { name: "(ax - b)(cx - d) 【雙常數負】", total:0, firstMatch:0, retryMatch:0, failed:0 }, 4: { name: "單項式乘以多項式 【常數單項】", total:0, firstMatch:0, retryMatch:0, failed:0 } }; }
     function toggleOverlay(s, t="讀取中...") { let o = document.getElementById('loadingOverlay'); if(o) { document.getElementById('loadingText').innerText=t; o.style.display=s?'flex':'none'; } }
     
-    // 🎯 核心修正：統一在 DOM 元素渲染完成後再載入頂部標籤與面板
+    // 🎯 核心修復：徹底分離資料解凍與介面加載順序
     function setupLayoutForRole() {
         let seatStr = String(userRawSeat).padStart(2, '0');
         let badge = document.getElementById('topCenterAccount');
@@ -374,7 +372,7 @@
 
         let mainGreeting = document.getElementById('welcomeText');
         if(mainGreeting) {
-            if(currentRole === 'GUEST') mainGreeting.innerText = "✨ 歡迎！目前正在以 [訪客身份] 進行多項式挑戰";
+            if(currentRole === 'GUEST') mainGreeting.innerText = "✨ 歡迎！目前正以 [訪客身份] 進行多項式挑戰";
             else if(currentRole === 'TEACHER') mainGreeting.innerText = "👨‍🏫 歡迎！管理員教師功能選單";
             else mainGreeting.innerText = `👋 歡迎！ ${userRawClass} 班 ${userRawSeat} 號 同學`;
         }
@@ -387,7 +385,7 @@
             document.querySelectorAll('.id-teacher-only').forEach(el=>el.style.display="none");
             updateReviewMenuUI();
         }
-        showPanel('step1'); // 🚀 完美渲染面板，大功告成！
+        showPanel('step1'); // 🚀 完美拉開主畫面，解決空框死鎖問題！
     }
 
     function showPanel(id) { document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active'); let navLeft = document.getElementById('topLeftNav'); if (id === 'step1') navLeft.style.display = 'none'; else navLeft.style.display = 'block'; window.scrollTo({ top: 0, behavior: 'smooth' }); }
@@ -395,8 +393,16 @@
     function fetchStudentCloudData(tC, tS, cb) { Promise.all([ fetch(`${GAS_API_URL}?jsonData=${encodeURIComponent(JSON.stringify({action:"load", userKey:`Simplify_${tC}-${tS}`}))}`).then(r=>r.json()).catch(()=>null), fetch(`${GAS_API_URL}?jsonData=${encodeURIComponent(JSON.stringify({action:"load", userKey:`PolyMulti_${tC}-${tS}`}))}`).then(r=>r.json()).catch(()=>null) ]).then(([dSim, dMul]) => { if(dSim?.success && dSim?.stats?.[1]) cacheStorage.SIMPLIFY = dSim; else initLocalFallback("SIMPLIFY", tC, tS); if(dMul?.success && dMul?.stats?.[1]) cacheStorage.MULTIPLY = dMul; else initLocalFallback("MULTIPLY", tC, tS); if(cb) cb(); }); }
     function initLocalFallback(eng, tC, tS) { try { let local = localStorage.getItem(`PolyCache_${eng}_${tC}-${tS}`); if(local) { let p = JSON.parse(local); if(p.stats?.[1]) { cacheStorage[eng] = p; return; } } } catch(e){} cacheStorage[eng] = { wrongBook: [], stats: getInitialStatsObject(eng) }; }
     function cloudSaveData() { if (["TEACHER","GUEST"].includes(currentRole) || !userRawClass || !userRawSeat) return; try { localStorage.setItem(`PolyCache_${currentEngine}_${userRawClass}-${userRawSeat}`, JSON.stringify(cacheStorage[currentEngine])); } catch(e){} fetch(GAS_API_URL, { method:"POST", mode:"no-cors", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:"jsonData="+encodeURIComponent(JSON.stringify({ action:"save", userKey:`${currentEngine==='SIMPLIFY'?'Simplify':'PolyMulti'}_${userRawClass}-${userRawSeat}`, stats:cacheStorage[currentEngine].stats, wrongBook:cacheStorage[currentEngine].wrongBook })) }); }
-    function updateReviewMenuUI() { let c = (cacheStorage.SIMPLIFY.wrongBook || []).length + (cacheStorage.MULTIPLY.wrongBook || []).length; document.getElementById('reviewModeCard').classList.toggle('disabled', c===0); let b = document.getElementById('reviewBadge'); b.style.display = c>0?'inline-block':'none'; b.innerText = c; if(c>0) { document.getElementById('reviewTitle').innerText = `錯題溫習 (還剩 ${c} 題)`; } else { document.getElementById('reviewTitle').innerText = `錯題溫習 (還剩 0 題)`; } }
-    onGameEngineChange()
+    
+    // 🎯 修正核心：安全綁定動態 reviewTitle 卡片描述欄位
+    function updateReviewMenuUI() { 
+        let c = (cacheStorage.SIMPLIFY.wrongBook || []).length + (cacheStorage.MULTIPLY.wrongBook || []).length; 
+        let targetCard = document.getElementById('reviewTitle');
+        if(targetCard) {
+            targetCard.innerText = `錯題溫習 (還剩 ${c} 題)`;
+        }
+    }
+    
     function onGameEngineChange() { currentEngine = document.querySelector('input[name="gameEngine"]:checked').value; renderTypeSelectOptions(); }
     function toggleConditionUI() { let c = document.querySelector('input[name="endCondition"]:checked').value; document.getElementById('countInputWrapper').style.display=c==='COUNT'?'block':'none'; document.getElementById('targetScoreInputWrapper').style.display=c==='COUNT'?'none':'block'; document.getElementById('timeLimitInputWrapper').style.display=c==='TIME_LIMIT'?'block':'none'; }
     function renderTypeSelectOptions() { let s = document.getElementById('typeSelect'); if(!s) return; s.innerHTML = currentEngine === 'SIMPLIFY' ? `<option value="1">1. (ax + b) + (cx + d) 【單變數加】</option><option value="2">2. (ax + by) + (cx + dy) 【雙變數加】</option><option value="3">3. (ax + b) - (cx + d) 【單變數減】</option><option value="4">4. (ax + by) - (cx + dy) 【雙變數減】</option><option value="MIX" selected>5. 🔀 題型大混戰</option>` : `<option value="1">1. (ax + b)(cx + d) 【全正數型】</option><option value="2">2. (ax - b)(cx + d) 【單項負數】</option><option value="3">3. (ax - b)(cx - d) 【雙常數負】</option><option value="4">4. 單項式乘以多項式</option><option value="MIX" selected>5. 🔀 題型大混戰</option>`; }
