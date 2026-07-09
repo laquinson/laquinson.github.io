@@ -249,21 +249,12 @@
 
     <div id="step1_solver" class="step-panel">
         <h2>🛠️ 智慧解答模式</h2>
-        <div class="form-group"><label>✏️ 請輸入多項式算式：</label><input type="text" id="eqInput" placeholder="example: (3x+2)-(x-5)"></div>
+        <div class="form-group"><label>✏️ 請輸入多項式算式：</label><input type="text" id="eqInput" placeholder="例如：(3x+2)-(x-5) 或 (x+2)(x-3)"></div>
         <button onclick="handleManualSolverInput()" class="screenshot-btn">開始逐步教學引導</button>
     </div>
 
     <div id="step2" class="step-panel">
-        <div class="progress-banner">
-            <div class="progress-banner-header">
-                <span id="progressText">進度...</span>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <span id="globalTimerBox" class="timer-badge">⏱️ 00:00</span>
-                    <span id="scoreText" style="background:var(--stage-bg);color:#fffb00;padding:4px 8px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);">積分：0</span>
-                </div>
-            </div>
-            <div class="progress-bar-container"><div id="progressBarFill" class="progress-bar-fill"></div></div>
-        </div>
+        <div class="progress-banner"><span id="progressText">進度...</span><div><span id="typeBadgeText" style="background:rgba(255,255,255,0.2);padding:4px 8px;border-radius:6px;font-size:14px;margin-right:10px;display:none;color:#ffffff;border:1px solid rgba(255,255,255,0.25);"></span><span id="scoreText" style="background:var(--stage-bg);color:#fffb00;padding:4px 8px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);">積分：0</span></div></div>
         <h2 id="step2Title">請計算化簡以下多項式</h2>
         <div class="stage-box" id="displayEq">題目載入中...</div>
         <div class="form-group"><label id="inputLabel">你的最終簡化結果（用 ^2 代表平方，係數 1 可省略）：</label><input type="text" id="ansInput" placeholder="例如: 2x+5 或 x^2-x-6"></div>
@@ -272,16 +263,7 @@
     </div>
 
     <div id="step3" class="step-panel">
-        <div class="progress-banner">
-            <div class="progress-banner-header">
-                <span id="progressTextStage3">進度...</span>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <span id="globalTimerBoxStage3" class="timer-badge">⏱️ 00:00</span>
-                    <span id="teachingHeaderBadge" style="color:var(--danger);font-weight:bold;margin-right: 5px;">💡 多項式逐步分解程序</span>
-                </div>
-            </div>
-            <div class="progress-bar-container"><div id="progressBarFillStage3" class="progress-bar-fill"></div></div>
-        </div>
+        <div class="progress-banner"><span id="progressTextStage3">進度...</span><span style="color:var(--danger);font-weight:bold;">💡 逐步破譯程序</span></div>
         <h2 id="step3HeadingTitle">多項式逐步分解思維</h2>
         <div class="stage-box" id="interactiveStageBox">展示台</div>
         <div id="feedbackArea" class="feedback"></div>
@@ -335,7 +317,7 @@
                 <h4 style="color:var(--danger);margin-top:20px;">📘 目前未消滅錯題本數量 (計 <span id="statsWrongCount">0</span> 題)</h4>
             </div>
         </div>
-        <div class="btn-group non-print" style="display:flex;gap:15px;margin-top:20px;"><button onclick="window.print()" class="btn-info">🖨️ 匯出 PDF 學習報告檔案</button><button class="btn-secondary" onclick="resetToMainMenu(false)">↩️ 返回主選單</button></div>
+        <div class="btn-group non-print" style="display:flex;gap:15px;margin-top:20px;"><button onclick="window.print()" class="btn-info">🖨️ 匯出 PDF 學習報告檔案</button><button class="btn-secondary" onclick="resetToMainMenu(false)">↩️ 返回大廳</button></div>
     </div>
 </div>
 
@@ -353,14 +335,22 @@
         currentRole = localStorage.getItem("Active_User_Role");
         userRawClass = localStorage.getItem("Active_User_Class");
         userRawSeat = localStorage.getItem("Active_User_Seat");
-        if (!currentRole) { window.location.href = "index.html"; return; }
+
+        if (!currentRole) {
+            alert("⚠️ 偵測到未授權存取，請先回到入口首頁完成登入驗證！");
+            window.location.href = "index.html"; 
+            return;
+        }
+
         let seatStr = String(userRawSeat).padStart(2, '0');
         let badge = document.getElementById('topCenterAccount');
         if(currentRole === 'STUDENT') badge.innerText = `挑戰者: ${userRawClass}班${seatStr}號`;
         else if(currentRole === 'GUEST') badge.innerText = `挑戰者: 訪客體驗`;
         else if(currentRole === 'TEACHER') badge.innerText = `管理員: ${localStorage.getItem("Active_User_TeacherID").replace('Teacher_','')}`;
+
         document.getElementById('globalLogoutBtn').style.display="inline-block";
         document.getElementById('globalHomeBtn').style.display="none";
+
         if(currentRole === 'GUEST') {
             cacheStorage.SIMPLIFY.wrongBook = []; cacheStorage.SIMPLIFY.stats = getInitialStatsObject("SIMPLIFY");
             cacheStorage.MULTIPLY.wrongBook = []; cacheStorage.MULTIPLY.stats = getInitialStatsObject("MULTIPLY");
@@ -388,25 +378,22 @@
     function cloudSaveData() { if (["TEACHER","GUEST"].includes(currentRole) || !userRawClass || !userRawSeat) return; try { localStorage.setItem(`PolyCache_${currentEngine}_${userRawClass}-${userRawSeat}`, JSON.stringify(cacheStorage[currentEngine])); } catch(e){} fetch(GAS_API_URL, { method:"POST", mode:"no-cors", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:"jsonData="+encodeURIComponent(JSON.stringify({ action:"save", userKey:`${currentEngine==='SIMPLIFY'?'Simplify':'PolyMulti'}_${userRawClass}-${userRawSeat}`, stats:cacheStorage[currentEngine].stats, wrongBook:cacheStorage[currentEngine].wrongBook })) }); }
     function updateReviewMenuUI() { let c = (cacheStorage.SIMPLIFY.wrongBook || []).length + (cacheStorage.MULTIPLY.wrongBook || []).length; document.getElementById('reviewModeCard').classList.toggle('disabled', c===0); let b = document.getElementById('reviewBadge'); b.style.display = c>0?'inline-block':'none'; b.innerText = c; if(c>0) { document.getElementById('reviewTitle').innerText = `錯題溫習 (還剩 ${c} 題)`; } else { document.getElementById('reviewTitle').innerText = `錯題溫習 (還剩 0 題)`; } }
     function onGameEngineChange() { currentEngine = document.querySelector('input[name="gameEngine"]:checked').value; renderTypeSelectOptions(); }
-    function toggleConditionUI() { let c = document.querySelector('input[name="endCondition"]:checked').value; document.getElementById('countInputWrapper').style.display=c==='COUNT'?'block':'none'; document.getElementById('targetScoreInputWrapper').style.display=c==='TARGET_SCORE'?'block':'none'; document.getElementById('timeLimitInputWrapper').style.display=c==='TIME_LIMIT'?'block':'none'; }
+    function toggleConditionUI() { let c = document.querySelector('input[name="endCondition"]:checked').value; document.getElementById('countInputWrapper').style.display=c==='COUNT'?'block':'none'; document.getElementById('targetScoreInputWrapper').style.display=c==='COUNT'?'none':'block'; document.getElementById('timeLimitInputWrapper').style.display=c==='TIME_LIMIT'?'block':'none'; }
     function renderTypeSelectOptions() { let s = document.getElementById('typeSelect'); if(!s) return; s.innerHTML = currentEngine === 'SIMPLIFY' ? `<option value="1">1. (ax + b) + (cx + d) 【單變數加】</option><option value="2">2. (ax + by) + (cx + dy) 【雙變數加】</option><option value="3">3. (ax + b) - (cx + d) 【單變數減】</option><option value="4">4. (ax + by) - (cx + dy) 【雙變數減】</option><option value="MIX" selected>5. 🔀 題型大混戰</option>` : `<option value="1">1. (ax + b)(cx + d) 【全正數型】</option><option value="2">2. (ax - b)(cx + d) 【單項負數】</option><option value="3">3. (ax - b)(cx - d) 【雙常數負】</option><option value="4">4. 單項式乘以多項式</option><option value="MIX" selected>5. 🔀 題型大混戰</option>`; }
-    function switchSetupConfig(mode) { session.currentMode = mode; if(mode==='CHALLENGE') { showPanel('step1_challenge'); renderTypeSelectOptions(); } else if(mode==='SOLVER') showPanel('step1_solver'); else if(mode==='CHG_PWD') showPanel('step1_chgpwd'); else if(mode==='REVIEW') { if(((cacheStorage.SIMPLIFY.wrongBook||[]).length+(cacheStorage.MULTIPLY.wrongBook||[]).length)===0) return; initReviewSession(); } else if(mode==='STATS') { calculateAndRenderStats(); showPanel('step_stats_panel'); } }
-
-    // 🎯 核心計時引擎同步化
-    function startSessionTimer(seconds) {
-        stopSessionTimer(); timeLeft = seconds; updateTimerDisplay();
-        document.getElementById('globalTimerBox').style.display = 'inline-block';
-        document.getElementById('globalTimerBoxStage3').style.display = 'inline-block';
-        timerInterval = setInterval(() => {
-            timeLeft--; updateTimerDisplay();
-            if(session.endCondition === 'TIME_LIMIT') updateProgressBarUI();
-            if (timeLeft <= 0) {
-                stopSessionTimer();
-                alert("⏱️ 時間到！即將為您結算本次挑戰分數！");
-                finishTimeLimitSession();
-            }
-        }, 1000);
+    
+    function switchSetupConfig(mode) { 
+        session.currentMode = mode; 
+        if(mode==='CHALLENGE') { 
+            showPanel('step1_challenge'); 
+            renderTypeSelectOptions(); 
+        } else if(mode==='SOLVER') showPanel('step1_solver'); 
+        else if(mode==='CHG_PWD') showPanel('step1_chgpwd'); 
+        else if(mode==='REVIEW') { if(((cacheStorage.SIMPLIFY.wrongBook||[]).length+(cacheStorage.MULTIPLY.wrongBook||[]).length)===0) return; initReviewSession(); } 
+        else if(mode==='STATS') { calculateAndRenderStats(); showPanel('step_stats_panel'); } 
     }
+
+    // 🎯 限時衝分模式計時器引擎
+    function startSessionTimer(seconds) { stopSessionTimer(); timeLeft = seconds; updateTimerDisplay(); document.getElementById('globalTimerBox').style.display = 'inline-block'; document.getElementById('globalTimerBoxStage3').style.display = 'inline-block'; timerInterval = setInterval(() => { timeLeft--; updateTimerDisplay(); if(session.endCondition === 'TIME_LIMIT') updateProgressBarUI(); if (timeLeft <= 0) { stopSessionTimer(); alert("⏱️ 時間到！即將為您結算本次挑戰分數！"); finishTimeLimitSession(); } }, 1000); }
     function stopSessionTimer() { if(timerInterval) { clearInterval(timerInterval); timerInterval = null; } document.getElementById('globalTimerBox').style.display = 'none'; document.getElementById('globalTimerBoxStage3').style.display = 'none'; }
     function updateTimerDisplay() { let m = Math.floor(timeLeft / 60); let s = timeLeft % 60; let str = `⏱️ ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`; document.getElementById('globalTimerBox').innerText = str; document.getElementById('globalTimerBoxStage3').innerText = str; }
     function finishTimeLimitSession() { stopSessionTimer(); calculateAndRenderStats(); let summaryBox = document.getElementById('timeModeResultSummary'); summaryBox.style.display = 'block'; let minSet = Math.floor(session.timeLimitSetting / 60); summaryBox.innerHTML = `🏁 限時挑戰完賽：你在 ${minSet} 分鐘內成功斬獲了 <span style="font-size:20px;color:var(--danger);">${session.score}</span> 分！`; document.getElementById('reportMainHeading').innerText = "🏆 限時挑戰戰果結算報告"; showPanel('step_stats_panel'); }
@@ -415,7 +402,7 @@
         let selectedType = document.getElementById('typeSelect').value; 
         let condition = document.querySelector('input[name="endCondition"]:checked').value; 
         session.currentMode = 'CHALLENGE'; session.selectedType = selectedType; session.endCondition = condition; session.currentIdx = 0; session.score = 0; session.questionList = []; 
-        document.getElementById('reportMainHeading').innerText = "📊 學生歷程練習數據報告"; 
+        document.getElementById('reportMainHeading').innerText = "📊 學生多項式練習數據報告"; 
         document.getElementById('timeModeResultSummary').style.display = 'none'; 
         if (condition === 'COUNT') { stopSessionTimer(); session.totalQuestions = parseInt(document.getElementById('totalQuestionsInput').value) || 5; for (let i = 0; i < session.totalQuestions; i++) session.questionList.push(generateQuestion(currentEngine, session.selectedType)); } 
         else if (condition === 'TARGET_SCORE') { stopSessionTimer(); session.targetScore = parseInt(document.getElementById('targetScoreInput').value) || 5; session.questionList.push(generateQuestion(currentEngine, session.selectedType)); } 
@@ -424,7 +411,7 @@
     }
     function initReviewSession() { session.currentIdx = 0; session.questionList = [...cacheStorage.SIMPLIFY.wrongBook, ...cacheStorage.MULTIPLY.wrongBook]; session.totalQuestions = session.questionList.length; loadPolynomialToStage(); }
     function handleManualSolverInput() { let input = document.getElementById('eqInput').value.replace(/\s+/g,''); if(!input) return; currentEngine = (input.includes(')(')||(/^[+-]?\d*[a-zA-Z]?\(/.test(input)&&!input.includes(')+(')&&!input.includes(')-(')))?'MULTIPLY':'SIMPLIFY'; session.totalQuestions=1; session.currentIdx=0; session.questionList=[input]; loadPolynomialToStage(); }
-    function parseMathStructure(str) { let letters = str.replace(/[^a-zA-Z]/g, ''); if(letters.length === 0) return false; let unique = [...new Set(letters)]; polyData.engine = currentEngine; if(currentEngine === 'SIMPLIFY') { polyData.v1 = unique[0]; polyData.v2 = unique[1] || 'y'; polyData.targetVarType = unique.length>1?'v1_v2':'v1_c'; let regex = polyData.targetVarType==='v1_v2'?new RegExp(`^\\(([+-]?\\d*)${polyData.v1}([+-]?\\d*)${polyData.v2}\\)([+-])\\(([+-]?\\d*)${polyData.v1}([+-]?\\d*)${polyData.v2}\\)$`):new RegExp(`^\\(([+-]?\\d*)${polyData.v1}([+-]?\\d+)?\\)([+-])\\(([+-]?\\d*)${polyData.v1}([+-]?\\d+)?\\)$`); let m = str.match(regex); if(!m) return false; polyData.a = m[1]===""||m[1]==="+"?1:(m[1]==="-"?-1:parseInt(m[1])); let v2=m[2]?(m[2]==="+"?1:(m[2]==="-"?-1:parseInt(m[2]))):0; polyData.sign=m[3]; polyData.c = m[4]===""||m[4]==="+"?1:(m[4]==="-"?-1:parseInt(m[4])); let v5=m[5]?(m[5]==="+"?1:(m[5]==="-"?-1:parseInt(m[5]))):0; if(polyData.targetVarType==='v1_v2') { polyData.b=v2; polyData.e=0; polyData.d=v5; polyData.f=0; } else { polyData.b=0; polyData.e=v2; document.getElementById('loadingText').innerText=""; polyData.d=0; polyData.f=v5; } let fV1 = polyData.sign==='+'?(polyData.a+polyData.c):(polyData.a-polyData.c), fV2 = polyData.sign==='+'?(polyData.b+polyData.d):(polyData.b-polyData.d), fC = polyData.sign==='+'?(polyData.e+polyData.f):(polyData.e-polyData.f); let res = ""; if(fV1!==0) res+=`${fV1===1?'':(fV1===-1?'-':fV1)}${polyData.v1}`; if(polyData.targetVarType==='v1_v2') { if(fV2!==0) res+=`${fV2>0&&res!==''?'+':''}${fV2===1?'':(fV2===-1?'-':fV2)}${polyData.v2}`; } else { if(fC!==0) res+=`${fC>0&&res!==''?'+':''}${fC}`; } polyData.ansStr = res===""?"0":res; } else { polyData.v1 = unique[0]; polyData.isSingleTerm = false; let s = str.replace(new RegExp(`\\(([+-]?\\d*${polyData.v1})\\)\\((.*)\\)`), '$1($2)'); let m = s.match(new RegExp(`^\\(([+-]?\\d*)${polyData.v1}([+-]?\\d+)\\)\\(([+-]?\\d*)${polyData.v1}([+-]?\\d+)\\)$`)) || s.match(new RegExp(`^([+-]?\\d*)(${polyData.v1})?\\(([+-]?\\d*)${polyData.v1}([+-]?\\d+)\\)$`)); if(!m) return false; if(m.length===5) { polyData.a=m[1]===""||m[1]==="+"?1:(m[1]==="-"?-1:parseInt(m[1])); polyData.b=parseInt(m[2]); polyData.c=m[3]===""||m[3]==="+"?1:(m[3]==="-"?-1:parseInt(m[3])); polyData.d=parseInt(m[4]); } else { let lead = m[1]===""||m[1]==="+"?1:(m[1]==="-"?-1:parseInt(m[1])), hasVar = m[2]!==undefined; polyData.a=hasVar?lead:0; polyData.b=hasVar?0:lead; polyData.c=m[3]===""||m[3]==="+"?1:(m[3]==="-"?-1:parseInt(m[3])); polyData.d=parseInt(m[4]); polyData.isSingleTerm=true; polyData.singleType=hasVar?"pure_variable":"pure_constant"; } let c00=polyData.a*polyData.c, c01=polyData.a*polyData.d, c10=polyData.b*polyData.c, c11=polyData.b*polyData.d; polyData.cells = { "0-0":c00===0?"0":`${c00}${polyData.v1}^2`, "0-1":c01===0?"0":`${fmtSign(c01)}${polyData.v1}`, "1-0":c10===0?"0":`${fmtSign(c10)}${polyData.v1}`, "1-1":c11===0?"0":`${fmtSign(c11)}` }; polyData.step2_formula=`${c01}${fmtSign(c10)}`; let fX2=c00, fX=c01+c10, fC=c11, res=""; if(fX2!==0) res+=`${fX2}${polyData.v1}^2`; if(fX!==0) res+=`${fX>0&&res!==''?'+':''}${fX}${polyData.v1}`; if(fC!==0) res+=`${fC>0&&res!==''?'+':''}${fC}`; polyData.ansStr=res===""?"0":res; } return true; }
+    function parseMathStructure(str) { let letters = str.replace(/[^a-zA-Z]/g, ''); if(letters.length === 0) return false; let unique = [...new Set(letters)]; polyData.engine = currentEngine; if(currentEngine === 'SIMPLIFY') { polyData.v1 = unique[0]; polyData.v2 = unique[1] || 'y'; polyData.targetVarType = unique.length>1?'v1_v2':'v1_c'; let regex = polyData.targetVarType==='v1_v2'?new RegExp(`^\\(([+-]?\\d*)${polyData.v1}([+-]?\\d*)${polyData.v2}\\)([+-])\\(([+-]?\\d*)${polyData.v1}([+-]?\\d*)${polyData.v2}\\)$`):new RegExp(`^\\(([+-]?\\d*)${polyData.v1}([+-]?\\d+)?\\)([+-])\\(([+-]?\\d*)${polyData.v1}([+-]?\\d+)?\\)$`); let m = str.match(regex); if(!m) return false; polyData.a = m[1]===""||m[1]==="+"?1:(m[1]==="-"?-1:parseInt(m[1])); let v2=m[2]?(m[2]==="+"?1:(m[2]==="-"?-1:parseInt(m[2]))):0; polyData.sign=m[3]; polyData.c = m[4]===""||m[4]==="+"?1:(m[4]==="-"?-1:parseInt(m[4])); let v5=m[5]?(m[5]==="+"?1:(m[5]==="-"?-1:parseInt(m[5]))):0; if(polyData.targetVarType==='v1_v2') { polyData.b=v2; polyData.e=0; polyData.d=v5; polyData.f=0; } else { polyData.b=0; polyData.e=v2; polyData.d=0; polyData.f=v5; } let fV1 = polyData.sign==='+'?(polyData.a+polyData.c):(polyData.a-polyData.c), fV2 = polyData.sign==='+'?(polyData.b+polyData.d):(polyData.b-polyData.d), fC = polyData.sign==='+'?(polyData.e+polyData.f):(polyData.e-polyData.f); let res = ""; if(fV1!==0) res+=`${fV1===1?'':(fV1===-1?'-':fV1)}${polyData.v1}`; if(polyData.targetVarType==='v1_v2') { if(fV2!==0) res+=`${fV2>0&&res!==''?'+':''}${fV2===1?'':(fV2===-1?'-':fV2)}${polyData.v2}`; } else { if(fC!==0) res+=`${fC>0&&res!==''?'+':''}${fC}`; } polyData.ansStr = res===""?"0":res; } else { polyData.v1 = unique[0]; polyData.isSingleTerm = false; let s = str.replace(new RegExp(`\\(([+-]?\\d*${polyData.v1})\\)\\((.*)\\)`), '$1($2)'); let m = s.match(new RegExp(`^\\(([+-]?\\d*)${polyData.v1}([+-]?\\d+)\\)\\(([+-]?\\d*)${polyData.v1}([+-]?\\d+)\\)$`)) || s.match(new RegExp(`^([+-]?\\d*)(${polyData.v1})?\\(([+-]?\\d*)${polyData.v1}([+-]?\\d+)\\)$`)); if(!m) return false; if(m.length===5) { polyData.a=m[1]===""||m[1]==="+"?1:(m[1]==="-"?-1:parseInt(m[1])); polyData.b=parseInt(m[2]); polyData.c=m[3]===""||m[3]==="+"?1:(m[3]==="-"?-1:parseInt(m[3])); polyData.d=parseInt(m[4]); } else { let lead = m[1]===""||m[1]==="+"?1:(m[1]==="-"?-1:parseInt(m[1])), hasVar = m[2]!==undefined; polyData.a=hasVar?lead:0; polyData.b=hasVar?0:lead; polyData.c=m[3]===""||m[3]==="+"?1:(m[3]==="-"?-1:parseInt(m[3])); polyData.d=parseInt(m[4]); polyData.isSingleTerm=true; polyData.singleType=hasVar?"pure_variable":"pure_constant"; } let c00=polyData.a*polyData.c, c01=polyData.a*polyData.d, c10=polyData.b*polyData.c, c11=polyData.b*polyData.d; polyData.cells = { "0-0":c00===0?"0":`${c00}${polyData.v1}^2`, "0-1":c01===0?"0":`${fmtSign(c01)}${polyData.v1}`, "1-0":c10===0?"0":`${fmtSign(c10)}${polyData.v1}`, "1-1":c11===0?"0":`${fmtSign(c11)}` }; polyData.step2_formula=`${c01}${fmtSign(c10)}`; let fX2=c00, fX=c01+c10, fC=c11, res=""; if(fX2!==0) res+=`${fX2}${polyData.v1}^2`; if(fX!==0) res+=`${fX>0&&res!==''?'+':''}${fX}${polyData.v1}`; if(fC!==0) res+=`${fC>0&&res!==''?'+':''}${fC}`; polyData.ansStr=res===""?"0":res; } return true; }
     function canonicalizePolyStr(uStr, mVar) { let c = uStr.replace(/\s+/g,'').toLowerCase().replace(/^\+/,''); return c.replace(new RegExp(`([+-])1${mVar}\\^2`,'g'),`$1${mVar}^2`).replace(new RegExp(`^1${mVar}\\^2`),`${mVar}^2`).replace(new RegExp(`([+-])1${mVar}([^\\^]|$)`,'g'),`$1${mVar}$2`).replace(new RegExp(`^1${mVar}([^\\^]|$)`),`${mVar}$1`); }
     function loadPolynomialToStage() { session.wrongAttemptsThisQuestion = 0; session.hasAddedToWrongBookThisQuestion = false; document.getElementById('initialFeedbackArea').innerHTML = ''; let expr = session.questionList[session.currentIdx]; if(session.currentMode==='REVIEW') currentEngine = (expr.includes(')(')||(/^[+-]?\d*[a-zA-Z]?\(/.test(expr)&&!expr.includes(')+(')&&!expr.includes(')-(')))?'MULTIPLY':'SIMPLIFY'; if(!parseMathStructure(expr)) { alert("算式結構有誤！已跳回主選單"); resetToMainMenu(false); return; } if(session.currentMode==='CHALLENGE') { cacheStorage[currentEngine].stats[session.currentTypeNum].total++; cloudSaveData(); } document.getElementById('step2Title').innerText = session.currentMode==='REVIEW'?"👹 魔王題重溫": (currentEngine==='SIMPLIFY'?"請化簡以下多項式":"請展開化簡以下多項式"); document.getElementById('progressText').innerText = session.currentMode==='CHALLENGE' ? (session.endCondition==='COUNT'?`進度: ${session.currentIdx+1}/${session.totalQuestions}`: (session.endCondition==='TARGET_SCORE'? `積分挑戰中(目標 ${session.targetScore})` : `⏳ 限時狂熱衝分中！`)) : `自主學習模式第 ${session.currentIdx+1} 題`; document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`; document.getElementById('ansInput').value = ''; document.getElementById('displayEq').innerText = expr; document.getElementById('submitAnsBtn').className = ""; document.getElementById('submitAnsBtn').innerText = "提交結果驗證"; showPanel('step2'); }
     function checkFirstAnswer() { if(canonicalizePolyStr(document.getElementById('ansInput').value, polyData.v1) === canonicalizePolyStr(polyData.ansStr, polyData.v1)) { if(session.currentMode==='CHALLENGE'&&session.wrongAttemptsThisQuestion===0) cacheStorage[currentEngine].stats[session.currentTypeNum].firstMatch++; showPanel('step3'); executeDirectSuccess(); } else { session.wrongAttemptsThisQuestion++; if(session.currentMode==='CHALLENGE'&&!session.hasAddedToWrongBookThisQuestion) { if(!cacheStorage[currentEngine].wrongBook.includes(session.questionList[session.currentIdx])) cacheStorage[currentEngine].wrongBook.push(session.questionList[session.currentIdx]); cacheStorage[currentEngine].stats[session.currentTypeNum].failed++; session.hasAddedToWrongBookThisQuestion=true; } if(session.currentMode==='CHALLENGE' && session.wrongAttemptsThisQuestion===1) { session.score--; document.getElementById('scoreText').innerText = `目前積分: ${session.score}`; let area = document.getElementById('initialFeedbackArea'); area.className="feedback warning"; area.innerHTML="❌ 答案有誤差！<b>積分-1</b>。提供一次<b>原地補答修正的挽回機會</b>！"; document.getElementById('submitAnsBtn').innerText = "提交修正補答答案"; document.getElementById('submitAnsBtn').className="btn-warning"; } else { if(session.currentMode==='CHALLENGE') session.score--; showPanel('step3'); executeFinalFailure(); } cloudSaveData(); } }
