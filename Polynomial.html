@@ -166,7 +166,7 @@
 
 <div class="container" id="mainContainer">
     <div id="step1" class="step-panel dashboard-wrapper">
-        <div class="greeting-text">請選擇挑戰模式</div>
+        <div class="greeting-text" id="welcomeText">請選擇挑戰模式</div>
         
         <div class="dashboard-grid">
             <div class="dash-btn bg-purple id-student-only" onclick="switchSetupConfig('CHALLENGE')">
@@ -317,7 +317,7 @@
                 <h4 style="color:var(--danger);margin-top:20px;">📘 目前未消滅錯題本數量 (計 <span id="statsWrongCount">0</span> 題)</h4>
             </div>
         </div>
-        <div class="btn-group non-print" style="display:flex;gap:15px;margin-top:20px;"><button onclick="window.print()" class="btn-info">🖨️ 匯出 PDF 學習報告檔案</button><button class="btn-secondary" onclick="resetToMainMenu(false)">↩️ 返回大廳</button></div>
+        <div class="btn-group non-print" style="display:flex;gap:15px;margin-top:20px;"><button onclick="window.print()" class="btn-info">🖨️ 匯出 PDF 學習報告檔案</button><button class="btn-secondary" onclick="resetToMainMenu(false)">↩️ 返回主選單</button></div>
     </div>
 </div>
 
@@ -354,23 +354,37 @@
         if(currentRole === 'GUEST') {
             cacheStorage.SIMPLIFY.wrongBook = []; cacheStorage.SIMPLIFY.stats = getInitialStatsObject("SIMPLIFY");
             cacheStorage.MULTIPLY.wrongBook = []; cacheStorage.MULTIPLY.stats = getInitialStatsObject("MULTIPLY");
-            showPanel('step1');
+            setupLayoutForRole();
         } else if(currentRole === 'TEACHER') {
             document.querySelectorAll('.id-student-only').forEach(el=>el.style.display="none");
             document.querySelectorAll('.id-teacher-only').forEach(el=>el.style.display="block");
-            showPanel('step1');
+            setupLayoutForRole();
         } else {
             toggleOverlay(true, "連線雲端資料庫中...");
             fetchStudentCloudData(userRawClass, userRawSeat, () => {
                 toggleOverlay(false);
                 updateReviewMenuUI();
-                showPanel('step1');
+                setupLayoutForRole();
             });
         }
     })();
 
     function getInitialStatsObject(eng) { return eng === "SIMPLIFY" ? { 1: { name: "(ax + b) + (cx + d) 【單變數加】", total:0, firstMatch:0, retryMatch:0, failed:0 }, 2: { name: "(ax + by) + (cx + dy) 【雙變數加】", total:0, firstMatch:0, retryMatch:0, failed:0 }, 3: { name: "(ax + b) - (cx + d) 【單變數減】", total:0, firstMatch:0, retryMatch:0, failed:0 }, 4: { name: "(ax + by) - (cx + dy) 【雙變數減】", total:0, firstMatch:0, retryMatch:0, failed:0 } } : { 1: { name: "(ax + b)(cx + d) 【全正數型】", total:0, firstMatch:0, retryMatch:0, failed:0 }, 2: { name: "(ax - b)(cx + d) 【單項負數】", total:0, firstMatch:0, retryMatch:0, failed:0 }, 3: { name: "(ax - b)(cx - d) 【雙常數負】", total:0, firstMatch:0, retryMatch:0, failed:0 }, 4: { name: "單項式乘以多項式 【常數單項】", total:0, firstMatch:0, retryMatch:0, failed:0 } }; }
     function toggleOverlay(s, t="讀取中...") { let o = document.getElementById('loadingOverlay'); if(o) { document.getElementById('loadingText').innerText=t; o.style.display=s?'flex':'none'; } }
+    
+    // 🎯 核心優化點：改寫面板加載流程，強制解凍選單
+    function setupLayoutForRole() {
+        if(currentRole === 'TEACHER') {
+            document.querySelectorAll('.id-student-only').forEach(el=>el.style.display="none");
+            document.querySelectorAll('.id-teacher-only').forEach(el=>el.style.display="flex");
+        } else {
+            document.querySelectorAll('.id-student-only').forEach(el=>el.style.display="flex");
+            document.querySelectorAll('.id-teacher-only').forEach(el=>el.style.display="none");
+            updateReviewMenuUI();
+        }
+        showPanel('step1'); // 💡 確保在抽查資料完畢後才釋放主畫面，防範死鎖
+    }
+
     function showPanel(id) { document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active'); let navLeft = document.getElementById('topLeftNav'); if (id === 'step1') navLeft.style.display = 'none'; else navLeft.style.display = 'block'; window.scrollTo({ top: 0, behavior: 'smooth' }); }
     function changeTeacherPassword() { let op = document.getElementById('oldPwd').value, np = document.getElementById('newPwd').value, idx = localStorage.getItem("Active_User_TeacherID").split('_')[1]; let currentPwd = "1007"; try { currentPwd = localStorage.getItem(`Teacher_Pwd_${idx}`) || "1007"; } catch(e){} if(op !== currentPwd || !np.trim()) { alert("❌ 驗證失敗或欄位空白！"); return; } try { localStorage.setItem(`Teacher_Pwd_${idx}`, np); } catch(e){} alert("🎉 密碼更新成功！"); resetToMainMenu(false); }
     function fetchStudentCloudData(tC, tS, cb) { Promise.all([ fetch(`${GAS_API_URL}?jsonData=${encodeURIComponent(JSON.stringify({action:"load", userKey:`Simplify_${tC}-${tS}`}))}`).then(r=>r.json()).catch(()=>null), fetch(`${GAS_API_URL}?jsonData=${encodeURIComponent(JSON.stringify({action:"load", userKey:`PolyMulti_${tC}-${tS}`}))}`).then(r=>r.json()).catch(()=>null) ]).then(([dSim, dMul]) => { if(dSim?.success && dSim?.stats?.[1]) cacheStorage.SIMPLIFY = dSim; else initLocalFallback("SIMPLIFY", tC, tS); if(dMul?.success && dMul?.stats?.[1]) cacheStorage.MULTIPLY = dMul; else initLocalFallback("MULTIPLY", tC, tS); if(cb) cb(); }); }
@@ -381,6 +395,7 @@
     function toggleConditionUI() { let c = document.querySelector('input[name="endCondition"]:checked').value; document.getElementById('countInputWrapper').style.display=c==='COUNT'?'block':'none'; document.getElementById('targetScoreInputWrapper').style.display=c==='COUNT'?'none':'block'; document.getElementById('timeLimitInputWrapper').style.display=c==='TIME_LIMIT'?'block':'none'; }
     function renderTypeSelectOptions() { let s = document.getElementById('typeSelect'); if(!s) return; s.innerHTML = currentEngine === 'SIMPLIFY' ? `<option value="1">1. (ax + b) + (cx + d) 【單變數加】</option><option value="2">2. (ax + by) + (cx + dy) 【雙變數加】</option><option value="3">3. (ax + b) - (cx + d) 【單變數減】</option><option value="4">4. (ax + by) - (cx + dy) 【雙變數減】</option><option value="MIX" selected>5. 🔀 題型大混戰</option>` : `<option value="1">1. (ax + b)(cx + d) 【全正數型】</option><option value="2">2. (ax - b)(cx + d) 【單項負數】</option><option value="3">3. (ax - b)(cx - d) 【雙常數負】</option><option value="4">4. 單項式乘以多項式</option><option value="MIX" selected>5. 🔀 題型大混戰</option>`; }
     
+    // 🎯 核心優化：開啟設定時立刻渲染多項式選項
     function switchSetupConfig(mode) { 
         session.currentMode = mode; 
         if(mode==='CHALLENGE') { 
@@ -392,7 +407,6 @@
         else if(mode==='STATS') { calculateAndRenderStats(); showPanel('step_stats_panel'); } 
     }
 
-    // 🎯 限時衝分模式計時器引擎
     function startSessionTimer(seconds) { stopSessionTimer(); timeLeft = seconds; updateTimerDisplay(); document.getElementById('globalTimerBox').style.display = 'inline-block'; document.getElementById('globalTimerBoxStage3').style.display = 'inline-block'; timerInterval = setInterval(() => { timeLeft--; updateTimerDisplay(); if(session.endCondition === 'TIME_LIMIT') updateProgressBarUI(); if (timeLeft <= 0) { stopSessionTimer(); alert("⏱️ 時間到！即將為您結算本次挑戰分數！"); finishTimeLimitSession(); } }, 1000); }
     function stopSessionTimer() { if(timerInterval) { clearInterval(timerInterval); timerInterval = null; } document.getElementById('globalTimerBox').style.display = 'none'; document.getElementById('globalTimerBoxStage3').style.display = 'none'; }
     function updateTimerDisplay() { let m = Math.floor(timeLeft / 60); let s = timeLeft % 60; let str = `⏱️ ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`; document.getElementById('globalTimerBox').innerText = str; document.getElementById('globalTimerBoxStage3').innerText = str; }
