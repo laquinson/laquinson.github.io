@@ -94,6 +94,16 @@
         .bg-orange { background: linear-gradient(135deg, #f59e0b, #fcd34d); } 
         .bg-teal   { background: linear-gradient(135deg, #0d9488, #2dd4bf); } 
         .bg-blue   { background: linear-gradient(135deg, #0284c7, #38bdf8); } 
+
+        /* 🎯 核心修正：將開始遊戲大按鍵設計樣式全局同步 */
+        .screenshot-btn { 
+            width: 100%; padding: 14px; background: #10b981; color: white; border: none; 
+            border-radius: 12px; font-size: 17px; cursor: pointer; font-weight: 700; 
+            letter-spacing: 4px; box-sizing: border-box;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4); 
+            transition: all 0.2s ease;
+        }
+        .screenshot-btn:hover { background: #059669; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(16, 185, 129, 0.5); }
         
         .progress-banner { background: rgba(255,255,255,0.2); padding: 15px 20px; border-radius: 12px; font-weight: bold; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; box-sizing: border-box; }
         .progress-banner-header { display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box; color: white; }
@@ -145,12 +155,11 @@
 <body>
 
 <div id="loadingOverlay" class="loading-overlay" style="display: none;"><div class="spinner"></div><p id="loadingText" style="margin-top:15px;font-weight:bold;color:white;">連線中...</p></div>
+<div id="topCenterAccount" class="top-center-account"></div>
 
 <div id="topLeftNav" class="top-left-nav">
     <button class="top-nav-btn" onclick="resetToMainMenu(true)" title="返回主選單">↩️ 返回主選單</button>
 </div>
-
-<div id="topCenterAccount" class="top-center-account"></div>
 
 <div id="topRightNav" class="top-right-nav">
     <button class="top-nav-btn logout-btn-text" onclick="logoutSession()" title="登出">登出</button>
@@ -159,8 +168,6 @@
 <div class="container" id="mainContainer">
     <div id="step1" class="step-panel dashboard-wrapper active">
         <div class="greeting-text">請選擇挑戰模式</div>
-        <button onclick="window.location.href='Substitution.html'" class="btn-purple" style="width:auto; padding: 6px 15px; font-size: 13px; border-radius: 8px; margin-bottom: 25px; float: right;">🔄 切換至多變數代入求值系統</button>
-        <div style="clear: both;"></div>
         
         <div class="dashboard-grid">
             <div class="dash-btn bg-purple id-student-only" onclick="switchSetupConfig('CHALLENGE')">
@@ -228,13 +235,13 @@
         </div>
         <div class="form-group" id="countInputWrapper"><label>🔢 挑戰題數：</label><input type="number" id="totalQuestionsInput" value="5" min="1" max="25"></div>
         <div class="form-group" id="targetScoreInputWrapper" style="display: none;"><label>🏆 目標達標分數：</label><input type="number" id="targetScoreInput" value="5" min="1"></div>
-        <button onclick="initChallengeSession()" class="btn-success">🎲 建立關卡，出發！</button>
+        <button onclick="initChallengeSession()" class="screenshot-btn">🎲 建立關卡，出發！</button>
     </div>
 
     <div id="step1_solver" class="step-panel">
         <h2>🛠️ 智慧解答模式</h2>
         <div class="form-group"><label>✏️ 請輸入多項式算式：</label><input type="text" id="eqInput" placeholder="例如：(3x+2)-(x-5) 或 (x+2)(x-3)"></div>
-        <button onclick="handleManualSolverInput()">開始逐步教學引導</button>
+        <button onclick="handleManualSolverInput()" class="screenshot-btn">開始逐步教學引導</button>
     </div>
 
     <div id="step2" class="step-panel">
@@ -312,7 +319,7 @@
     let polyData = { engine: 'SIMPLIFY', a:0, b:0, c:0, d:0, e:0, f:0, sign:'+', v1:'x', v2:'y', targetVarType:'v1_c', ansStr:'', isSingleTerm:false, singleType:"pure_constant", cells:{}, step2_formula:"" };
     const varPool = [{v1:'x',v2:'y'},{v1:'a',v2:'b'},{v1:'m',v2:'n'},{v1:'p',v2:'q'}];
 
-    // 🛡️ 核心保安閘門機制
+    // 🛡️ 保安閘門機制
     (function checkSecurityGate(){
         currentRole = localStorage.getItem("Active_User_Role");
         userRawClass = localStorage.getItem("Active_User_Class");
@@ -343,7 +350,6 @@
             toggleOverlay(true, "連線雲端資料庫中...");
             fetchStudentCloudData(userRawClass, userRawSeat, () => {
                 toggleOverlay(false);
-                document.getElementById('welcomeText').innerText = `👋 歡迎！ ${userRawClass} 班 ${userRawSeat} 號 同學`;
                 updateReviewMenuUI();
                 renderTypeSelectOptions();
             });
@@ -400,7 +406,7 @@
     function handleManualSolverInput() { let input = document.getElementById('eqInput').value.replace(/\s+/g,''); if(!input) return; currentEngine = (input.includes(')(')||(/^[+-]?\d*[a-zA-Z]?\(/.test(input)&&!input.includes(')+(')&&!input.includes(')-(')))?'MULTIPLY':'SIMPLIFY'; session.totalQuestions=1; session.currentIdx=0; session.questionList=[input]; loadPolynomialToStage(); }
     function parseMathStructure(str) { let letters = str.replace(/[^a-zA-Z]/g, ''); if(letters.length === 0) return false; let unique = [...new Set(letters)]; polyData.engine = currentEngine; if(currentEngine === 'SIMPLIFY') { polyData.v1 = unique[0]; polyData.v2 = unique[1] || 'y'; polyData.targetVarType = unique.length>1?'v1_v2':'v1_c'; let regex = polyData.targetVarType==='v1_v2'?new RegExp(`^\\(([+-]?\\d*)${polyData.v1}([+-]?\\d*)${polyData.v2}\\)([+-])\\(([+-]?\\d*)${polyData.v1}([+-]?\\d*)${polyData.v2}\\)$`):new RegExp(`^\\(([+-]?\\d*)${polyData.v1}([+-]?\\d+)?\\)([+-])\\(([+-]?\\d*)${polyData.v1}([+-]?\\d+)?\\)$`); let m = str.match(regex); if(!m) return false; polyData.a = m[1]===""||m[1]==="+"?1:(m[1]==="-"?-1:parseInt(m[1])); let v2=m[2]?(m[2]==="+"?1:(m[2]==="-"?-1:parseInt(m[2]))):0; polyData.sign=m[3]; polyData.c = m[4]===""||m[4]==="+"?1:(m[4]==="-"?-1:parseInt(m[4])); let v5=m[5]?(m[5]==="+"?1:(m[5]==="-"?-1:parseInt(m[5]))):0; if(polyData.targetVarType==='v1_v2') { polyData.b=v2; polyData.e=0; polyData.d=v5; polyData.f=0; } else { polyData.b=0; polyData.e=v2; polyData.d=0; polyData.f=v5; } let fV1 = polyData.sign==='+'?(polyData.a+polyData.c):(polyData.a-polyData.c), fV2 = polyData.sign==='+'?(polyData.b+polyData.d):(polyData.b-polyData.d), fC = polyData.sign==='+'?(polyData.e+polyData.f):(polyData.e-polyData.f); let res = ""; if(fV1!==0) res+=`${fV1===1?'':(fV1===-1?'-':fV1)}${polyData.v1}`; if(polyData.targetVarType==='v1_v2') { if(fV2!==0) res+=`${fV2>0&&res!==''?'+':''}${fV2===1?'':(fV2===-1?'-':fV2)}${polyData.v2}`; } else { if(fC!==0) res+=`${fC>0&&res!==''?'+':''}${fC}`; } polyData.ansStr = res===""?"0":res; } else { polyData.v1 = unique[0]; polyData.isSingleTerm = false; let s = str.replace(new RegExp(`\\(([+-]?\\d*${polyData.v1})\\)\\((.*)\\)`), '$1($2)'); let m = s.match(new RegExp(`^\\(([+-]?\\d*)${polyData.v1}([+-]?\\d+)\\)\\(([+-]?\\d*)${polyData.v1}([+-]?\\d+)\\)$`)) || s.match(new RegExp(`^([+-]?\\d*)(${polyData.v1})?\\(([+-]?\\d*)${polyData.v1}([+-]?\\d+)\\)$`)); if(!m) return false; if(m.length===5) { polyData.a=m[1]===""||m[1]==="+"?1:(m[1]==="-"?-1:parseInt(m[1])); polyData.b=parseInt(m[2]); polyData.c=m[3]===""||m[3]==="+"?1:(m[3]==="-"?-1:parseInt(m[3])); polyData.d=parseInt(m[4]); } else { let lead = m[1]===""||m[1]==="+"?1:(m[1]==="-"?-1:parseInt(m[1])), hasVar = m[2]!==undefined; polyData.a=hasVar?lead:0; polyData.b=hasVar?0:lead; polyData.c=m[3]===""||m[3]==="+"?1:(m[3]==="-"?-1:parseInt(m[3])); polyData.d=parseInt(m[4]); polyData.isSingleTerm=true; polyData.singleType=hasVar?"pure_variable":"pure_constant"; } let c00=polyData.a*polyData.c, c01=polyData.a*polyData.d, c10=polyData.b*polyData.c, c11=polyData.b*polyData.d; polyData.cells = { "0-0":c00===0?"0":`${c00}${polyData.v1}^2`, "0-1":c01===0?"0":`${fmtSign(c01)}${polyData.v1}`, "1-0":c10===0?"0":`${fmtSign(c10)}${polyData.v1}`, "1-1":c11===0?"0":`${fmtSign(c11)}` }; polyData.step2_formula=`${c01}${fmtSign(c10)}`; let fX2=c00, fX=c01+c10, fC=c11, res=""; if(fX2!==0) res+=`${fX2}${polyData.v1}^2`; if(fX!==0) res+=`${fX>0&&res!==''?'+':''}${fX}${polyData.v1}`; if(fC!==0) res+=`${fC>0&&res!==''?'+':''}${fC}`; polyData.ansStr=res===""?"0":res; } return true; }
     function canonicalizePolyStr(uStr, mVar) { let c = uStr.replace(/\s+/g,'').toLowerCase().replace(/^\+/,''); return c.replace(new RegExp(`([+-])1${mVar}\\^2`,'g'),`$1${mVar}^2`).replace(new RegExp(`^1${mVar}\\^2`),`${mVar}^2`).replace(new RegExp(`([+-])1${mVar}([^\\^]|$)`,'g'),`$1${mVar}$2`).replace(new RegExp(`^1${mVar}([^\\^]|$)`),`${mVar}$1`); }
-    function loadPolynomialToStage() { session.wrongAttemptsThisQuestion = 0; session.hasAddedToWrongBookThisQuestion = false; document.getElementById('initialFeedbackArea').innerHTML = ''; let expr = session.questionList[session.currentIdx]; if(session.currentMode==='REVIEW') currentEngine = (expr.includes(')(')||(/^[+-]?\d*[a-zA-Z]?\(/.test(input)&&!expr.includes(')+(')&&!expr.includes(')-(')))?'MULTIPLY':'SIMPLIFY'; if(!parseMathStructure(expr)) { alert("算式結構有誤！已跳回主選單"); resetToMainMenu(false); return; } if(session.currentMode==='CHALLENGE') { cacheStorage[currentEngine].stats[session.currentTypeNum].total++; cloudSaveData(); } document.getElementById('step2Title').innerText = session.currentMode==='REVIEW'?"👹 魔王題重溫": (currentEngine==='SIMPLIFY'?"請化簡以下多項式":"請展開化簡以下多項式"); document.getElementById('progressText').innerText = session.currentMode==='CHALLENGE' ? (session.endCondition==='COUNT'?`進度: ${session.currentIdx+1}/${session.totalQuestions}`:`積分挑戰中(目標 ${session.targetScore})`) : `自主學習模式第 ${session.currentIdx+1} 題`; document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`; document.getElementById('ansInput').value = ''; document.getElementById('displayEq').innerText = expr; document.getElementById('submitAnsBtn').className = ""; document.getElementById('submitAnsBtn').innerText = "提交結果驗證"; showPanel('step2'); }
+    function loadPolynomialToStage() { session.wrongAttemptsThisQuestion = 0; session.hasAddedToWrongBookThisQuestion = false; document.getElementById('initialFeedbackArea').innerHTML = ''; let expr = session.questionList[session.currentIdx]; if(session.currentMode==='REVIEW') currentEngine = (expr.includes(')(')||(/^[+-]?\d*[a-zA-Z]?\(/.test(expr)&&!expr.includes(')+(')&&!expr.includes(')-(')))?'MULTIPLY':'SIMPLIFY'; if(!parseMathStructure(expr)) { alert("算式結構有誤！已跳回主選單"); resetToMainMenu(false); return; } if(session.currentMode==='CHALLENGE') { cacheStorage[currentEngine].stats[session.currentTypeNum].total++; cloudSaveData(); } document.getElementById('step2Title').innerText = session.currentMode==='REVIEW'?"👹 魔王題重溫": (currentEngine==='SIMPLIFY'?"請化簡以下多項式":"請展開化簡以下多項式"); document.getElementById('progressText').innerText = session.currentMode==='CHALLENGE' ? (session.endCondition==='COUNT'?`進度: ${session.currentIdx+1}/${session.totalQuestions}`:`積分挑戰中(目標 ${session.targetScore})`) : `自主學習模式第 ${session.currentIdx+1} 題`; document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`; document.getElementById('ansInput').value = ''; document.getElementById('displayEq').innerText = expr; document.getElementById('submitAnsBtn').className = ""; document.getElementById('submitAnsBtn').innerText = "提交結果驗證"; showPanel('step2'); }
     function checkFirstAnswer() { if(canonicalizePolyStr(document.getElementById('ansInput').value, polyData.v1) === canonicalizePolyStr(polyData.ansStr, polyData.v1)) { if(session.currentMode==='CHALLENGE'&&session.wrongAttemptsThisQuestion===0) cacheStorage[currentEngine].stats[session.currentTypeNum].firstMatch++; showPanel('step3'); executeDirectSuccess(); } else { session.wrongAttemptsThisQuestion++; if(session.currentMode==='CHALLENGE'&&!session.hasAddedToWrongBookThisQuestion) { if(!cacheStorage[currentEngine].wrongBook.includes(session.questionList[session.currentIdx])) cacheStorage[currentEngine].wrongBook.push(session.questionList[session.currentIdx]); cacheStorage[currentEngine].stats[session.currentTypeNum].failed++; session.hasAddedToWrongBookThisQuestion=true; } if(session.currentMode==='CHALLENGE' && session.wrongAttemptsThisQuestion===1) { session.score--; document.getElementById('scoreText').innerText = `目前積分: ${session.score}`; let area = document.getElementById('initialFeedbackArea'); area.className="feedback warning"; area.innerHTML="❌ 答案有誤差！<b>積分-1</b>。提供一次<b>原地補答修正的挽回機會</b>！"; document.getElementById('submitAnsBtn').innerText = "提交修正補答答案"; document.getElementById('submitAnsBtn').className="btn-warning"; } else { if(session.currentMode==='CHALLENGE') session.score--; showPanel('step3'); executeFinalFailure(); } cloudSaveData(); } }
     function executeDirectSuccess() { document.getElementById('interactiveStageBox').innerHTML = `最簡結果：<span style="color:#fffb00;">${polyData.ansStr}</span> ✨`; document.getElementById('teachingZone').style.display="none"; document.getElementById('solveBtn').style.display="none"; document.getElementById('nextBtn').style.display="block"; let f = document.getElementById('feedbackArea'); f.className="feedback success"; if(session.currentMode==='CHALLENGE') { session.score++; if(session.wrongAttemptsThisQuestion===1) { cacheStorage[currentEngine].stats[session.currentTypeNum].failed--; cacheStorage[currentEngine].stats[session.currentTypeNum].retryMatch++; } f.innerHTML="🎉 恭喜答對！表現優異！"; } else if(session.currentMode==='REVIEW') { let expr = session.questionList[session.currentIdx]; cacheStorage.SIMPLIFY.wrongBook=cacheStorage.SIMPLIFY.wrongBook.filter(i=>i!==expr); cacheStorage.MULTIPLY.wrongBook=cacheStorage.MULTIPLY.wrongBook.filter(i=>i!==expr); f.innerHTML="🎉 戰勝魔王！錯題已順利完全消滅！"; } else f.innerHTML="🎉 計算完全正確！概念非常精準。"; cloudSaveData(); setupNextButtonLabel(); }
     function executeFinalFailure() { document.getElementById('interactiveStageBox').innerText=session.questionList[session.currentIdx]; document.getElementById('nextBtn').style.display="none"; document.getElementById('solveBtn').style.display="block"; document.getElementById('teachingZone').style.display="none"; let f=document.getElementById('feedbackArea'); f.className="feedback error"; f.innerHTML=session.currentMode==='CHALLENGE'?"❌ 補答仍不吻合。<span style='color:red;'>[挑戰失敗] 積分扣1分！</span>請點擊下方按鈕啟動代數思維破譯":"❌ 答案有誤。請點下方按鈕啟動逐步教學。"; }
