@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>中一多變數代數式求值系統 - 系統入口</title>
+    <style>
+        :root { 
+            --primary: #3b82f6; --teacher-color: #8b5cf6; 
+            --card-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.15), 0 10px 10px -5px rgb(0 0 0 / 0.1); 
+            --glass-bg: rgba(255, 255, 255, 0.12);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.25);
+            --glass-blur: blur(14px);
+        }
+        
+        body { 
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft JhengHei", sans-serif; 
+            background-image: url("https://i.imgur.com/f118Qxn.jpeg"); 
+            background-size: 100% auto; 
+            background-repeat: repeat-y; 
+            background-attachment: scroll; 
+            background-position: top center; 
+            background-color: #0b1424; 
+            margin: 0; padding: 20px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh; box-sizing: border-box; 
+        }
+
+        .login-layout-container {
+            width: 100%; max-width: 640px; 
+            display: flex; flex-direction: column; align-items: center;
+            padding: 0 20px; box-sizing: border-box;
+        }
+
+        .brand-logo-title {
+            font-size: 42px; font-weight: 800; 
+            color: #ffffff; 
+            letter-spacing: 4px; margin-bottom: 35px; text-align: center;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7); 
+        }
+
+        .screenshot-login-card {
+            width: 100%; 
+            background: var(--glass-bg); 
+            backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); 
+            border: var(--glass-border); 
+            border-radius: 8px; padding: 45px 50px; box-shadow: var(--card-shadow);
+            box-sizing: border-box;
+        }
+        
+        h2 { text-align: center; color: #ffffff; margin-top: 0; font-weight: 800; text-shadow: 1px 1px 4px rgba(0,0,0,0.6); }
+        .form-group { margin-bottom: 24px; width: 100%; box-sizing: border-box; }
+        .form-group:last-of-type { margin-bottom: 32px; }
+        
+        label { 
+            display: block; margin-bottom: 12px; font-size: 16px; font-weight: 700; color: #ffffff; 
+            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.9); 
+        }
+        
+        input[type="password"], select { 
+            width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; 
+            font-size: 16px; box-sizing: border-box; background: rgba(255, 255, 255, 0.9); color: #0f172a; transition: all 0.15s ease; 
+        }
+        
+        .screenshot-btn { 
+            width: 100%; padding: 14px; background: #0088ff; color: white; border: none; 
+            border-radius: 4px; font-size: 17px; cursor: pointer; font-weight: 700; 
+            letter-spacing: 8px; box-sizing: border-box;
+            box-shadow: 0 4px 14px rgba(0, 136, 255, 0.5); 
+            transition: all 0.2s ease;
+        }
+        .screenshot-btn:hover { background: #0077ee; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0, 136, 255, 0.6); }
+        
+        .toggle-login-mode { text-align: center; color: #e2e8f0; font-weight: bold; cursor: pointer; font-size: 14px; margin-top: 25px; transition: color 0.15s; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
+        .toggle-login-mode:hover { color: #a78bfa; }
+
+        .screenshot-footer {
+            margin-top: 50px; font-size: 14px; font-weight: 600; 
+            color: #ffffff; 
+            text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.9), 0 0 3px rgba(0, 0, 0, 1); 
+            text-align: center; letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-layout-container">
+    <div class="brand-logo-title"><span>數學練習系統</span></div>
+    
+    <div id="studentLoginBox" class="screenshot-login-card">
+        <div class="form-group"><label>班別</label><select id="loginClass"></select></div>
+        <div class="form-group"><label>學號</label><select id="loginSeat"></select></div>
+        <button onclick="loginStudent()" class="screenshot-btn">登入</button>
+        <button onclick="loginGuest()" style="margin-top:15px; background:rgba(255,255,255,0.75); border:1px solid #94a3b8; color:#0f172a; font-size:14px; padding:10px; border-radius:4px; font-weight:700; cursor:pointer; width:100%; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">🎭 以訪客身份免登入試玩</button>
+        <div class="toggle-login-mode" onclick="toggleLoginMode('TEACHER')">⚙️ 教師管理登入</div>
+    </div>
+
+    <div id="teacherLoginBox" class="screenshot-login-card" style="display: none;">
+        <h2>教師數據管理後台</h2>
+        <div class="form-group"><label>管理員帳號</label><select id="teacherSelect"></select></div>
+        <div class="form-group"><label>安全認證密碼</label><input type="password" id="teacherPwd" placeholder="••••••••"></div>
+        <button onclick="loginTeacher()" class="screenshot-btn" style="background:var(--teacher-color); box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);">驗證登入</button>
+        <div class="toggle-login-mode" onclick="toggleLoginMode('STUDENT')">🎒 返回學生模式</div>
+    </div>
+
+    <div class="screenshot-footer">Copyright @ 2026 La Quinson</div>
+</div>
+
+<script>
+    (function initFormOptions(){
+        let cHtml = "", sHtml = "", tHtml = "";
+        for(let g=1;g<=6;g++) ['A','B','C','D'].forEach(l => cHtml+=`<option value="${g}${l}">${g}${l} 班</option>`);
+        for(let i=1;i<=35;i++) sHtml+=`<option value="${i}">${i} 號</option>`;
+        for(let i=1;i<=5;i++) tHtml+=`<option value="Teacher_0${i}">💼 0${i}號 管理員</option>`;
+        document.getElementById('loginClass').innerHTML = cHtml; 
+        document.getElementById('loginSeat').innerHTML = sHtml; 
+        document.getElementById('teacherSelect').innerHTML = tHtml;
+    })();
+
+    function toggleLoginMode(m) { 
+        document.getElementById('studentLoginBox').style.display=m==='TEACHER'?'none':'block'; 
+        document.getElementById('teacherLoginBox').style.display=m==='TEACHER'?'block':'none'; 
+    }
+
+    function loginStudent() {
+        let uClass = document.getElementById('loginClass').value;
+        let uSeat = document.getElementById('loginSeat').value;
+        
+        // 🎯 關鍵：把登入狀態加密暫存進瀏覽器
+        localStorage.setItem("Active_User_Role", "STUDENT");
+        localStorage.setItem("Active_User_Class", uClass);
+        localStorage.setItem("Active_User_Seat", uSeat);
+        
+        // 🚀 跳轉到同一個資料夾下的遊戲頁面
+        window.location.href = "dashboard.html";
+    }
+
+    function loginGuest() {
+        localStorage.setItem("Active_User_Role", "GUEST");
+        localStorage.setItem("Active_User_Class", "GUEST");
+        localStorage.setItem("Active_User_Seat", "VISITOR");
+        window.location.href = "dashboard.html";
+    }
+
+    function loginTeacher() {
+        let id = document.getElementById('teacherSelect').value, p = document.getElementById('teacherPwd').value;
+        if(p === "1007") {
+            localStorage.setItem("Active_User_Role", "TEACHER");
+            localStorage.setItem("Active_User_TeacherID", id);
+            window.location.href = "dashboard.html";
+        } else { alert("❌ 密碼錯誤！"); }
+    }
+</script>
+</body>
+</html>
