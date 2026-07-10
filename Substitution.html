@@ -84,8 +84,8 @@
 
     <div id="step1_solver" class="step-panel">
         <h2>🛠️ 數學有問必答 (自訂代入)</h2>
-        <div class="form-group"><label>✏️ 請輸入代數式或公式：</label><input type="text" id="eqInput" placeholder="例如: A = bh / 2"></div>
-        <div class="form-group"><label>🔢 指定各變數的值：</label><input type="text" id="xValueInput" placeholder="例如: b=8, h=11"></div>
+        <div class="form-group"><label>✏️ 請輸入代數式或公式：</label><input type="text" id="eqInput" placeholder="例如: F = 1.8C + 32"></div>
+        <div class="form-group"><label>🔢 指定各變數的值：</label><input type="text" id="xValueInput" placeholder="例如: C=20"></div>
         <button onclick="handleManualSolverInput()" class="screenshot-btn">開始多變數代入教學引導</button>
     </div>
 
@@ -146,13 +146,17 @@
     let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, targetScore: 5, timeLimitSetting: 300, score: 0, currentIdx: 0, questionList: [], selectedType: 'MIX' };
     let eqData = { targetLetter: "A", formulaName: "bh/2", variablesText: "b=8, h=11", ansStr: "44", substituted: "(8)(11)/2", formulaTex: "", substitutedTex: "" };
     let timerInterval = null; let timeLeft = 0;
+    let wrongQuestionBank = [];
 
-    // 完整的跨學科多變數公式數據庫 (附帶教科書 LaTeX 樣式描述)
+    // GAS 連線設定
+    const GOOGLE_SHEET_API = "https://script.google.com/macros/s/AKfycbwIK7Mqd4WEDpbuZR-PDt4pq-8EkZ74POUDDe9WgxZA_5QqPvIBdGdD2jVFjsVOZRIj/exec";
+
+    // 數據庫更新：採用真實生活科學 1.8C + 32 小數公式，並優化負數運算
     const FORMULA_BANK = {
         1: [
             { name: "幾何：正方形面積", target: "A", expr: "s^2", tex: "s^2", vars: ["s"], range: { s: [3, 12] } },
-            { name: "幾何：圓周長", target: "C", expr: "6r", tex: "6r", vars: ["r"], range: { r: [2, 10] } },
-            { name: "生活：華氏/攝氏溫度轉換", target: "F", expr: "2C + 32", tex: "2C + 32", vars: ["C"], range: { C: [0, 35] } }
+            { name: "幾何：圓周長 (約數)", target: "C", expr: "6r", tex: "6r", vars: ["r"], range: { r: [2, 10] } },
+            { name: "科學：華氏/攝氏溫度轉換", target: "F", expr: "1.8 * C + 32", tex: "1.8C + 32", vars: ["C"], range: { C: [-10, 35] } }
         ],
         2: [
             { name: "幾何：長方形面積", target: "A", expr: "lw", tex: "lw", vars: ["l", "w"], range: { l: [4, 12], w: [3, 8] } },
@@ -162,6 +166,41 @@
             { name: "幾何：梯形面積", target: "A", expr: "(a + b)h / 2", tex: "\\frac{(a + b)h}{2}", vars: ["a", "b", "h"], range: { a: [2, 6], b: [7, 12], h: [4, 10] } }
         ]
     };
+
+    // 雲端同步引擎
+    async function syncWithCloud(action, payload = null) {
+        const userKey = localStorage.getItem("Active_User_Role") || "GUEST";
+        if (userKey === "GUEST") return null;
+        try {
+            if (action === "load") {
+                const url = `${GOOGLE_SHEET_API}?jsonData=${encodeURIComponent(JSON.stringify({ action: "load", userKey: userKey }))}`;
+                const response = await fetch(url);
+                const resData = await response.json();
+                if (resData.success) return resData;
+            } else if (action === "save" && payload) {
+                const cloudCurrent = await syncWithCloud("load");
+                let mergedStats = cloudCurrent && cloudCurrent.stats ? cloudCurrent.stats : {};
+                let mergedWB = cloudCurrent && cloudCurrent.wrongBook ? cloudCurrent.wrongBook : {};
+                
+                mergedStats["sub"] = payload.stats;
+                mergedWB["sub"] = payload.wrongBook;
+
+                const postBody = { action: "save", userKey: userKey, stats: mergedStats, wrongBook: mergedWB };
+                await fetch(GOOGLE_SHEET_API, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify(postBody)
+                });
+            }
+        } catch (e) { console.error("雲端同步異常:", e); }
+        return null;
+    }
+
+    function updateReviewCardUI() {
+        wrongQuestionBank = JSON.parse(localStorage.getItem("Sub_Wrong_Bank")) || [];
+        const reviewTitle = document.getElementById('reviewTitle');
+        if (reviewTitle) reviewTitle.innerText = `錯題庫 (還剩 ${wrongQuestionBank.length} 題)`;
+    }
 
     function showPanel(id) {
         document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
@@ -181,8 +220,20 @@
         } else if (mode === 'STATS') {
             document.getElementById('statsFinalScore').innerText = `${session.score} 分`;
             showPanel('step_stats_panel');
+            updateReviewCardUI();
         } else if (mode === 'REVIEW') {
-            alert("目前錯題本無紀錄！");
+            wrongQuestionBank = JSON.parse(localStorage.getItem("Sub_Wrong_Bank")) || [];
+            if (wrongQuestionBank.length === 0) {
+                alert("🎉 太棒了！目前沒有任何錯題記錄！");
+                return;
+            }
+            stopSessionTimer();
+            session.score = 0; session.currentIdx = 0;
+            session.questionList = [...wrongQuestionBank];
+            session.endCondition = 'COUNT';
+            session.totalQuestions = session.questionList.length;
+            document.getElementById('timeModeResultSummary').style.display = 'none';
+            loadEquationToStage();
         }
     }
 
@@ -201,7 +252,6 @@
         document.getElementById('timeLimitInputWrapper').style.display = c === 'TIME_LIMIT' ? 'block' : 'none';
     }
 
-    // 隨機題目演算法引擎 (回傳原始計算式與精準 LaTeX 渲染樣式字串)
     function generateQuestion(typeCode) {
         let poolKey = typeCode === 'MIX' ? ['1', '2', '3'][Math.floor(Math.random() * 3)] : typeCode;
         let pool = FORMULA_BANK[poolKey] || FORMULA_BANK[1];
@@ -216,11 +266,9 @@
             varAssigns.push(`${v} = ${val}`);
         });
         
-        // 生成給學生看教科書精美代入格式 (如：(9)^2 或是 \frac{(8)(11)}{2})
         let subTex = formula.tex;
         formula.vars.forEach(v => { subTex = subTex.replace(new RegExp(v, 'g'), `(${rMap[v]})`); });
         
-        // 核心運算防線
         let rawCalc = formula.expr;
         rawCalc = rawCalc.replace(/\^2/g, '**2');
         rawCalc = rawCalc.replace(/(\d+)([a-zA-Z])/g, '$1*$2');
@@ -242,7 +290,6 @@
         eqData.formulaTex = parts[6] || parts[2];
     }
 
-    // 限時賽引擎
     function startSessionTimer(seconds) {
         stopSessionTimer(); timeLeft = seconds;
         document.getElementById('globalTimerBox').style.display = 'inline-block';
@@ -282,17 +329,27 @@
 
     function handleManualSolverInput() {
         stopSessionTimer();
-        let eq = document.getElementById('eqInput').value || "A = bh / 2";
-        let vars = document.getElementById('xValueInput').value || "b=8, h=11";
+        let eq = document.getElementById('eqInput').value.trim() || "F = 1.8C + 32";
+        let vars = document.getElementById('xValueInput').value.trim() || "C=20";
         
         let rightSide = eq.includes('=') ? eq.split('=')[1].trim() : eq;
-        let leftSide = eq.includes('=') ? eq.split('=')[0].trim() : "Y";
+        let leftSide = eq.includes('=') ? eq.split('=')[0].trim() : "F";
         
-        // 自訂模式的簡單 TeX 轉換器
-        let texVer = rightSide.replace(/h\s*\/\s*2/g, "\\frac{bh}{2}").replace(/\^2/g, "^2");
-        let subTexVer = texVer.replace(/b/g, "(8)").replace(/h/g, "(11)");
+        let texVer = rightSide.replace(/(\d+(\.\d+)?)([a-zA-Z])/g, '$1$3');
+        let rawCalc = rightSide.replace(/(\d+(\.\d+)?)([a-zA-Z])/g, '$1*$3');
+        
+        let subTexVer = texVer;
+        let varPairs = vars.split(',');
+        varPairs.forEach(p => {
+            let [v, val] = p.split('=').map(s => s.trim());
+            if(v && val) {
+                subTexVer = subTexVer.replace(new RegExp(v, 'g'), `(${val})`);
+                rawCalc = rawCalc.replace(new RegExp(v, 'g'), val);
+            }
+        });
 
-        session.questionList = [`自訂驗證|${leftSide}|${rightSide}|${vars}|${subTexVer}|44|${texVer}`];
+        let finalAns = Math.round(Function(`return (${rawCalc})`)() * 10) / 10;
+        session.questionList = [`自訂驗證|${leftSide}|${rightSide}|${vars}|${subTexVer}|${finalAns}|${texVer}`];
         session.currentIdx = 0;
         loadEquationToStage();
     }
@@ -301,9 +358,13 @@
         document.getElementById('ansInput').value = '';
         parseEquationStructure(session.questionList[session.currentIdx]);
         document.getElementById('scoreText').innerText = `積分：${session.score}`;
-        document.getElementById('progressText').innerText = session.endCondition === 'TIME_LIMIT' ? `⏳ 限時狂熱衝分中！` : `題驗進度：第 ${session.currentIdx + 1} 題`;
         
-        // 渲染主畫面公式為教科書 LaTeX 樣式
+        if (session.currentMode === 'REVIEW') {
+            document.getElementById('progressText').innerText = `🔥 錯題重溫中：第 ${session.currentIdx + 1} / ${session.totalQuestions} 題`;
+        } else {
+            document.getElementById('progressText').innerText = session.endCondition === 'TIME_LIMIT' ? `⏳ 限時狂熱衝分中！` : `題驗進度：第 ${session.currentIdx + 1} 題`;
+        }
+        
         document.getElementById('displayEq').innerHTML = `
             <div>已知：<span id="texFormula" class="math-tex"></span></div>
             <div style='margin-top:25px; color:#cbd5e1; font-size: 21px;'>
@@ -311,34 +372,47 @@
             </div>
         `;
         
-        // 調用 KaTeX 引擎渲染
         katex.render(`${eqData.targetLetter} = ${eqData.formulaTex}`, document.getElementById('texFormula'), { throwOnError: false });
         showPanel('step2');
     }
 
     function checkFirstAnswer() {
         let ans = document.getElementById('ansInput').value.trim();
+        let currentQuestionStr = session.questionList[session.currentIdx];
+
         if(ans === eqData.ansStr) {
             session.score++;
-            showPanel('step3');
-            executeDirectSuccess();
+            if (session.currentMode === 'REVIEW') {
+                wrongQuestionBank = wrongQuestionBank.filter(q => q !== currentQuestionStr);
+                localStorage.setItem("Sub_Wrong_Bank", JSON.stringify(wrongQuestionBank));
+            }
+            alert("🎯 計算完全正確！");
         } else {
-            alert("❌ 計算結果不對喔！別氣餒，系統直接啟動動態拆解引導。");
-            showPanel('step3');
-            executeDirectSuccess(); 
+            alert("❌ 計算結果不對喔！別氣餒，系統已自動為你記錄此題並開啟拆解引導。");
+            if (!wrongQuestionBank.includes(currentQuestionStr)) {
+                wrongQuestionBank.push(currentQuestionStr);
+                localStorage.setItem("Sub_Wrong_Bank", JSON.stringify(wrongQuestionBank));
+            }
         }
+        
+        // 發送雲端即時上傳
+        syncWithCloud("save", {
+            stats: { lastScore: session.score, lastTotal: session.currentIdx + 1, timestamp: new Date().toLocaleString() },
+            wrongBook: wrongQuestionBank
+        });
+
+        showPanel('step3');
+        executeDirectSuccess();
     }
 
     function executeDirectSuccess() {
         document.getElementById('interactiveStageBox').innerHTML = `公式求值最簡集成結果：<span style='color:#fffb00;'>${eqData.ansStr}</span>`;
-        
         document.getElementById('mathStepBox').innerHTML = `
             <div style="margin-bottom:12px;"><strong>原式：</strong> <span id="stepTex1"></span></div>
             <div style="color:#cbd5e1; margin-bottom:12px;"><strong>[代入步驟]：</strong> <span id="stepTex2"></span></div>
             <div style="color:#00ff00;"><strong>[算值集成]：</strong> <span id="stepTex3"></span> 🎯</div>
         `;
         
-        // 逐步解析面板全面同步成教科書印刷體
         katex.render(`${eqData.targetLetter} = ${eqData.formulaTex}`, document.getElementById('stepTex1'), { throwOnError: false });
         katex.render(`= ${eqData.substitutedTex}`, document.getElementById('stepTex2'), { throwOnError: false });
         katex.render(`= ${eqData.ansStr}`, document.getElementById('stepTex3'), { throwOnError: false });
@@ -361,9 +435,15 @@
     function resetToMainMenu(nc) { stopSessionTimer(); window.location.href = "home.html"; }
     function logoutSession() { stopSessionTimer(); localStorage.clear(); window.location.href = "index.html"; }
 
-    (function init() {
+    (async function init() {
         currentRole = localStorage.getItem("Active_User_Role") || "GUEST";
         document.getElementById('topCenterAccount').innerText = `挑戰者: ${currentRole}`;
+        
+        const cloudData = await syncWithCloud("load");
+        if (cloudData && cloudData.wrongBook && cloudData.wrongBook.sub) {
+            localStorage.setItem("Sub_Wrong_Bank", JSON.stringify(cloudData.wrongBook.sub));
+        }
+        updateReviewCardUI();
     })();
 </script>
 </body>
