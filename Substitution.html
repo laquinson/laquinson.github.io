@@ -356,7 +356,7 @@
     </div>
 
     <div id="step1_solver" class="step-panel">
-        <h2>🛠️ 數學有問必答 (自訂代入)</h2>
+        <h2>🛠️ 多項式有問必答 (自訂代入)</h2>
         <div class="form-group"><label>✏️ 請輸入代數式或公式（例如：F = 1.8C + 32 或 A = bh / 2）：</label><input type="text" id="eqInput" placeholder="example: A = bh / 2"></div>
         <div class="form-group"><label>🔢 指定各變數的值（多個變數請用逗號隔開）：</label><input type="text" id="xValueInput" placeholder="例如: b=8, h=11"></div>
         <button onclick="handleManualSolverInput()">開始多變數代入教學引導</button>
@@ -493,7 +493,8 @@
             { name: "幾何：梯形面積", target: "A", expr: "((a + b) * h) / 2", vars: ["a", "b", "h"], range: { a: [2, 8], b: [9, 16], h: [4, 12] } },
             { name: "幾何：長方體表面積簡化項", target: "S", expr: "l * w + l * h + w * h", vars: ["l", "w", "h"], range: { l: [2, 6], w: [2, 5], h: [3, 8] } },
             { name: "物理：等加速位移前段", target: "s", expr: "u * t + a", vars: ["u", "t", "a"], range: { u: [2, 10], t: [2, 5], a: [-4, 8] } },
-            { name: "理財：簡單利息結餘", target: "A", expr: "P + P * (r / 100)", vars: ["P", "r"], range: { P: [20, 100], r: [1, 4] } }
+            // 🎯 核心修正：優化百分比利息公式代數結構，解決 P 替換常數 100 造成的 Eval 致命錯誤
+            { name: "理財：簡單利息結餘", target: "A", expr: "P * (1 + r / 100)", vars: ["P", "r"], range: { P: [20, 100], r: [1, 8] } }
         ],
         4: [
             { name: "幾何：兩點距離平方", target: "D", expr: "(y - b)^2 + (x - a)^2", vars: ["y", "b", "x", "a"], range: { y: [4, 10], b: [-2, 3], x: [5, 11], a: [1, 4] } },
@@ -516,15 +517,13 @@
         document.getElementById('teacherSelect').innerHTML = tHtml;
         cacheStorage.EQ.stats = getInitialStatsObject();
         renderTypeSelectOptions();
-        checkActiveSessionOnLoad(); // 初始化自動執行 Session 檢查
+        checkActiveSessionOnLoad();
     })();
 
-    // 🎯 核心優化點一：跨網頁免重複登入檢查
     function checkActiveSessionOnLoad() {
         let savedClass = localStorage.getItem("Active_User_Class");
         let savedSeat = localStorage.getItem("Active_User_Seat");
         let savedRole = localStorage.getItem("Active_User_Role");
-
         if (savedRole === "GUEST") {
             loginGuest();
         } else if (savedClass && savedSeat) {
@@ -533,7 +532,7 @@
             let seatStr = String(userRawSeat).padStart(2, '0');
             document.getElementById('topCenterAccount').innerText = `挑戰者: ${userRawClass}班${seatStr}號`;
             setupLayoutForStudent();
-            syncWithCloud("load"); // 背景載入雲端紀錄
+            syncWithCloud("load");
         }
     }
 
@@ -548,6 +547,10 @@
 
     function convertToRichMathHTML(str) {
         let clean = str.replace(/\^2/g, '²').replace(/\*\*/g, '²').replace(/\*/g, '&times;');
+        // 渲染時如果是利息公式，漂亮地轉換成教科書利息顯示形式
+        if (clean.includes('1 + r / 100')) {
+            clean = clean.replace('P &times; (1 + r / 100)', 'P + P &times; \\frac{r}{100}');
+        }
         if (clean.includes('/')) {
             let parts = clean.split('/');
             let num = parts[0].trim(); let den = parts[1].trim(); let leftPart = "";
@@ -571,10 +574,8 @@
     function showPanel(id) { 
         document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active')); 
         document.getElementById(id).classList.add('active'); 
-        
         let navLeft = document.getElementById('topLeftNav'); let navRight = document.getElementById('topRightNav');
         let accCenter = document.getElementById('topCenterAccount'); let box = document.getElementById('mainContainer');
-        
         if (id === 'step0_login') {
             navLeft.style.display = 'none'; navRight.style.display = 'none'; accCenter.style.display = 'none'; box.style.display = 'none';
         } else {
@@ -588,7 +589,6 @@
         localStorage.setItem("Active_User_Class", userRawClass);
         localStorage.setItem("Active_User_Seat", userRawSeat);
         localStorage.setItem("Active_User_Role", `${userRawClass}_${userRawSeat}`);
-        
         toggleOverlay(true, "連線雲端資料庫中...");
         setTimeout(() => {
             initLocalFallback(userRawClass, userRawSeat);
@@ -801,17 +801,25 @@
             
             eqData.formulaTitle = displayTitle; eqData.formulaName = formulaPart; eqData.targetLetter = targetLetter; eqData.variablesText = dataPart;
 
-            let varRegex = /([a-zA-Z])\s*=\s*([-]?\d+(\.\d+)?)/g; let match; let varMap = {}; let varList = [];
-            while ((match = varRegex.exec(dataPart)) !== null) { varMap[match[1]] = match[2]; varList.push(match[1]); }
-            varList.sort((a,b) => b.length - a.length);
+            // 🎯 核心修復：使用完全精準的邊界錨定比對正則，防止常數中的數字（如 100）被誤判為變數
+            let varMap = {};
+            dataPart.split(',').forEach(segment => {
+                let kv = segment.split('=');
+                if (kv.length === 2) varMap[kv[0].trim()] = kv[1].trim();
+            });
 
+            let varList = Object.keys(varMap).sort((a,b) => b.length - a.length);
             let substitutedExpr = formulaPart;
             for (let v of varList) {
-                let val = varMap[v]; let regex = new RegExp(v, 'g'); substitutedExpr = substitutedExpr.replace(regex, `(${val})`);
+                let val = varMap[v]; 
+                // 利用正則表達式的單詞邊界（\b）鎖定變數名，100 當中的 0 就不會再被錯當成變數替換
+                let regex = new RegExp('\\b' + v + '\\b', 'g'); 
+                substitutedExpr = substitutedExpr.replace(regex, `(${val})`);
             }
             eqData.targetRightCamp = substitutedExpr;
 
-            let calcExpr = convertToStandardMath(substitutedExpr); let finalVal = eval(calcExpr);
+            let calcExpr = convertToStandardMath(substitutedExpr); 
+            let finalVal = eval(calcExpr);
             if (finalVal % 1 !== 0) finalVal = Math.round(finalVal * 10) / 10;
             eqData.ansStr = "" + finalVal;
 
@@ -880,13 +888,12 @@
         }
     }
 
-    // 🎯 核心優化點二：答對時，完全隱藏下方的動態操作驗證與分步黑板
     function executeDirectSuccess() {
         document.getElementById('interactiveStageBox').innerHTML = `
             <div style="font-size: 40px; margin-bottom: 10px;">✅</div>
             ${eqData.targetLetter} = <span style='color:#00ffc4;'>${eqData.ansStr}</span> (計算完全正確！)
         `;
-        document.getElementById('teachingZone').style.display = "none"; // 隱藏動態操作區與步驟黑板
+        document.getElementById('teachingZone').style.display = "none"; 
         document.getElementById('solveBtn').style.display = "none"; 
         document.getElementById('nextBtn').style.display = "block";
         
@@ -903,18 +910,20 @@
         cloudSaveData(); setupNextButtonLabel();
     }
 
+    // 🎯 核心修復：拔除直接解鎖機制，逼迫答錯者必須進入逐步拆解黑板
     function executeFinalFailure() {
         document.getElementById('interactiveStageBox').innerHTML = `已知 ${convertToRichMathHTML(eqData.targetLetter + " = " + eqData.formulaName)} <br> ⚖️ 當 ${eqData.variablesText}`;
-        document.getElementById('nextBtn').style.display = "none"; document.getElementById('solveBtn').style.display = "block"; document.getElementById('teachingZone').style.display = "none";
+        document.getElementById('nextBtn').style.display = "none"; 
+        document.getElementById('solveBtn').style.display = "block"; // 只露出破譯教學鈕
+        document.getElementById('teachingZone').style.display = "none"; 
         
         let f=document.getElementById('feedbackArea'); f.className = "feedback error";
-        let debugBtn = `<br><br><button class='btn-warning' style='width:auto;padding:8px 15px;' onclick='alert("💡 本題精確答案為 " + eqData.ansStr); executeDirectSuccess();'>🔓 直接顯示正確解答</button>`;
-        f.innerHTML = session.currentMode==='CHALLENGE' ? "❌ 補答依然有些微誤差。<span style='color:red;'>[挑戰失敗] 積分 -1 分！</span>請開啟下方破譯教學。" + debugBtn : "❌ 計算有誤。請點擊下方開啟逐步拆解教學。" + debugBtn;
+        f.innerHTML = session.currentMode==='CHALLENGE' ? "❌ 補答依然有些微誤差。<span style='color:red;'>[挑戰失敗] 積分 -1 分！</span>請點擊下方按鈕啟動隱形括號逐步解題。" : "❌ 計算有誤。請點擊下方開啟逐步拆解教學。";
     }
 
     function startInteractiveSolving() {
         document.getElementById('solveBtn').style.display = "none";
-        document.getElementById('teachingZone').style.display = "flex"; // 只有答錯點擊時，才顯示逐步驗證與步驟黑板
+        document.getElementById('teachingZone').style.display = "flex"; 
         document.getElementById('stageCampArea').style.display = "block";
         document.getElementById('stageCombineArea').style.display = "none"; document.getElementById('stageFinalArea').style.display = "none";
         document.getElementById('rightCampInput').value = "";
@@ -922,10 +931,11 @@
         renderMathSteps(1); checkTeachingWrongCounter('teachingWrongArea1');
     }
 
+    // 🎯 核心修復：只有在分步拆解過程中輸入錯誤滿 3 次，才會在該步驟下開啟防卡死跳過連結
     function checkTeachingWrongCounter(targetAreaId) {
         let area = document.getElementById(targetAreaId);
         if (session.wrongAttemptsInTeaching >= 3) {
-            area.innerHTML = `<div style="margin-top:10px; padding:10px; background:#fef2f2; border-left:4px solid var(--danger); border-radius:6px; font-weight:bold; color:var(--danger);">💡 防卡死機制密鑰：<button class='btn-warning' style='width:auto;padding:4px 8px;font-size:12px;margin-left:10px;' onclick='executeDirectSuccess();'>🔓 直接跳過並顯示正確答案</button></div>`;
+            area.innerHTML = `<div style="margin-top:10px; padding:10px; background:#fef2f2; border-left:4px solid var(--danger); border-radius:6px; font-weight:bold; color:var(--danger);">💡 偵測到連續卡關，防卡死解鎖鑰匙：<button class='btn-warning' style='width:auto;padding:4px 8px;font-size:12px;margin-left:10px;' onclick='executeDirectSuccess();'>🔓 直接跳過本題並顯示正確答案</button></div>`;
         } else { area.innerHTML = ""; }
     }
 
@@ -934,6 +944,7 @@
         if (valRaw === eqData.ansStr) { alert("🚀 太優秀了！秒殺本題！"); executeDirectSuccess(); return; }
         let uR = convertToStandardMath(valRaw); let tR = convertToStandardMath(eqData.targetRightCamp);
         if(uR === tR || eval(uR) === eval(tR)) {
+            session.wrongAttemptsInTeaching = 0; // 對了就重置計數
             alert("🎯 變數括號對號入座完全正確！"); document.getElementById('interactiveStageBox').innerHTML = `${eqData.targetLetter} = ${convertToRichMathHTML(eqData.targetRightCamp)}`;
             document.getElementById('stageCampArea').style.display="none"; document.getElementById('stageCombineArea').style.display="block"; document.getElementById('rightCombineInput').value = ""; renderMathSteps(2);
         } else { session.wrongAttemptsInTeaching++; alert(`❌ 結構位置不對哦。`); checkTeachingWrongCounter('teachingWrongArea1'); }
@@ -944,6 +955,7 @@
         if (valRaw === eqData.ansStr) { alert("🚀 秒殺本題！"); executeDirectSuccess(); return; }
         let uR = convertToStandardMath(valRaw); let tR = convertToStandardMath(eqData.midStepStr);
         if(uR === tR || eval(uR) === eval(tR)) {
+            session.wrongAttemptsInTeaching = 0;
             alert("🎯 乘除與指數部分優先處理正確！"); document.getElementById('interactiveStageBox').innerHTML = `${eqData.targetLetter} = ${convertToRichMathHTML(eqData.midStepStr)}`;
             document.getElementById('stageCombineArea').style.display="none"; document.getElementById('stageFinalArea').style.display="block"; document.getElementById('finalAnsInput').value = ""; renderMathSteps(3);
         } else { session.wrongAttemptsInTeaching++; alert("❌ 中段階段計算有誤。"); checkTeachingWrongCounter('teachingWrongArea2'); }
@@ -952,6 +964,7 @@
     function executeFinal() {
         let uAns = document.getElementById('finalAnsInput').value.replace(/\s+/g,'');
         if(uAns === eqData.ansStr) {
+            session.wrongAttemptsInTeaching = 0;
             document.getElementById('interactiveStageBox').innerHTML=`求得 ${eqData.targetLetter} = <span style='color:#00ff00;'>${eqData.ansStr}</span> 🎯`;
             document.getElementById('stageFinalArea').style.display="none"; document.getElementById('nextBtn').style.display="block"; setupNextButtonLabel(); renderMathSteps(4);
         } else { session.wrongAttemptsInTeaching++; alert("最終數值不對！"); checkTeachingWrongCounter('teachingWrongArea3'); }
