@@ -358,8 +358,8 @@
 
     <div id="step1_solver" class="step-panel">
         <h2>🛠️ 數學有問必答 (自訂代入)</h2>
-        <div class="form-group"><label>✏️ 請輸入代數式或公式（例如：F = 1.8C + 32 或 A = (a+b)h/2）：</label><input type="text" id="eqInput" placeholder="example: A = (a+b)h/2"></div>
-        <div class="form-group"><label>🔢 指定各變數的值（多個變數請用逗號隔開）：</label><input type="text" id="xValueInput" placeholder="例如: b=8, h=11"></div>
+        <div class="form-group"><label>✏️ 請輸入代數式或公式：</label><input type="text" id="eqInput" placeholder="example: A = (a+b)h/2" autocomplete="off"></div>
+<div class="form-group"><label>🔢 指定各變數的值：</label><input type="text" id="xValueInput" placeholder="例如: b=8, h=11" autocomplete="off"></div>
         <button onclick="handleManualSolverInput()">開始多變數代入教學引導</button>
     </div>
 
@@ -380,15 +380,15 @@
         <div class="stage-box" id="displayEq">題目載入中...</div>
         
         <div id="studentAnswerFormContainer">
-            <div class="form-group" id="primaryInputWrapper">
-                <label id="inputLabel" style="color:#ffffff; text-shadow:1px 1px 2px rgba(0,0,0,0.8);">請填寫最終求得的數值（負數請加負號，若有小數請四捨五入至小數點後第1位）：</label>
-                <input type="text" id="ansInput" placeholder="例如: 25 或 44 或 -14">
-            </div>
-            <div id="retryInputWrapper" style="display:none; margin-top: 15px; padding-top: 15px; border-top: 2px dashed #cbd5e1;">
-                <label style="color:var(--warning); text-shadow:none;"><b>✍️ 請在下方全新的輸入框填寫你的補答修正答案：</b></label>
-                <input type="text" id="ansRetryInput" placeholder="請在此處輸入修正後的答案">
-            </div>
-        </div>
+    <div class="form-group" id="primaryInputWrapper">
+        <label id="inputLabel" style="color:#ffffff; text-shadow:1px 1px 2px rgba(0,0,0,0.8);">請填寫最終求得的數值（負數請加負號，若有小數請四捨五入至小數點後第1位）：</label>
+        <input type="text" id="ansInput" placeholder="例如: 25 或 44 或 -14" autocomplete="off">
+    </div>
+    <div id="retryInputWrapper" style="display:none; margin-top: 15px; padding-top: 15px; border-top: 2px dashed #cbd5e1;">
+        <label style="color:var(--warning); text-shadow:none;"><b>✍️ 請在下方全新的輸入框填寫你的補答修正答案：</b></label>
+        <input type="text" id="ansRetryInput" placeholder="請在此處輸入修正後的答案" autocomplete="off">
+    </div>
+</div>
         <div id="initialFeedbackArea"></div>
         <button id="submitAnsBtn" onclick="checkFirstAnswer()">提交結果並驗證答案</button>
     </div>
@@ -411,14 +411,14 @@
         <div id="feedbackArea" class="feedback"></div>
         <button id="solveBtn" class="btn-warning" onclick="startInteractiveSolving()">🔮 啟動隱形括號逐步破譯教學</button>
 
-        <div id="teachingZone" class="teaching-row" style="display: none;">
+<div id="teachingZone" class="teaching-row" style="display: none;">
             <div class="teaching-column">
                 <h3>🛠️ 逐步動態操作驗證</h3>
                 <div id="stageCampArea" style="display:none;">
                     <div class="block-form">
                         <div class="camp-tip"><b>⚖️ 第一步：對號入座！</b>將算式主體中的變數，替換為對應的帶括號數字 <b>( )</b>。</div>
                         <div id="campLabelContainer"></div>
-                        <input type="text" id="rightCampInput" placeholder="例如: (8)(11)/2 或 1.8(17) + 32">
+                        <input type="text" id="rightCampInput" placeholder="例如: (8)(11)/2 或 1.8(17) + 32" autocomplete="off">
                         <button onclick="executeCampStage()">確認群組代入結構</button>
                         <div id="teachingWrongArea1"></div>
                     </div>
@@ -427,11 +427,23 @@
                     <div class="block-form">
                         <div class="camp-tip"><b>統合計算：</b>遵循「先乘除/次方、後加減」原則優先處理各區塊。</div>
                         <label style="color:#ffffff; text-shadow:1px 1px 2px rgba(0,0,0,0.8);"><strong>第二步：乘除及指數運算後，算式可簡化為：</strong></label>
-                        <input type="text" id="rightCombineInput" placeholder="例如: 88/2 或 30.6 + 32">
+                        <input type="text" id="rightCombineInput" placeholder="例如: 88/2 或 30.6 + 32" autocomplete="off">
                         <button onclick="executeCombineStage()">確認中段計算</button>
                         <div id="teachingWrongArea2"></div>
                     </div>
                 </div>
+                <div id="stageFinalArea" style="display: none;">
+                    <div class="block-form">
+                        <div class="camp-tip"><b>大功告成：</b>完成最後的加減、除法，求出最終數值！</div>
+                        <label style="color:#ffffff; text-shadow:1px 1px 2px rgba(0,0,0,0.8);"><strong>最終步：公式的最終計算結果等於：</strong></label>
+                        <input type="text" id="finalAnsInput" placeholder="例如: 44 或 -26" autocomplete="off">
+                        <button onclick="executeFinal()" class="btn-success">宣告最終計算結果</button>
+                        <div id="teachingWrongArea3"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="teaching-column"><h3>📝 步驟動態黑板</h3><div class="math-step-box" id="mathStepBox"></div></div>
+        </div>
                 <div id="stageFinalArea" style="display: none;">
                     <div class="block-form">
                         <div class="camp-tip"><b>大功告成：</b>完成最後的加減、除法，求出最終數值！</div>
