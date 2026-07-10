@@ -5,6 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>中一多變數代數式求值系統 - 挑戰選單</title>
     <link rel="stylesheet" href="style.css">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js"></script>
+    <style>
+        /* 確保排版在各種螢幕上清晰大氣 */
+        .math-tex {
+            font-size: 1.25em;
+            color: #fffb00 !important;
+            padding: 0 4px;
+        }
+        .stage-box .math-tex {
+            font-size: 1.5em;
+            display: inline-block;
+            margin: 5px 0;
+        }
+    </style>
 </head>
 <body>
 
@@ -128,22 +144,22 @@
 <script>
     let currentRole = "", userRawClass = "", userRawSeat = "";
     let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, targetScore: 5, timeLimitSetting: 300, score: 0, currentIdx: 0, questionList: [], selectedType: 'MIX' };
-    let eqData = { targetLetter: "A", formulaName: "bh/2", variablesText: "b=8, h=11", ansStr: "44", substituted: "(8)(11)/2" };
+    let eqData = { targetLetter: "A", formulaName: "bh/2", variablesText: "b=8, h=11", ansStr: "44", substituted: "(8)(11)/2", formulaTex: "", substitutedTex: "" };
     let timerInterval = null; let timeLeft = 0;
 
-    // 完整的跨學科多變數公式數據庫
+    // 完整的跨學科多變數公式數據庫 (附帶教科書 LaTeX 樣式描述)
     const FORMULA_BANK = {
         1: [
-            { name: "幾何：正方形面積", target: "A", expr: "s^2", vars: ["s"], range: { s: [3, 12] } },
-            { name: "幾何：圓周長", target: "C", expr: "6r", vars: ["r"], range: { r: [2, 10] } },
-            { name: "生活：華氏/攝氏溫度轉換", target: "F", expr: "2C + 32", vars: ["C"], range: { C: [0, 35] } }
+            { name: "幾何：正方形面積", target: "A", expr: "s^2", tex: "s^2", vars: ["s"], range: { s: [3, 12] } },
+            { name: "幾何：圓周長", target: "C", expr: "6r", tex: "6r", vars: ["r"], range: { r: [2, 10] } },
+            { name: "生活：華氏/攝氏溫度轉換", target: "F", expr: "2C + 32", tex: "2C + 32", vars: ["C"], range: { C: [0, 35] } }
         ],
         2: [
-            { name: "幾何：長方形面積", target: "A", expr: "lw", vars: ["l", "w"], range: { l: [4, 12], w: [3, 8] } },
-            { name: "幾何：三角形面積", target: "A", expr: "bh / 2", vars: ["b", "h"], range: { b: [4, 14], h: [3, 10] } }
+            { name: "幾何：長方形面積", target: "A", expr: "lw", tex: "lw", vars: ["l", "w"], range: { l: [4, 12], w: [3, 8] } },
+            { name: "幾何：三角形面積", target: "A", expr: "bh / 2", tex: "\\frac{bh}{2}", vars: ["b", "h"], range: { b: [4, 14], h: [3, 10] } }
         ],
         3: [
-            { name: "幾何：梯形面積", target: "A", expr: "(a + b)h / 2", vars: ["a", "b", "h"], range: { a: [2, 6], b: [7, 12], h: [4, 10] } }
+            { name: "幾何：梯形面積", target: "A", expr: "(a + b)h / 2", tex: "\\frac{(a + b)h}{2}", vars: ["a", "b", "h"], range: { a: [2, 6], b: [7, 12], h: [4, 10] } }
         ]
     };
 
@@ -185,7 +201,7 @@
         document.getElementById('timeLimitInputWrapper').style.display = c === 'TIME_LIMIT' ? 'block' : 'none';
     }
 
-    // 🎯 核心修復：隨機題目演算法引擎（支援數字緊貼字母、雙字母隱式乘號自動補全）
+    // 隨機題目演算法引擎 (回傳原始計算式與精準 LaTeX 渲染樣式字串)
     function generateQuestion(typeCode) {
         let poolKey = typeCode === 'MIX' ? ['1', '2', '3'][Math.floor(Math.random() * 3)] : typeCode;
         let pool = FORMULA_BANK[poolKey] || FORMULA_BANK[1];
@@ -200,26 +216,20 @@
             varAssigns.push(`${v} = ${val}`);
         });
         
-        // 1. 生成給學生看的帶括號步驟 (例如：6(10) 或 (8)(11)/2)
-        let subExpr = formula.expr;
-        formula.vars.forEach(v => { subExpr = subExpr.replace(new RegExp(v, 'g'), `(${rMap[v]})`); });
+        // 生成給學生看教科書精美代入格式 (如：(9)^2 或是 \frac{(8)(11)}{2})
+        let subTex = formula.tex;
+        formula.vars.forEach(v => { subTex = subTex.replace(new RegExp(v, 'g'), `(${rMap[v]})`); });
         
-        // 2. 核心修正邏輯：將表達式轉換為可執行乘法的格式
+        // 核心運算防線
         let rawCalc = formula.expr;
-        
-        // 如果公式是 "6r" 這種數字緊跟字母的結構，自動在數字與字母間補上 *，防止其變成 610
+        rawCalc = rawCalc.replace(/\^2/g, '**2');
         rawCalc = rawCalc.replace(/(\d+)([a-zA-Z])/g, '$1*$2');
-        
-        // 如果公式是 "lw" 或 "bh" 這種兩個變數緊貼的結構，自動在字母與字母間補上 *
         rawCalc = rawCalc.replace(/([a-zA-Z])([a-zA-Z])/g, '$1*$2');
         
-        // 3. 代入真正的數值進行計算
         formula.vars.forEach(v => { rawCalc = rawCalc.replace(new RegExp(v, 'g'), rMap[v]); });
-        
-        // 精確執行數學計算
         let finalAns = Math.round(Function(`return (${rawCalc})`)() * 10) / 10;
 
-        return `${formula.name}|${formula.target}|${formula.expr}|${varAssigns.join(', ')}|${subExpr}|${finalAns}`;
+        return `${formula.name}|${formula.target}|${formula.expr}|${varAssigns.join(', ')}|${subTex}|${finalAns}|${formula.tex}`;
     }
 
     function parseEquationStructure(str) {
@@ -227,8 +237,9 @@
         eqData.formulaName = parts[2];
         eqData.targetLetter = parts[1];
         eqData.variablesText = parts[3];
-        eqData.substituted = parts[4];
+        eqData.substitutedTex = parts[4];
         eqData.ansStr = parts[5];
+        eqData.formulaTex = parts[6] || parts[2];
     }
 
     // 限時賽引擎
@@ -273,9 +284,15 @@
         stopSessionTimer();
         let eq = document.getElementById('eqInput').value || "A = bh / 2";
         let vars = document.getElementById('xValueInput').value || "b=8, h=11";
+        
         let rightSide = eq.includes('=') ? eq.split('=')[1].trim() : eq;
         let leftSide = eq.includes('=') ? eq.split('=')[0].trim() : "Y";
-        session.questionList = [`自訂驗證|${leftSide}|${rightSide}|${vars}|(8)(11)/2|44`];
+        
+        // 自訂模式的簡單 TeX 轉換器
+        let texVer = rightSide.replace(/h\s*\/\s*2/g, "\\frac{bh}{2}").replace(/\^2/g, "^2");
+        let subTexVer = texVer.replace(/b/g, "(8)").replace(/h/g, "(11)");
+
+        session.questionList = [`自訂驗證|${leftSide}|${rightSide}|${vars}|${subTexVer}|44|${texVer}`];
         session.currentIdx = 0;
         loadEquationToStage();
     }
@@ -285,7 +302,17 @@
         parseEquationStructure(session.questionList[session.currentIdx]);
         document.getElementById('scoreText').innerText = `積分：${session.score}`;
         document.getElementById('progressText').innerText = session.endCondition === 'TIME_LIMIT' ? `⏳ 限時狂熱衝分中！` : `題驗進度：第 ${session.currentIdx + 1} 題`;
-        document.getElementById('displayEq').innerHTML = `<div>已知 ${eqData.targetLetter} = ${eqData.formulaName}</div><div style='margin-top:20px; color:#cbd5e1; font-size: 22px;'>當 ${eqData.variablesText}，求 ${eqData.targetLetter} = ?</div>`;
+        
+        // 渲染主畫面公式為教科書 LaTeX 樣式
+        document.getElementById('displayEq').innerHTML = `
+            <div>已知：<span id="texFormula" class="math-tex"></span></div>
+            <div style='margin-top:25px; color:#cbd5e1; font-size: 21px;'>
+                當 <span style="color:#00ffc4; font-weight:bold;">${eqData.variablesText}</span> 時，求 <span class="math-tex">${eqData.targetLetter}</span> 的值。
+            </div>
+        `;
+        
+        // 調用 KaTeX 引擎渲染
+        katex.render(`${eqData.targetLetter} = ${eqData.formulaTex}`, document.getElementById('texFormula'), { throwOnError: false });
         showPanel('step2');
     }
 
@@ -303,12 +330,19 @@
     }
 
     function executeDirectSuccess() {
-        document.getElementById('interactiveStageBox').innerHTML = `公式最簡集成結果：<span style='color:#fffb00;'>${eqData.ansStr}</span>`;
+        document.getElementById('interactiveStageBox').innerHTML = `公式求值最簡集成結果：<span style='color:#fffb00;'>${eqData.ansStr}</span>`;
+        
         document.getElementById('mathStepBox').innerHTML = `
-            <div><strong>原式：</strong> ${eqData.targetLetter} = ${eqData.formulaName}</div>
-            <div style="color:#cbd5e1; margin-top:5px;"><strong>[帶入步驟]：</strong> = ${eqData.substituted}</div>
-            <div style="color:#00ff00; margin-top:5px;"><strong>[算值集成]：</strong> = ${eqData.ansStr} 🎯</div>
+            <div style="margin-bottom:12px;"><strong>原式：</strong> <span id="stepTex1"></span></div>
+            <div style="color:#cbd5e1; margin-bottom:12px;"><strong>[代入步驟]：</strong> <span id="stepTex2"></span></div>
+            <div style="color:#00ff00;"><strong>[算值集成]：</strong> <span id="stepTex3"></span> 🎯</div>
         `;
+        
+        // 逐步解析面板全面同步成教科書印刷體
+        katex.render(`${eqData.targetLetter} = ${eqData.formulaTex}`, document.getElementById('stepTex1'), { throwOnError: false });
+        katex.render(`= ${eqData.substitutedTex}`, document.getElementById('stepTex2'), { throwOnError: false });
+        katex.render(`= ${eqData.ansStr}`, document.getElementById('stepTex3'), { throwOnError: false });
+        
         document.getElementById('nextBtn').style.display = "block";
     }
 
