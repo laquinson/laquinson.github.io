@@ -359,7 +359,7 @@
     <div id="step1_solver" class="step-panel">
         <h2>🛠️ 數學有問必答 (自訂代入)</h2>
         <div class="form-group"><label>✏️ 請輸入代數式或公式：</label><input type="text" id="eqInput" placeholder="example: A = (a+b)h/2" autocomplete="off"></div>
-<div class="form-group"><label>🔢 指定各變數的值：</label><input type="text" id="xValueInput" placeholder="例如: b=8, h=11" autocomplete="off"></div>
+        <div class="form-group"><label>🔢 指定各變數的值：</label><input type="text" id="xValueInput" placeholder="例如: b=8, h=11" autocomplete="off"></div>
         <button onclick="handleManualSolverInput()">開始多變數代入教學引導</button>
     </div>
 
@@ -380,15 +380,15 @@
         <div class="stage-box" id="displayEq">題目載入中...</div>
         
         <div id="studentAnswerFormContainer">
-    <div class="form-group" id="primaryInputWrapper">
-        <label id="inputLabel" style="color:#ffffff; text-shadow:1px 1px 2px rgba(0,0,0,0.8);">請填寫最終求得的數值（負數請加負號，若有小數請四捨五入至小數點後第1位）：</label>
-        <input type="text" id="ansInput" placeholder="例如: 25 或 44 或 -14" autocomplete="off">
-    </div>
-    <div id="retryInputWrapper" style="display:none; margin-top: 15px; padding-top: 15px; border-top: 2px dashed #cbd5e1;">
-        <label style="color:var(--warning); text-shadow:none;"><b>✍️ 請在下方全新的輸入框填寫你的補答修正答案：</b></label>
-        <input type="text" id="ansRetryInput" placeholder="請在此處輸入修正後的答案" autocomplete="off">
-    </div>
-</div>
+            <div class="form-group" id="primaryInputWrapper">
+                <label id="inputLabel" style="color:#ffffff; text-shadow:1px 1px 2px rgba(0,0,0,0.8);">請填寫最終求得的數值（負數請加負號，若有小數請四捨五入至小數點後第1位）：</label>
+                <input type="text" id="ansInput" placeholder="例如: 25 或 44 或 -14" autocomplete="off">
+            </div>
+            <div id="retryInputWrapper" style="display:none; margin-top: 15px; padding-top: 15px; border-top: 2px dashed #cbd5e1;">
+                <label style="color:var(--warning); text-shadow:none;"><b>✍️ 請在下方全新的輸入框填寫你的補答修正答案：</b></label>
+                <input type="text" id="ansRetryInput" placeholder="請在此處輸入修正後的答案" autocomplete="off">
+            </div>
+        </div>
         <div id="initialFeedbackArea"></div>
         <button id="submitAnsBtn" onclick="checkFirstAnswer()">提交結果並驗證答案</button>
     </div>
@@ -411,7 +411,7 @@
         <div id="feedbackArea" class="feedback"></div>
         <button id="solveBtn" class="btn-warning" onclick="startInteractiveSolving()">🔮 啟動隱形括號逐步破譯教學</button>
 
-<div id="teachingZone" class="teaching-row" style="display: none;">
+        <div id="teachingZone" class="teaching-row" style="display: none;">
             <div class="teaching-column">
                 <h3>🛠️ 逐步動態操作驗證</h3>
                 <div id="stageCampArea" style="display:none;">
@@ -425,9 +425,9 @@
                 </div>
                 <div id="stageCombineArea" style="display: none;">
                     <div class="block-form">
-                        <div class="camp-tip"><b>統合計算：</b>遵循「先乘除/次方、後加減」原則優先處理各區塊。</div>
+                        <div class="camp-tip"><b>統合計算：</b>遵循「先乘除/次方、後加減」原則優先處理各區塊.</div>
                         <label style="color:#ffffff; text-shadow:1px 1px 2px rgba(0,0,0,0.8);"><strong>第二步：乘除及指數運算後，算式可簡化為：</strong></label>
-                        <input type="text" id="rightCombineInput" placeholder="例如: 88/2 或 30.6 + 32" autocomplete="off">
+                        <input type="text" id="rightCombineInput" placeholder="example: 88/2 或 30.6 + 32" autocomplete="off">
                         <button onclick="executeCombineStage()">確認中段計算</button>
                         <div id="teachingWrongArea2"></div>
                     </div>
@@ -437,18 +437,6 @@
                         <div class="camp-tip"><b>大功告成：</b>完成最後的加減、除法，求出最終數值！</div>
                         <label style="color:#ffffff; text-shadow:1px 1px 2px rgba(0,0,0,0.8);"><strong>最終步：公式的最終計算結果等於：</strong></label>
                         <input type="text" id="finalAnsInput" placeholder="例如: 44 或 -26" autocomplete="off">
-                        <button onclick="executeFinal()" class="btn-success">宣告最終計算結果</button>
-                        <div id="teachingWrongArea3"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="teaching-column"><h3>📝 步驟動態黑板</h3><div class="math-step-box" id="mathStepBox"></div></div>
-        </div>
-                <div id="stageFinalArea" style="display: none;">
-                    <div class="block-form">
-                        <div class="camp-tip"><b>大功告成：</b>完成最後的加減、除法，求出最終數值！</div>
-                        <label style="color:#ffffff; text-shadow:1px 1px 2px rgba(0,0,0,0.8);"><strong>最終步：公式的最終計算結果等於：</strong></label>
-                        <input type="text" id="finalAnsInput" placeholder="例如: 44 或 -26">
                         <button onclick="executeFinal()" class="btn-success">宣告最終計算結果</button>
                         <div id="teachingWrongArea3"></div>
                     </div>
@@ -506,7 +494,7 @@
             { name: "幾何：梯形面積", target: "A", expr: "((a + b) * h) / 2", vars: ["a", "b", "h"], range: { a: [2, 8], b: [9, 16], h: [4, 12] } },
             { name: "幾何：長方體表面積簡化項", target: "S", expr: "l * w + l * h + w * h", vars: ["l", "w", "h"], range: { l: [2, 6], w: [2, 5], h: [3, 8] } },
             { name: "物理：等加速位移前段 (s = ut + a)", target: "s", expr: "u * t + a", vars: ["u", "t", "a"], range: { u: [2, 10], t: [2, 5], a: [-4, 8] } },
-            { name: "理財：簡單利息結餘", target: "A", expr: "P + (P * r) / 100", vars: ["P", "r"], range: { P: [20, 100], r: [1, 8] } } // 🎯 修正利息原始公式，去括號避免 Eval Bug
+            { name: "理財：簡單利息結餘", target: "A", expr: "P + (P * r) / 100", vars: ["P", "r"], range: { P: [20, 100], r: [1, 8] } } 
         ],
         4: [
             { name: "幾何：兩點距離平方", target: "D", expr: "(y - b)^2 + (x - a)^2", vars: ["y", "b", "x", "a"], range: { y: [4, 10], b: [-2, 3], x: [5, 11], a: [1, 4] } },
@@ -516,14 +504,11 @@
         ]
     };
 
-    // 🎯 核心導航按鈕路由引擎：根據當前面板自動調配顯示文字與連結目標
     function handleNavigationBack() {
         const isMainMenuActive = document.getElementById('step1').classList.contains('active');
         if (isMainMenuActive) {
-            // 在主目錄時：直接返回外部大廳
             window.location.href = "home.html";
         } else {
-            // 在其他子功能內：彈出安全警告並回到主目錄
             if (document.getElementById('step2').classList.contains('active') || document.getElementById('step3').classList.contains('active')) {
                 if (!confirm("確定要中途退出挑戰嗎？")) return;
             }
@@ -606,11 +591,9 @@
         };
     }
 
-    // 🎯 核心渲染修正：徹底消滅 A = P + P\frac{r}{100} 的 LaTeX 字串外露問題，轉化為完美教科書分數格式
     function convertToRichMathHTML(str) {
         let clean = str.replace(/\^2/g, '²').replace(/\*\*/g, '²').replace(/\s*\*\s*/g, '');
         
-        // 處理簡單利息公式渲染優化
         if (clean.includes('P+(Pr)/100') || clean.includes('P+(P*r)/100')) {
             return `<div class="math-expr-wrapper">A = P + <div class="math-fraction"><div class="fraction-numerator">Pr</div><div class="fraction-denominator">100</div></div></div>`;
         }
@@ -630,7 +613,7 @@
 
     function convertToStandardMath(str) {
         let res = str.replace(/\s+/g, '').replace(/÷/g, '/').replace(/×/g, '*').replace(/\^2/g, '**2');
-        res = res.replace(/(\d+)([a-zA-Z])/g, '$1*$2').replace(/([a-zA-Z])([a-zA-Z])/g, '$1*$2').replace(/([a-zA-Z])(\()/g, '$1*$2').replace(/(\))([a-zA-Z])/g, '$1*$2').replace(/(\d+)([\(])/g, '$1*$2').replace(/([ \)])([\(])/g, '$1*$2');
+        res = res.replace(/(\d+)([a-zA-7])/g, '$1*$2').replace(/([a-zA-Z])([a-zA-Z])/g, '$1*$2').replace(/([a-zA-Z])(\()/g, '$1*$2').replace(/(\))([a-zA-Z])/g, '$1*$2').replace(/(\d+)([\(])/g, '$1*$2').replace(/([ \)])([\(])/g, '$1*$2');
         return res;
     }
 
@@ -649,7 +632,6 @@
         let loginBox = document.getElementById('step0_login');
         let backBtn = document.getElementById('navBackBtn');
 
-        // 動態調整返回按鈕文字與提示
         if (backBtn) {
             if (id === 'step1') {
                 backBtn.innerHTML = "&lt; 返回學習大廳";
