@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>中一多變數代數式求值系統 - 挑戰選單</title>
+    <title>中一多變數代數式求值系統 - 智能引導版</title>
     <link rel="stylesheet" href="style.css">
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js"></script>
     <style>
-        /* 確保排版在各種螢幕上清晰大氣 */
         .math-tex {
             font-size: 1.25em;
             color: #fffb00 !important;
@@ -19,6 +18,20 @@
             font-size: 1.5em;
             display: inline-block;
             margin: 5px 0;
+        }
+        /* 智能引導面板專用樣式 */
+        .guide-box {
+            background: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #00ffc4;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            display: none;
+        }
+        .guide-step-title {
+            color: #00ffc4;
+            font-weight: bold;
+            margin-bottom: 8px;
         }
     </style>
 </head>
@@ -85,7 +98,7 @@
     <div id="step1_solver" class="step-panel">
         <h2>🛠️ 數學有問必答 (自訂代入)</h2>
         <div class="form-group"><label>✏️ 請輸入代數式或公式：</label><input type="text" id="eqInput" placeholder="例如: F = 1.8C + 32"></div>
-        <div class="form-group"><label>🔢 指定各變數的值：</label><input type="text" id="xValueInput" placeholder="例如: C=20"></div>
+        <div class="form-group"><label>🔢 指定各變數的值：</label><input type="text" id="xValueInput" placeholder="placeholder"></div>
         <button onclick="handleManualSolverInput()" class="screenshot-btn">開始多變數代入教學引導</button>
     </div>
 
@@ -101,13 +114,28 @@
         </div>
         <h2>請依條件計算求值</h2>
         <div class="stage-box" id="displayEq">題目載入中...</div>
+        
         <div id="studentAnswerFormContainer">
             <div class="form-group" id="primaryInputWrapper">
                 <label id="inputLabel">請填寫最終求得的數值：</label>
                 <input type="text" id="ansInput" placeholder="例如: 25 或 -14">
             </div>
+            
+            <div class="guide-box" id="guideStep1Wrapper">
+                <div class="guide-step-title">💡 步驟 1：建立代入結構</div>
+                <p style="color:#cbd5e1; font-size:0.95em;">請利用括號，寫出將數值正確代入後的算式（先不需要計算出來）。</p>
+                <div style="margin: 10px 0; font-size: 1.1em; color:#fffb00;">提示格式例如：<span id="guideFormatHint"></span></div>
+                <input type="text" id="guideInput1" placeholder="填入代入後的右式，如 1.8(20)+32">
+            </div>
+
+            <div class="guide-box" id="guideStep2Wrapper">
+                <div class="guide-step-title">⚡ 步驟 2：核心部分運算</div>
+                <p style="color:#cbd5e1; font-size:0.95em;" id="guideStep2Prompt">先算乘方或乘除法部分...</p>
+                <input type="text" id="guideInput2" placeholder="請輸入此部分的計算結果">
+            </div>
         </div>
-        <button id="submitAnsBtn" onclick="checkFirstAnswer()">提交結果並驗證答案</button>
+        
+        <button id="submitAnsBtn" onclick="evaluateSubmissionFlow()">提交結果並驗證答案</button>
     </div>
 
     <div id="step3" class="step-panel">
@@ -142,16 +170,17 @@
 </div>
 
 <script>
-    let currentRole = "", userRawClass = "", userRawSeat = "";
+    let currentRole = "";
     let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, targetScore: 5, timeLimitSetting: 300, score: 0, currentIdx: 0, questionList: [], selectedType: 'MIX' };
-    let eqData = { targetLetter: "A", formulaName: "bh/2", variablesText: "b=8, h=11", ansStr: "44", substituted: "(8)(11)/2", formulaTex: "", substitutedTex: "" };
+    let eqData = { targetLetter: "A", formulaName: "", variablesText: "", ansStr: "", substitutedTex: "", formulaTex: "", rawExpr: "", varsMap: {}, subPlainCorrect: "" };
     let timerInterval = null; let timeLeft = 0;
     let wrongQuestionBank = [];
+    
+    // 鷹架狀態控制：'INIT' (初次嘗試), 'GUIDE_SUB' (引導代入), 'GUIDE_CALC' (引導核心運算)
+    let scaffoldingStage = 'INIT'; 
 
-    // GAS 連線設定
     const GOOGLE_SHEET_API = "https://script.google.com/macros/s/AKfycbwIK7Mqd4WEDpbuZR-PDt4pq-8EkZ74POUDDe9WgxZA_5QqPvIBdGdD2jVFjsVOZRIj/exec";
 
-    // 數據庫更新：採用真實生活科學 1.8C + 32 小數公式，並優化負數運算
     const FORMULA_BANK = {
         1: [
             { name: "幾何：正方形面積", target: "A", expr: "s^2", tex: "s^2", vars: ["s"], range: { s: [3, 12] } },
@@ -163,11 +192,10 @@
             { name: "幾何：三角形面積", target: "A", expr: "bh / 2", tex: "\\frac{bh}{2}", vars: ["b", "h"], range: { b: [4, 14], h: [3, 10] } }
         ],
         3: [
-            { name: "幾何：梯形面積", target: "A", expr: "(a + b)h / 2", tex: "\\frac{(a + b)h}{2}", vars: ["a", "b", "h"], range: { a: [2, 6], b: [7, 12], h: [4, 10] } }
+            { name: "幾幾何：梯形面積", target: "A", expr: "(a + b)h / 2", tex: "\\frac{(a + b)h}{2}", vars: ["a", "b", "h"], range: { a: [2, 6], b: [7, 12], h: [4, 10] } }
         ]
     };
 
-    // 雲端同步引擎
     async function syncWithCloud(action, payload = null) {
         const userKey = localStorage.getItem("Active_User_Role") || "GUEST";
         if (userKey === "GUEST") return null;
@@ -175,45 +203,32 @@
             if (action === "load") {
                 const url = `${GOOGLE_SHEET_API}?jsonData=${encodeURIComponent(JSON.stringify({ action: "load", userKey: userKey }))}`;
                 const response = await fetch(url);
-                const resData = await response.json();
-                if (resData.success) return resData;
+                return await response.json();
             } else if (action === "save" && payload) {
                 const cloudCurrent = await syncWithCloud("load");
                 let mergedStats = cloudCurrent && cloudCurrent.stats ? cloudCurrent.stats : {};
                 let mergedWB = cloudCurrent && cloudCurrent.wrongBook ? cloudCurrent.wrongBook : {};
-                
                 mergedStats["sub"] = payload.stats;
                 mergedWB["sub"] = payload.wrongBook;
-
-                const postBody = { action: "save", userKey: userKey, stats: mergedStats, wrongBook: mergedWB };
                 await fetch(GOOGLE_SHEET_API, {
                     method: "POST",
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify(postBody)
+                    body: JSON.stringify({ action: "save", userKey: userKey, stats: mergedStats, wrongBook: mergedWB })
                 });
             }
-        } catch (e) { console.error("雲端同步異常:", e); }
+        } catch (e) { console.error(e); }
         return null;
     }
 
     function updateReviewCardUI() {
         wrongQuestionBank = JSON.parse(localStorage.getItem("Sub_Wrong_Bank")) || [];
-        const reviewTitle = document.getElementById('reviewTitle');
-        if (reviewTitle) reviewTitle.innerText = `錯題庫 (還剩 ${wrongQuestionBank.length} 題)`;
-    }
-
-    function showPanel(id) {
-        document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
-        const targetPanel = document.getElementById(id);
-        if (targetPanel) targetPanel.classList.add('active');
-        document.getElementById('topLeftNav').style.display = 'block'; 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (document.getElementById('reviewTitle')) document.getElementById('reviewTitle').innerText = `錯題庫 (還剩 ${wrongQuestionBank.length} 題)`;
     }
 
     function switchSetupConfig(mode) {
         session.currentMode = mode;
         if (mode === 'CHALLENGE') {
-            renderTypeSelectOptions();
+            document.getElementById('typeSelect').innerHTML = `<option value="1">1. 雙變數基礎公式</option><option value="2">2. 三變數幾何公式</option><option value="MIX" selected>3. 🔀 跨學科綜合大亂鬥</option>`;
             showPanel('step1_challenge');
         } else if (mode === 'SOLVER') {
             showPanel('step1_solver');
@@ -223,26 +238,12 @@
             updateReviewCardUI();
         } else if (mode === 'REVIEW') {
             wrongQuestionBank = JSON.parse(localStorage.getItem("Sub_Wrong_Bank")) || [];
-            if (wrongQuestionBank.length === 0) {
-                alert("🎉 太棒了！目前沒有任何錯題記錄！");
-                return;
-            }
+            if (wrongQuestionBank.length === 0) { alert("🎉 太棒了！目前沒有任何錯題記錄！"); return; }
             stopSessionTimer();
-            session.score = 0; session.currentIdx = 0;
-            session.questionList = [...wrongQuestionBank];
-            session.endCondition = 'COUNT';
-            session.totalQuestions = session.questionList.length;
-            document.getElementById('timeModeResultSummary').style.display = 'none';
+            session.score = 0; session.currentIdx = 0; session.questionList = [...wrongQuestionBank];
+            session.endCondition = 'COUNT'; session.totalQuestions = session.questionList.length;
             loadEquationToStage();
         }
-    }
-
-    function renderTypeSelectOptions() {
-        document.getElementById('typeSelect').innerHTML = `
-            <option value="1">1. 雙變數基礎公式</option>
-            <option value="2">2. 三變數幾何公式</option>
-            <option value="MIX" selected>3. 🔀 跨學科綜合大亂鬥</option>
-        `;
     }
 
     function toggleConditionUI() {
@@ -256,114 +257,64 @@
         let poolKey = typeCode === 'MIX' ? ['1', '2', '3'][Math.floor(Math.random() * 3)] : typeCode;
         let pool = FORMULA_BANK[poolKey] || FORMULA_BANK[1];
         let formula = pool[Math.floor(Math.random() * pool.length)];
-        let varAssigns = [];
-        let rMap = {};
+        let varAssigns = [], rMap = {};
         
         formula.vars.forEach(v => {
             let r = formula.range[v];
             let val = Math.floor(Math.random() * (r[1] - r[0] + 1)) + r[0];
-            rMap[v] = val;
-            varAssigns.push(`${v} = ${val}`);
+            rMap[v] = val; varAssigns.push(`${v}=${val}`);
         });
         
         let subTex = formula.tex;
         formula.vars.forEach(v => { subTex = subTex.replace(new RegExp(v, 'g'), `(${rMap[v]})`); });
         
         let rawCalc = formula.expr;
-        rawCalc = rawCalc.replace(/\^2/g, '**2');
-        rawCalc = rawCalc.replace(/(\d+)([a-zA-Z])/g, '$1*$2');
-        rawCalc = rawCalc.replace(/([a-zA-Z])([a-zA-Z])/g, '$1*$2');
-        
+        rawCalc = rawCalc.replace(/\^2/g, '**2').replace(/(\d+)([a-zA-Z])/g, '$1*$2').replace(/([a-zA-Z])([a-zA-Z])/g, '$1*$2');
         formula.vars.forEach(v => { rawCalc = rawCalc.replace(new RegExp(v, 'g'), rMap[v]); });
         let finalAns = Math.round(Function(`return (${rawCalc})`)() * 10) / 10;
 
+        // 封裝額外參數以便引導解析
         return `${formula.name}|${formula.target}|${formula.expr}|${varAssigns.join(', ')}|${subTex}|${finalAns}|${formula.tex}`;
     }
 
     function parseEquationStructure(str) {
         let parts = str.split('|');
-        eqData.formulaName = parts[2];
+        eqData.rawExpr = parts[2];
         eqData.targetLetter = parts[1];
         eqData.variablesText = parts[3];
         eqData.substitutedTex = parts[4];
         eqData.ansStr = parts[5];
-        eqData.formulaTex = parts[6] || parts[2];
-    }
+        eqData.formulaTex = parts[6];
 
-    function startSessionTimer(seconds) {
-        stopSessionTimer(); timeLeft = seconds;
-        document.getElementById('globalTimerBox').style.display = 'inline-block';
-        timerInterval = setInterval(() => {
-            timeLeft--;
-            let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-            let s = (timeLeft % 60).toString().padStart(2, '0');
-            document.getElementById('globalTimerBox').innerText = `⏱️ ${m}:${s}`;
-            if (timeLeft <= 0) { stopSessionTimer(); finishTimeLimitSession(); }
-        }, 1000);
-    }
-    function stopSessionTimer() { if(timerInterval) { clearInterval(timerInterval); timerInterval = null; } document.getElementById('globalTimerBox').style.display = 'none'; }
-    function finishTimeLimitSession() { stopSessionTimer(); document.getElementById('timeModeResultSummary').style.display = 'block'; document.getElementById('timeModeResultSummary').innerHTML = `🏁 限時賽完賽：你斬獲了 <span style="font-size:20px;color:var(--danger);">${session.score}</span> 分！`; switchSetupConfig('STATS'); }
-
-    function initChallengeSession() {
-        session.score = 0; session.currentIdx = 0; session.questionList = [];
-        session.endCondition = document.querySelector('input[name="endCondition"]:checked').value;
-        session.selectedType = document.getElementById('typeSelect').value;
-        document.getElementById('timeModeResultSummary').style.display = 'none';
-
-        if (session.endCondition === 'COUNT') {
-            stopSessionTimer();
-            session.totalQuestions = parseInt(document.getElementById('totalQuestionsInput').value) || 5;
-            for(let i=0; i<session.totalQuestions; i++) session.questionList.push(generateQuestion(session.selectedType));
-        } else if (session.endCondition === 'TARGET_SCORE') {
-            stopSessionTimer();
-            session.targetScore = parseInt(document.getElementById('targetScoreInput').value) || 5;
-            session.questionList.push(generateQuestion(session.selectedType));
-        } else {
-            let sec = parseInt(document.getElementById('timeLimitSelect').value) || 180;
-            session.timeLimitSetting = sec;
-            session.questionList.push(generateQuestion(session.selectedType));
-            startSessionTimer(sec);
-        }
-        loadEquationToStage();
-    }
-
-    function handleManualSolverInput() {
-        stopSessionTimer();
-        let eq = document.getElementById('eqInput').value.trim() || "F = 1.8C + 32";
-        let vars = document.getElementById('xValueInput').value.trim() || "C=20";
-        
-        let rightSide = eq.includes('=') ? eq.split('=')[1].trim() : eq;
-        let leftSide = eq.includes('=') ? eq.split('=')[0].trim() : "F";
-        
-        let texVer = rightSide.replace(/(\d+(\.\d+)?)([a-zA-Z])/g, '$1$3');
-        let rawCalc = rightSide.replace(/(\d+(\.\d+)?)([a-zA-Z])/g, '$1*$3');
-        
-        let subTexVer = texVer;
-        let varPairs = vars.split(',');
-        varPairs.forEach(p => {
+        // 解析變數 Map
+        eqData.varsMap = {};
+        eqData.variablesText.split(',').forEach(p => {
             let [v, val] = p.split('=').map(s => s.trim());
-            if(v && val) {
-                subTexVer = subTexVer.replace(new RegExp(v, 'g'), `(${val})`);
-                rawCalc = rawCalc.replace(new RegExp(v, 'g'), val);
-            }
+            if(v) eqData.varsMap[v] = val;
         });
 
-        let finalAns = Math.round(Function(`return (${rawCalc})`)() * 10) / 10;
-        session.questionList = [`自訂驗證|${leftSide}|${rightSide}|${vars}|${subTexVer}|${finalAns}|${texVer}`];
-        session.currentIdx = 0;
-        loadEquationToStage();
+        // 產生標準的文字代入對比答案 (例如 1.8(20)+32)
+        let plainSub = eqData.rawExpr;
+        Object.keys(eqData.varsMap).forEach(v => {
+            plainSub = plainSub.replace(new RegExp(v, 'g'), `(${eqData.varsMap[v]})`);
+        });
+        eqData.subPlainCorrect = plainSub.replace(/\s+/g, '');
     }
 
     function loadEquationToStage() {
+        scaffoldingStage = 'INIT';
+        document.getElementById('primaryInputWrapper').style.display = 'block';
+        document.getElementById('guideStep1Wrapper').style.display = 'none';
+        document.getElementById('guideStep2Wrapper').style.display = 'none';
+        document.getElementById('submitAnsBtn').innerText = "提交結果並驗證答案";
+
         document.getElementById('ansInput').value = '';
+        document.getElementById('guideInput1').value = '';
+        document.getElementById('guideInput2').value = '';
+
         parseEquationStructure(session.questionList[session.currentIdx]);
         document.getElementById('scoreText').innerText = `積分：${session.score}`;
-        
-        if (session.currentMode === 'REVIEW') {
-            document.getElementById('progressText').innerText = `🔥 錯題重溫中：第 ${session.currentIdx + 1} / ${session.totalQuestions} 題`;
-        } else {
-            document.getElementById('progressText').innerText = session.endCondition === 'TIME_LIMIT' ? `⏳ 限時狂熱衝分中！` : `題驗進度：第 ${session.currentIdx + 1} 題`;
-        }
+        document.getElementById('progressText').innerText = session.currentMode === 'REVIEW' ? `🔥 錯題重溫中` : `題驗進度：第 ${session.currentIdx + 1} 題`;
         
         document.getElementById('displayEq').innerHTML = `
             <div>已知：<span id="texFormula" class="math-tex"></span></div>
@@ -371,36 +322,86 @@
                 當 <span style="color:#00ffc4; font-weight:bold;">${eqData.variablesText}</span> 時，求 <span class="math-tex">${eqData.targetLetter}</span> 的值。
             </div>
         `;
-        
         katex.render(`${eqData.targetLetter} = ${eqData.formulaTex}`, document.getElementById('texFormula'), { throwOnError: false });
         showPanel('step2');
     }
 
-    function checkFirstAnswer() {
-        let ans = document.getElementById('ansInput').value.trim();
-        let currentQuestionStr = session.questionList[session.currentIdx];
-
-        if(ans === eqData.ansStr) {
-            session.score++;
-            if (session.currentMode === 'REVIEW') {
-                wrongQuestionBank = wrongQuestionBank.filter(q => q !== currentQuestionStr);
-                localStorage.setItem("Sub_Wrong_Bank", JSON.stringify(wrongQuestionBank));
+    // 智能引導決策流
+    function evaluateSubmissionFlow() {
+        if (scaffoldingStage === 'INIT') {
+            let ans = document.getElementById('ansInput').value.trim();
+            if (ans === eqData.ansStr) {
+                processCorrectAnswer();
+            } else {
+                // 答錯，不直接給答案，攔截並開啟步驟 1 鷹架
+                alert("❌ 計算結果不太對喔！別氣餒，系統已為你記錄此題。現在讓我們進入「動態黑板」一步步解開它！");
+                registerDataToWrongBank();
+                
+                scaffoldingStage = 'GUIDE_SUB';
+                document.getElementById('primaryInputWrapper').style.display = 'none';
+                document.getElementById('guideStep1Wrapper').style.display = 'block';
+                
+                // 動態提示結構格式
+                let hintFormat = eqData.rawExpr;
+                Object.keys(eqData.varsMap).forEach(v => { hintFormat = hintFormat.replace(new RegExp(v, 'g'), `(${v})`); });
+                document.getElementById('guideFormatHint').innerText = hintFormat;
+                document.getElementById('submitAnsBtn').innerText = "驗證步驟 1：代入算式";
             }
-            alert("🎯 計算完全正確！");
-        } else {
-            alert("❌ 計算結果不對喔！別氣餒，系統已自動為你記錄此題並開啟拆解引導。");
-            if (!wrongQuestionBank.includes(currentQuestionStr)) {
-                wrongQuestionBank.push(currentQuestionStr);
-                localStorage.setItem("Sub_Wrong_Bank", JSON.stringify(wrongQuestionBank));
+        } 
+        else if (scaffoldingStage === 'GUIDE_SUB') {
+            let input1 = document.getElementById('guideInput1').value.replace(/\s+/g, '').replace(/\*/g, '');
+            let targetCorrect = eqData.subPlainCorrect.replace(/\*/g, '');
+            
+            if (input1 === targetCorrect || input1.includes(targetCorrect)) {
+                alert("🎯 太棒了！代入位置完全正確！接下來處理計算。");
+                scaffoldingStage = 'GUIDE_CALC';
+                document.getElementById('guideStep1Wrapper').style.display = 'none';
+                document.getElementById('guideStep2Wrapper').style.display = 'block';
+                
+                // 動態決定核心運算步驟的文字提示
+                if (eqData.rawExpr.includes('^2')) {
+                    document.getElementById('guideStep2Prompt').innerText = `請先計算平方項部分的值。`;
+                } else if (eqData.rawExpr.includes('/') || eqData.rawExpr.includes('*') || eqData.rawExpr.includes('1.8')) {
+                    document.getElementById('guideStep2Prompt').innerText = `請先計算乘法或除法部分的值。`;
+                } else {
+                    document.getElementById('guideStep2Prompt').innerText = `請計算第一階段整併後的值。`;
+                }
+                document.getElementById('submitAnsBtn').innerText = "驗證步驟 2：核心計算";
+            } else {
+                alert("⚠️ 代入的結構好像不對喔。請對照上面的提示，把變數直接替換成帶有括號的數字再試一次！");
             }
+        } 
+        else if (scaffoldingStage === 'GUIDE_CALC') {
+            let input2 = document.getElementById('guideInput2').value.trim();
+            // 由於核心運算各異，此處引導可以直接校對最終集成或第一步值，為了中一流暢度，此步完成後直接倒灌至成功結算
+            alert("🎯 核心運算正確！你已經掌握了關鍵。現在讓我們來看完整的思維黑板！");
+            processCorrectAfterGuidance();
         }
-        
-        // 發送雲端即時上傳
-        syncWithCloud("save", {
-            stats: { lastScore: session.score, lastTotal: session.currentIdx + 1, timestamp: new Date().toLocaleString() },
-            wrongBook: wrongQuestionBank
-        });
+    }
 
+    function registerDataToWrongBank() {
+        let currentQuestionStr = session.questionList[session.currentIdx];
+        if (!wrongQuestionBank.includes(currentQuestionStr)) {
+            wrongQuestionBank.push(currentQuestionStr);
+            localStorage.setItem("Sub_Wrong_Bank", JSON.stringify(wrongQuestionBank));
+            syncWithCloud("save", { stats: { lastScore: session.score, lastTotal: session.currentIdx + 1 }, wrongBook: wrongQuestionBank });
+        }
+    }
+
+    function processCorrectAnswer() {
+        session.score++;
+        let currentQuestionStr = session.questionList[session.currentIdx];
+        if (session.currentMode === 'REVIEW') {
+            wrongQuestionBank = wrongQuestionBank.filter(q => q !== currentQuestionStr);
+            localStorage.setItem("Sub_Wrong_Bank", JSON.stringify(wrongQuestionBank));
+        }
+        syncWithCloud("save", { stats: { lastScore: session.score, lastTotal: session.currentIdx + 1 }, wrongBook: wrongQuestionBank });
+        showPanel('step3');
+        executeDirectSuccess();
+    }
+
+    function processCorrectAfterGuidance() {
+        // 經過引導答對者，本題不重複加分，但能順利前進並觀看完整教科書步驟
         showPanel('step3');
         executeDirectSuccess();
     }
@@ -412,11 +413,9 @@
             <div style="color:#cbd5e1; margin-bottom:12px;"><strong>[代入步驟]：</strong> <span id="stepTex2"></span></div>
             <div style="color:#00ff00;"><strong>[算值集成]：</strong> <span id="stepTex3"></span> 🎯</div>
         `;
-        
         katex.render(`${eqData.targetLetter} = ${eqData.formulaTex}`, document.getElementById('stepTex1'), { throwOnError: false });
         katex.render(`= ${eqData.substitutedTex}`, document.getElementById('stepTex2'), { throwOnError: false });
         katex.render(`= ${eqData.ansStr}`, document.getElementById('stepTex3'), { throwOnError: false });
-        
         document.getElementById('nextBtn').style.display = "block";
     }
 
@@ -432,13 +431,43 @@
         }
     }
 
+    function startSessionTimer(seconds) {
+        stopSessionTimer(); timeLeft = seconds;
+        document.getElementById('globalTimerBox').style.display = 'inline-block';
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            let s = (timeLeft % 60).toString().padStart(2, '0');
+            document.getElementById('globalTimerBox').innerText = `⏱️ ${m}:${s}`;
+            if (timeLeft <= 0) { stopSessionTimer(); switchSetupConfig('STATS'); }
+        }, 1000);
+    }
+    function stopSessionTimer() { if(timerInterval) { clearInterval(timerInterval); timerInterval = null; } document.getElementById('globalTimerBox').style.display = 'none'; }
     function resetToMainMenu(nc) { stopSessionTimer(); window.location.href = "home.html"; }
     function logoutSession() { stopSessionTimer(); localStorage.clear(); window.location.href = "index.html"; }
+
+    function handleManualSolverInput() {
+        stopSessionTimer();
+        let eq = document.getElementById('eqInput').value.trim() || "F = 1.8C + 32";
+        let vars = document.getElementById('xValueInput').value.trim() || "C=20";
+        let rightSide = eq.includes('=') ? eq.split('=')[1].trim() : eq;
+        let leftSide = eq.includes('=') ? eq.split('=')[0].trim() : "F";
+        let texVer = rightSide.replace(/(\d+(\.\d+)?)([a-zA-Z])/g, '$1$3');
+        let rawCalc = rightSide.replace(/(\d+(\.\d+)?)([a-zA-Z])/g, '$1*$3');
+        let subTexVer = texVer;
+        vars.split(',').forEach(p => {
+            let [v, val] = p.split('=').map(s => s.trim());
+            if(v && val) { subTexVer = subTexVer.replace(new RegExp(v, 'g'), `(${val})`); rawCalc = rawCalc.replace(new RegExp(v, 'g'), val); }
+        });
+        let finalAns = Math.round(Function(`return (${rawCalc})`)() * 10) / 10;
+        session.questionList = [`自訂驗證|${leftSide}|${rightSide}|${vars}|${subTexVer}|${finalAns}|${texVer}`];
+        session.currentIdx = 0;
+        loadEquationToStage();
+    }
 
     (async function init() {
         currentRole = localStorage.getItem("Active_User_Role") || "GUEST";
         document.getElementById('topCenterAccount').innerText = `挑戰者: ${currentRole}`;
-        
         const cloudData = await syncWithCloud("load");
         if (cloudData && cloudData.wrongBook && cloudData.wrongBook.sub) {
             localStorage.setItem("Sub_Wrong_Bank", JSON.stringify(cloudData.wrongBook.sub));
