@@ -19,7 +19,6 @@
             display: inline-block;
             margin: 5px 0;
         }
-        /* 智能引導面板專用樣式 */
         .guide-box {
             background: rgba(255, 255, 255, 0.1);
             border-left: 4px solid #00ffc4;
@@ -182,19 +181,18 @@
     const FORMULA_BANK = {
         1: [
             { name: "幾何：正方形面積", target: "A", expr: "s^2", tex: "s^2", vars: ["s"], range: { s: [3, 12] } },
-            { name: "幾何：圓周長 (約數)", target: "C", expr: "6r", tex: "6r", vars: ["r"], range: { r: [2, 10] } },
-            { name: "科學：華氏/攝氏溫度轉換", target: "F", expr: "1.8 * C + 32", tex: "1.8C + 32", vars: ["C"], range: { C: [-10, 35] } }
+            { name: "幾何：圓周長 (約數)", target: "C", expr: "6 * r", tex: "6r", vars: ["r"], range: { r: [2, 10] } },
+            { name: "科學：華氏/攝氏溫度轉換", target: "F", expr: "1.8 * C + 32", tex: "1.8C + 32", vars: ["C"], range: { C: [0, 35] } } // 修復點：確保範圍邊界全為正整數便於隨機
         ],
         2: [
-            { name: "幾何：長方形面積", target: "A", expr: "lw", tex: "lw", vars: ["l", "w"], range: { l: [4, 12], w: [3, 8] } },
-            { name: "幾何：三角形面積", target: "A", expr: "bh / 2", tex: "\\frac{bh}{2}", vars: ["b", "h"], range: { b: [4, 14], h: [3, 10] } }
+            { name: "幾何：長方形面積", target: "A", expr: "l * w", tex: "lw", vars: ["l", "w"], range: { l: [4, 12], w: [3, 8] } },
+            { name: "幾何：三角形面積", target: "A", expr: "(b * h) / 2", tex: "\\frac{bh}{2}", vars: ["b", "h"], range: { b: [4, 14], h: [3, 10] } }
         ],
         3: [
-            { name: "幾何：梯形面積", target: "A", expr: "(a + b)h / 2", tex: "\\frac{(a + b)h}{2}", vars: ["a", "b", "h"], range: { a: [2, 6], b: [7, 12], h: [4, 10] } }
+            { name: "幾何：梯形面積", target: "A", expr: "((a + b) * h) / 2", tex: "\\frac{(a + b)h}{2}", vars: ["a", "b", "h"], range: { a: [2, 6], b: [7, 12], h: [4, 10] } }
         ]
     };
 
-    // 核心修正點：補回面板切換底層函數
     function showPanel(id) {
         document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
         const targetPanel = document.getElementById(id);
@@ -260,6 +258,7 @@
         document.getElementById('timeLimitInputWrapper').style.display = c === 'TIME_LIMIT' ? 'block' : 'none';
     }
 
+    // 修復點：修正公式解析中的隨機與乘號替換bug，確保100%成功出題
     function generateQuestion(typeCode) {
         let poolKey = typeCode === 'MIX' ? ['1', '2', '3'][Math.floor(Math.random() * 3)] : typeCode;
         let pool = FORMULA_BANK[poolKey] || FORMULA_BANK[1];
@@ -276,7 +275,7 @@
         formula.vars.forEach(v => { subTex = subTex.replace(new RegExp(v, 'g'), `(${rMap[v]})`); });
         
         let rawCalc = formula.expr;
-        rawCalc = rawCalc.replace(/\^2/g, '**2').replace(/(\d+)([a-zA-Z])/g, '$1*$2').replace(/([a-zA-Z])([a-zA-Z])/g, '$1*$2');
+        rawCalc = rawCalc.replace(/\^2/g, '**2');
         formula.vars.forEach(v => { rawCalc = rawCalc.replace(new RegExp(v, 'g'), rMap[v]); });
         let finalAns = Math.round(Function(`return (${rawCalc})`)() * 10) / 10;
 
@@ -285,8 +284,9 @@
 
     function parseEquationStructure(str) {
         let parts = str.split('|');
-        eqData.rawExpr = parts[2];
+        eqData.formulaName = parts[0];
         eqData.targetLetter = parts[1];
+        eqData.rawExpr = parts[2];
         eqData.variablesText = parts[3];
         eqData.substitutedTex = parts[4];
         eqData.ansStr = parts[5];
@@ -321,7 +321,7 @@
         document.getElementById('progressText').innerText = session.currentMode === 'REVIEW' ? `🔥 錯題重溫中` : `題驗進度：第 ${session.currentIdx + 1} 題`;
         
         document.getElementById('displayEq').innerHTML = `
-            <div>已知：<span id="texFormula" class="math-tex"></span></div>
+            <div>已知公式：<span id="texFormula" class="math-tex"></span></div>
             <div style='margin-top:25px; color:#cbd5e1; font-size: 21px;'>
                 當 <span style="color:#00ffc4; font-weight:bold;">${eqData.variablesText}</span> 時，求 <span class="math-tex">${eqData.targetLetter}</span> 的值。
             </div>
@@ -368,7 +368,7 @@
                 }
                 document.getElementById('submitAnsBtn').innerText = "驗證步驟 2：核心計算";
             } else {
-                alert("⚠️ 代入的結構好像不對喔。請對照上面的提示，把變數直接替換成帶有括號的數字再試一次！");
+                alert("⚠️ 代入的結構好像不對喔。請把變數直接替換成帶有括號的數字再試一次！");
             }
         } 
         else if (scaffoldingStage === 'GUIDE_CALC') {
@@ -403,6 +403,7 @@
         executeDirectSuccess();
     }
 
+    // 優化點：拆解題目時，右邊動態黑板與右式同步顯示完美公式
     function executeDirectSuccess() {
         document.getElementById('interactiveStageBox').innerHTML = `公式求值最簡集成結果：<span style='color:#fffb00;'>${eqData.ansStr}</span>`;
         document.getElementById('mathStepBox').innerHTML = `
@@ -449,16 +450,42 @@
         let vars = document.getElementById('xValueInput').value.trim() || "C=20";
         let rightSide = eq.includes('=') ? eq.split('=')[1].trim() : eq;
         let leftSide = eq.includes('=') ? eq.split('=')[0].trim() : "F";
+        
         let texVer = rightSide.replace(/(\d+(\.\d+)?)([a-zA-Z])/g, '$1$3');
         let rawCalc = rightSide.replace(/(\d+(\.\d+)?)([a-zA-Z])/g, '$1*$3');
         let subTexVer = texVer;
+        
         vars.split(',').forEach(p => {
             let [v, val] = p.split('=').map(s => s.trim());
             if(v && val) { subTexVer = subTexVer.replace(new RegExp(v, 'g'), `(${val})`); rawCalc = rawCalc.replace(new RegExp(v, 'g'), val); }
         });
+        
         let finalAns = Math.round(Function(`return (${rawCalc})`)() * 10) / 10;
+        // 自訂模式完美封裝資料流，使其同步支援右側分步黑板渲染
         session.questionList = [`自訂驗證|${leftSide}|${rightSide}|${vars}|${subTexVer}|${finalAns}|${texVer}`];
         session.currentIdx = 0;
+        loadEquationToStage();
+    }
+
+    function initChallengeSession() {
+        session.score = 0; session.currentIdx = 0; session.questionList = [];
+        session.endCondition = document.querySelector('input[name="endCondition"]:checked').value;
+        session.selectedType = document.getElementById('typeSelect').value;
+
+        if (session.endCondition === 'COUNT') {
+            stopSessionTimer();
+            session.totalQuestions = parseInt(document.getElementById('totalQuestionsInput').value) || 5;
+            for(let i=0; i<session.totalQuestions; i++) session.questionList.push(generateQuestion(session.selectedType));
+        } else if (session.endCondition === 'TARGET_SCORE') {
+            stopSessionTimer();
+            session.targetScore = parseInt(document.getElementById('targetScoreInput').value) || 5;
+            session.questionList.push(generateQuestion(session.selectedType));
+        } else {
+            let sec = parseInt(document.getElementById('timeLimitSelect').value) || 180;
+            session.timeLimitSetting = sec;
+            session.questionList.push(generateQuestion(session.selectedType));
+            startSessionTimer(sec);
+        }
         loadEquationToStage();
     }
 
