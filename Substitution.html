@@ -466,6 +466,26 @@
 </div>
 
 <script>
+    // 🎯 補足專案缺失的路由分流引擎
+function switchSetupConfig(configMode) {
+    if (configMode === 'CHALLENGE') {
+        showPanel('step1_challenge');
+    } else if (configMode === 'STATS') {
+        calculateAndRenderStats();
+        showPanel('step_stats_panel');
+    } else if (configMode === 'SOLVER') {
+        showPanel('step1_solver');
+    } else if (configMode === 'REVIEW') {
+        let count = (cacheStorage.EQ.wrongBook || []).length;
+        if (count > 0) {
+            initReviewSession();
+        } else {
+            alert("🎉 太棒了！目前沒有未消滅的錯題。");
+        }
+    } else if (configMode === 'CHG_PWD') {
+        showPanel('step1_chgpwd');
+    }
+}
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwIK7Mqd4WEDpbuZR-PDt4pq-8EkZ74POUDDe9WgxZA_5QqPvIBdGdD2jVFjsVOZRIj/exec";
     let currentRole = "STUDENT", activeTeacherId = "", userRawClass = "", userRawSeat = "";
     let cacheStorage = { EQ: { wrongBook: [], stats: {} } };
@@ -572,18 +592,45 @@
     function toggleOverlay(s, t="讀取中...") { let o = document.getElementById('loadingOverlay'); if(o) { document.getElementById('loadingText').innerText=t; o.style.display=s?'flex':'none'; } }
     function toggleLoginMode(m) { document.getElementById('studentLoginBox').style.display=m==='TEACHER'?'none':'block'; document.getElementById('teacherLoginBox').style.display=m==='TEACHER'?'block':'none'; }
     
-    function showPanel(id) { 
-        document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active')); 
-        document.getElementById(id).classList.add('active'); 
-        let navLeft = document.getElementById('topLeftNav'); let navRight = document.getElementById('topRightNav');
-        let accCenter = document.getElementById('topCenterAccount'); let box = document.getElementById('mainContainer');
-        if (id === 'step0_login') {
-            navLeft.style.display = 'none'; navRight.style.display = 'none'; accCenter.style.display = 'none'; box.style.display = 'none';
-        } else {
-            navLeft.style.display = 'block'; navRight.style.display = 'block'; accCenter.style.display = 'block'; box.style.display = 'block';
-            box.style.background = 'var(--glass-bg)'; box.style.backdropFilter = 'var(--glass-blur)'; box.style.webkitBackdropFilter = 'var(--glass-blur)'; box.style.boxShadow = 'var(--card-shadow)'; box.style.border = 'var(--glass-border)';
+function showPanel(id) { 
+    // 1. 切換所有面板的 active 狀態
+    document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active')); 
+    const targetPanel = document.getElementById(id);
+    if (targetPanel) targetPanel.classList.add('active'); 
+
+    let navLeft = document.getElementById('topLeftNav'); 
+    let navRight = document.getElementById('topRightNav');
+    let accCenter = document.getElementById('topCenterAccount'); 
+    let box = document.getElementById('mainContainer');
+    let loginBox = document.getElementById('step0_login');
+
+    if (id === 'step0_login') {
+        // 登入狀態：顯示登入，隱藏主內容與導航
+        if(navLeft) navLeft.style.display = 'none'; 
+        if(navRight) navRight.style.display = 'none'; 
+        if(accCenter) accCenter.style.display = 'none'; 
+        if(box) box.style.display = 'none';
+        loginBox.style.display = 'flex'; // 確保登入板正常顯示
+    } else {
+        // 進入系統狀態：完全隱藏登入板，釋放點擊層
+        loginBox.style.display = 'none'; 
+        
+        if(navLeft) navLeft.style.display = 'block'; 
+        if(navRight) navRight.style.display = 'block'; 
+        if(accCenter) accCenter.style.display = 'block'; 
+        
+        if(box) {
+            box.style.display = 'block';
+            box.style.position = 'relative'; // 提升定位層級
+            box.style.zIndex = '10';         // 確保點擊穿透至主面板
+            box.style.background = 'var(--glass-bg)'; 
+            box.style.backdropFilter = 'var(--glass-blur)'; 
+            box.style.webkitBackdropFilter = 'var(--glass-blur)'; 
+            box.style.boxShadow = 'var(--card-shadow)'; 
+            box.style.border = 'var(--glass-border)';
         }
     }
+}
 
     function loginStudent() {
         currentRole = "STUDENT"; userRawClass = document.getElementById('loginClass').value; userRawSeat = document.getElementById('loginSeat').value;
