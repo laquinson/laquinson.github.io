@@ -99,14 +99,6 @@
         <div class="stage-box" id="interactiveStageBox">展示台</div>
         <div id="teachingZone" class="teaching-row">
             <div class="teaching-column">
-                <h3>🛠️ 逐步動態操作驗證</h3>
-                <div class="block-form">
-                    <p class="camp-tip">💡 概念引導：請寫出括號代入過程或最終答案來完成驗證。</p>
-                    <div class="form-group"><label>請寫出代入算式 (例如 (8)(11)/2 或答案) 以通過防禦認證：</label><input type="text" id="rightCampInput" placeholder="例如: (8)(11)/2 或 44"></div>
-                    <button onclick="executeFinalVerify()" class="btn-success">執行集成驗證</button>
-                </div>
-            </div>
-            <div class="teaching-column">
                 <h3>📝 步驟動態黑板</h3>
                 <div class="math-step-box" id="mathStepBox"></div>
             </div>
@@ -139,7 +131,7 @@
     let eqData = { targetLetter: "A", formulaName: "bh/2", variablesText: "b=8, h=11", ansStr: "44", substituted: "(8)(11)/2" };
     let timerInterval = null; let timeLeft = 0;
 
-    // 🎯 核心補回：完整的跨學科多變數公式代入數據庫項目
+    // 完整的跨學科多變數公式數據庫
     const FORMULA_BANK = {
         1: [
             { name: "幾何：正方形面積", target: "A", expr: "s^2", vars: ["s"], range: { s: [3, 12] } },
@@ -174,7 +166,7 @@
             document.getElementById('statsFinalScore').innerText = `${session.score} 分`;
             showPanel('step_stats_panel');
         } else if (mode === 'REVIEW') {
-            alert("目前精簡沙盒版錯題本無紀錄！");
+            alert("目前錯題本無紀錄！");
         }
     }
 
@@ -193,13 +185,14 @@
         document.getElementById('timeLimitInputWrapper').style.display = c === 'TIME_LIMIT' ? 'block' : 'none';
     }
 
-    // 🎯 核心補回：隨機題目演算法引擎
+    // 🎯 核心修復：隨機題目演算法引擎（支援數字緊貼字母、雙字母隱式乘號自動補全）
     function generateQuestion(typeCode) {
         let poolKey = typeCode === 'MIX' ? ['1', '2', '3'][Math.floor(Math.random() * 3)] : typeCode;
         let pool = FORMULA_BANK[poolKey] || FORMULA_BANK[1];
         let formula = pool[Math.floor(Math.random() * pool.length)];
         let varAssigns = [];
         let rMap = {};
+        
         formula.vars.forEach(v => {
             let r = formula.range[v];
             let val = Math.floor(Math.random() * (r[1] - r[0] + 1)) + r[0];
@@ -207,12 +200,23 @@
             varAssigns.push(`${v} = ${val}`);
         });
         
+        // 1. 生成給學生看的帶括號步驟 (例如：6(10) 或 (8)(11)/2)
         let subExpr = formula.expr;
         formula.vars.forEach(v => { subExpr = subExpr.replace(new RegExp(v, 'g'), `(${rMap[v]})`); });
         
-        // 簡單的內建 eval 核心模擬
+        // 2. 核心修正邏輯：將表達式轉換為可執行乘法的格式
         let rawCalc = formula.expr;
+        
+        // 如果公式是 "6r" 這種數字緊跟字母的結構，自動在數字與字母間補上 *，防止其變成 610
+        rawCalc = rawCalc.replace(/(\d+)([a-zA-Z])/g, '$1*$2');
+        
+        // 如果公式是 "lw" 或 "bh" 這種兩個變數緊貼的結構，自動在字母與字母間補上 *
+        rawCalc = rawCalc.replace(/([a-zA-Z])([a-zA-Z])/g, '$1*$2');
+        
+        // 3. 代入真正的數值進行計算
         formula.vars.forEach(v => { rawCalc = rawCalc.replace(new RegExp(v, 'g'), rMap[v]); });
+        
+        // 精確執行數學計算
         let finalAns = Math.round(Function(`return (${rawCalc})`)() * 10) / 10;
 
         return `${formula.name}|${formula.target}|${formula.expr}|${varAssigns.join(', ')}|${subExpr}|${finalAns}`;
@@ -227,6 +231,7 @@
         eqData.ansStr = parts[5];
     }
 
+    // 限時賽引擎
     function startSessionTimer(seconds) {
         stopSessionTimer(); timeLeft = seconds;
         document.getElementById('globalTimerBox').style.display = 'inline-block';
@@ -291,9 +296,9 @@
             showPanel('step3');
             executeDirectSuccess();
         } else {
-            alert("❌ 計算結果不對喔！別氣餒，系統直接啟動動態拆解引導卡片。");
+            alert("❌ 計算結果不對喔！別氣餒，系統直接啟動動態拆解引導。");
             showPanel('step3');
-            executeDirectSuccess(); // 自動導引進入黑板程序
+            executeDirectSuccess(); 
         }
     }
 
