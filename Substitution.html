@@ -59,12 +59,12 @@
 
         .topLeftNav, .top-left-nav {
             position: absolute; top: 25px; left: 20px;
-            display: none; z-index: 999 !important; /* 🌟 提升層級確保點擊有效 */
+            display: none; z-index: 999 !important; 
         }
 
         .top-right-nav {
             position: absolute; top: 25px; right: 20px;
-            display: none; z-index: 999 !important; /* 🌟 提升層級確保點擊有效 */
+            display: none; z-index: 999 !important; 
         }
 
         .container { 
@@ -225,7 +225,7 @@
 <div id="loadingOverlay" class="loading-overlay" style="display: none;"><div class="spinner"></div><p id="loadingText" style="margin-top:15px;font-weight:bold;">連線中...</p></div>
 
 <div id="topLeftNav" class="top-left-nav">
-    <button class="top-nav-btn" onclick="resetToMainMenu(true)" title="返回主選單">&lt; 返回主目錄</button>
+    <button class="top-nav-btn" onclick="resetToMainMenu(true)" title="返回學習大廳">&lt; 返回學習大廳</button>
 </div>
 
 <div id="topCenterAccount" class="top-center-account"></div>
@@ -485,7 +485,7 @@
         2: [
             { name: "幾何：長方形面積", target: "A", expr: "l * w", vars: ["l", "w"], range: { l: [5, 18], w: [3, 10] } },
             { name: "物理：運動學路徑", target: "d", expr: "v * t", vars: ["v", "t"], range: { v: [10, 90], t: [2, 6] } },
-            { name: "幾何：三角形面積", target: "A", expr: "(b * h) / 2", vars: ["b", "h"], range: { b: [4, 16], h: [3, 12] } },
+            { name: "幾幾何：三角形面積", target: "A", expr: "(b * h) / 2", vars: ["b", "h"], range: { b: [4, 16], h: [3, 12] } },
             { name: "物理：牛頓第二定律", target: "F", expr: "m * a", vars: ["m", "a"], range: { m: [2, 45], a: [1, 9] } },
             { name: "科學：物質質量", target: "M", expr: "p * V", vars: ["p", "V"], range: { p: [2, 8], V: [4, 25] } }
         ],
@@ -503,7 +503,6 @@
         ]
     };
 
-    // 🎯 完善路由分流引擎
     function switchSetupConfig(configMode) {
         if (configMode === 'CHALLENGE') {
             showPanel('step1_challenge');
@@ -540,7 +539,6 @@
         cacheStorage.EQ.stats = getInitialStatsObject();
         renderTypeSelectOptions();
         
-        // 身分驗證與免登入自動跳轉
         checkActiveSessionOnLoad();
     })();
 
@@ -1007,8 +1005,8 @@
         let n = document.getElementById('nextBtn');
         if(session.currentMode==='CHALLENGE') {
             n.innerText = (session.endCondition==='TIME_LIMIT') ? "下一道瘋狂求值題 ➡️" : ((session.currentIdx < session.questionList.length-1)?"前進下一題 ➡️":"🏁 挑戰結束，查看報告");
-        } else if(session.currentMode==='REVIEW') n.innerText = (session.currentIdx === session.totalQuestions-1 || cacheStorage.EQ.wrongBook.length===0)?"🏁 結束溫習返回主選單":"下一道魔王關卡 ➡️";
-        else n.innerText="↩️ 講解完畢，返回選單";
+        } else if(session.currentMode==='REVIEW') n.innerText = (session.currentIdx === session.totalQuestions-1 || cacheStorage.EQ.wrongBook.length===0)?"🏁 結束溫習返回學習大廳":"下一道魔王關卡 ➡️";
+        else n.innerText="↩️ 講解完畢，返回學習大廳";
     }
 
     function advanceQuestion() {
@@ -1057,12 +1055,19 @@
     }
 
     function resetToMainMenu(nc) {
-        if(nc && (document.getElementById('step2').classList.contains('active')||document.getElementById('step3').classList.contains('active'))) {
-            if(!confirm("確定要中途退出挑戰嗎？")) return;
-        }
-        stopSessionTimer(); document.getElementById('nextBtn').style.display="none"; document.getElementById('teachingZone').style.display="none";
-        cloudSaveData(); updateReviewMenuUI(); showPanel('step1');
+    if(nc && (document.getElementById('step2').classList.contains('active') || document.getElementById('step3').classList.contains('active'))) {
+        if(!confirm("確定要中途退出挑戰嗎？")) return;
     }
+    stopSessionTimer(); 
+    if(document.getElementById('nextBtn')) document.getElementById('nextBtn').style.display="none"; 
+    if(document.getElementById('teachingZone')) document.getElementById('teachingZone').style.display="none";
+    
+    cloudSaveData(); 
+    updateReviewMenuUI(); 
+    
+    // 🎯 核心修改：不再停留在當前頁面的 step1，而是直接跳轉到大廳首頁
+    window.location.href = "home.html"; 
+}
 
     function logoutSession() {
         if(confirm("確定登出系統嗎？")) {
@@ -1070,7 +1075,6 @@
         }
     }
 
-    // ⏱️ 計時器引擎（🌟 已修復多餘括號語法錯誤 🌟）
     function startSessionTimer(seconds) {
         stopSessionTimer();
         timeLeft = seconds;
@@ -1082,7 +1086,7 @@
         timerInterval = setInterval(() => {
             timeLeft--;
             let min = String(Math.floor(timeLeft / 60)).padStart(2, '0');
-            let sec = String(timeLeft % 60).padStart(2, '0'); // 修正完畢
+            let sec = String(timeLeft % 60).padStart(2, '0');
             let timeStr = `⏱️ ${min}:${sec}`;
             
             if (timerBox) timerBox.innerText = timeStr;
