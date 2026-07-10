@@ -19,23 +19,6 @@
             display: inline-block;
             margin: 10px 0;
         }
-        /* 直式對齊專用樣式 */
-        .vertical-math-block {
-            font-family: 'KaTeX_Main', serif;
-            font-size: 1.5em;
-            color: #00ffc4;
-            display: inline-block;
-            text-align: right;
-            line-height: 1.5;
-            padding: 10px 20px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 8px;
-        }
-        .vertical-line {
-            border-bottom: 2px solid #ffffff;
-            margin-top: 4px;
-            padding-bottom: 4px;
-        }
     </style>
 </head>
 <body>
@@ -65,6 +48,10 @@
             <div class="dash-btn bg-teal" onclick="switchSetupConfig('SOLVER')">
                 <div><div class="dash-icon"><i>f(x)</i></div><div class="dash-title">多項式計算機</div></div>
                 <div class="dash-desc">輸入任意多項式進行橫式與直式拆解</div>
+            </div>
+            <div id="reviewModeCard" class="dash-btn bg-blue" onclick="switchSetupConfig('REVIEW')">
+                <div><div class="dash-icon">🗂️</div><div class="dash-title" id="reviewTitle">錯題庫 (還剩 0 題)</div></div>
+                <div class="dash-desc">重溫卡片與未攻破題型</div>
             </div>
         </div>
     </div>
@@ -159,13 +146,53 @@
 <script>
     let currentRole = "";
     let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, timeLimitSetting: 300, score: 0, currentIdx: 0, questionList: [], selectedType: 'MIX' };
-    let polyData = { rawExpr: "", ansStr: "", type: "ADD", texExpr: "", texAns: "", steps: [] };
+    let polyData = { rawExpr: "", ansStr: "", type: "ADD", texExpr: "", texAns: "", p1: "", op: "", p2: "", a1:0, b1:0, c1:0, a2:0, b2:0, c2:0, ansA:0, ansB:0, ansC:0, isQuad: true };
     let timerInterval = null; let timeLeft = 0;
+    let wrongQuestionBank = [];
+
+    // GAS 連線設定
+    const GOOGLE_SHEET_API = "https://script.google.com/macros/s/AKfycbwIK7Mqd4WEDpbuZR-PDt4pq-8EkZ74POUDDe9WgxZA_5QqPvIBdGdD2jVFjsVOZRIj/exec";
+
+    // 雲端同步引擎
+    async function syncWithCloud(action, payload = null) {
+        const userKey = localStorage.getItem("Active_User_Role") || "GUEST";
+        if (userKey === "GUEST") return null;
+        try {
+            if (action === "load") {
+                const url = `${GOOGLE_SHEET_API}?jsonData=${encodeURIComponent(JSON.stringify({ action: "load", userKey: userKey }))}`;
+                const response = await fetch(url);
+                const resData = await response.json();
+                if (resData.success) return resData;
+            } else if (action === "save" && payload) {
+                const cloudCurrent = await syncWithCloud("load");
+                let mergedStats = cloudCurrent && cloudCurrent.stats ? cloudCurrent.stats : {};
+                let mergedWB = cloudCurrent && cloudCurrent.wrongBook ? cloudCurrent.wrongBook : {};
+                
+                mergedStats["poly"] = payload.stats;
+                mergedWB["poly"] = payload.wrongBook;
+
+                const postBody = { action: "save", userKey: userKey, stats: mergedStats, wrongBook: mergedWB };
+                await fetch(GOOGLE_SHEET_API, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify(postBody)
+                });
+            }
+        } catch (e) { console.error("雲端同步異常:", e); }
+        return null;
+    }
+
+    function updateReviewCardUI() {
+        wrongQuestionBank = JSON.parse(localStorage.getItem("Poly_Wrong_Bank")) || [];
+        const reviewTitle = document.getElementById('reviewTitle');
+        if (reviewTitle) reviewTitle.innerText = `錯題庫 (還剩 ${wrongQuestionBank.length} 題)`;
+    }
 
     function showPanel(id) {
         document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
         const targetPanel = document.getElementById(id);
         if (targetPanel) targetPanel.classList.add('active');
+        document.getElementById('topLeftNav').style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -183,6 +210,22 @@
         } else if (mode === 'STATS') {
             document.getElementById('statsFinalScore').innerText = `${session.score} 分`;
             showPanel('step_stats_panel');
+            updateReviewCardUI();
+        } else if (mode === 'REVIEW') {
+            wrongQuestionBank = JSON.parse(localStorage.getItem("Poly_Wrong_Bank")) || [];
+            if (wrongQuestionBank.length === 0) {
+                alert("🎉 太棒了！目前多項式沒有任何錯題記錄！");
+                return;
+            }
+            stopSessionTimer();
+            session.score = 0; session.currentIdx = 0;
+            session.questionList = [...wrongQuestionBank];
+            session.endCondition = 'COUNT';
+            session.totalQuestions = session.questionList.length;
+            if(document.getElementById('timeModeResultSummary')) {
+                document.getElementById('timeModeResultSummary').style.display = 'none';
+            }
+            loadQuestionToStage();
         }
     }
 
@@ -192,7 +235,6 @@
         document.getElementById('timeLimitInputWrapper').style.display = c === 'TIME_LIMIT' ? 'block' : 'none';
     }
 
-    // 格式化輸出多項式 LaTeX 字串，處理常數與正負號
     function formatPolyTex(a, b, c = 0, isQuad = false) {
         let res = "";
         if (isQuad && a !== 0) {
@@ -209,12 +251,10 @@
         return res || "0";
     }
 
-    // 將使用者輸入的標準字串形式（如 3x^2-2x）標準化，便於答案比對
     function normalizePolyStr(str) {
         return str.replace(/\s+/g, '').replace(/\+x/g, '+1x').replace(/-x/g, '-1x').replace(/^x/, '1x');
     }
 
-    // 亂數多項式產生器
     function generatePolynomialQuestion(mode) {
         let isQuad = mode === 'MIX' ? Math.random() > 0.5 : (mode === 'QUAD');
         let isAdd = Math.random() > 0.5;
@@ -229,30 +269,24 @@
         
         let p1Tex = formatPolyTex(a1, b1, c1, isQuad);
         let p2Tex = formatPolyTex(a2, b2, c2, isQuad);
-        
         let op = isAdd ? "+" : "-";
         let texExpr = `(${p1Tex}) ${op} (${p2Tex})`;
         
         let ansA = isAdd ? (a1 + a2) : (a1 - a2);
         let ansB = isAdd ? (b1 + b2) : (b1 - b2);
         let ansC = isAdd ? (c1 + c2) : (c1 - c2);
-        
         let texAns = formatPolyTex(ansA, ansB, ansC, isQuad);
-        let plainAns = texAns.replace(/\{/g, '').replace(/\}/g, '');
 
-        // 直式排版字串生成
-        let vSign = isAdd ? "+" : "-";
-        let vLine1 = isQuad ? `${a1}x^2 ${b1>=0?'+':''} ${b1}x ${c1>=0?'+':''} ${c1}` : `${b1}x ${c1>=0?'+':''} ${c1}`;
-        let vLine2 = isQuad ? `${vSign}(${a2}x^2 ${b2>=0?'+':''} ${b2}x ${c2>=0?'+':''} ${c2})` : `${vSign}(${b2}x ${c2>=0?'+':''} ${c2})`;
-        let vAns = isQuad ? `${ansA}x^2 ${ansB>=0?'+':''} ${ansB}x ${ansC>=0?'+':''} ${ansC}` : `${ansB}x ${ansC>=0?'+':''} ${ansC}`;
-
-        return `${texExpr}|${plainAns}|${texAns}|${p1Tex}|${op}|${p2Tex}|${vLine1}|${vLine2}|${vAns}`;
+        return `${texExpr}|${texAns}|${p1Tex}|${op}|${p2Tex}|${a1},${b1},${c1}|${a2},${b2},${c2}|${ansA},${ansB},${ansC}|${isQuad?1:0}`;
     }
 
     function initChallengeSession() {
         session.score = 0; session.currentIdx = 0; session.questionList = [];
         session.endCondition = document.querySelector('input[name="endCondition"]:checked').value;
         session.selectedType = document.getElementById('typeSelect').value;
+        if(document.getElementById('timeModeResultSummary')) {
+            document.getElementById('timeModeResultSummary').style.display = 'none';
+        }
 
         if (session.endCondition === 'COUNT') {
             stopSessionTimer();
@@ -270,8 +304,7 @@
     function handleManualSolverInput() {
         stopSessionTimer();
         let input = document.getElementById('polyInput').value || "(2x^2 + 3x) + (x^2 - 5x)";
-        // 自訂模式的簡單轉換機制
-        session.questionList = [`(${input})|3x^2-2x|3x^2-2x|2x^2+3x|+|x^2-5x|2x^2+3x|+(x^2-5x)|3x^2-2x`];
+        session.questionList = [`(${input})|3x^2-2x|2x^2+3x|+|x^2-5x|2,3,0|1,-5,0|3,-2,0|1`];
         session.currentIdx = 0;
         loadQuestionToStage();
     }
@@ -282,18 +315,27 @@
         
         polyData.texExpr = parts[0];
         polyData.ansStr = parts[1];
-        polyData.texAns = parts[2];
-        polyData.p1 = parts[3];
-        polyData.op = parts[4];
-        polyData.p2 = parts[5];
-        polyData.v1 = parts[6];
-        polyData.v2 = parts[7];
-        polyData.vAns = parts[8];
+        polyData.texAns = parts[1];
+        polyData.p1 = parts[2];
+        polyData.op = parts[3];
+        polyData.p2 = parts[4];
+        
+        let c1 = parts[5].split(',').map(Number);
+        polyData.a1 = c1[0]; polyData.b1 = c1[1]; polyData.c1 = c1[2];
+        let c2 = parts[6].split(',').map(Number);
+        polyData.a2 = c2[0]; polyData.b2 = c2[1]; polyData.c2 = c2[2];
+        let c3 = parts[7].split(',').map(Number);
+        polyData.ansA = c3[0]; polyData.ansB = c3[1]; polyData.ansC = c3[2];
+        polyData.isQuad = Number(parts[8]) === 1;
 
         document.getElementById('scoreText').innerText = `積分：${session.score}`;
-        document.getElementById('progressText').innerText = session.endCondition === 'TIME_LIMIT' ? `⏳ 限時狂熱衝分中！` : `題驗進度：第 ${session.currentIdx + 1} 題`;
         
-        // 使用 KaTeX 進行教科書式排版渲染
+        if (session.currentMode === 'REVIEW') {
+            document.getElementById('progressText').innerText = `🔥 錯題重溫中：第 ${session.currentIdx + 1} / ${session.totalQuestions} 題`;
+        } else {
+            document.getElementById('progressText').innerText = session.endCondition === 'TIME_LIMIT' ? `⏳ 限時狂熱衝分中！` : `題驗進度：第 ${session.currentIdx + 1} 題`;
+        }
+        
         katex.render(polyData.texExpr, document.getElementById('displayPoly'), { throwOnError: false });
         showPanel('step2');
     }
@@ -302,43 +344,87 @@
         let studentAns = document.getElementById('ansInput').value.trim();
         let normStudent = normalizePolyStr(studentAns);
         let normCorrect = normalizePolyStr(polyData.ansStr);
+        let currentQuestionStr = session.questionList[session.currentIdx];
 
         if(normStudent === normCorrect || studentAns === polyData.ansStr) {
             session.score++;
-            alert("🎯 太棒了！計算完全正確！");
+            if (session.currentMode === 'REVIEW') {
+                wrongQuestionBank = wrongQuestionBank.filter(q => q !== currentQuestionStr);
+                localStorage.setItem("Poly_Wrong_Bank", JSON.stringify(wrongQuestionBank));
+            }
+            alert("🎯 計算完全正確！");
         } else {
-            alert(`❌ 答案不太對喔！正確答案是 ${polyData.ansStr}。讓我們來看解題拆解！`);
+            alert(`❌ 答案不太對喔！已為你記錄此題。讓我們來看解題拆解！`);
+            if (!wrongQuestionBank.includes(currentQuestionStr)) {
+                wrongQuestionBank.push(currentQuestionStr);
+                localStorage.setItem("Poly_Wrong_Bank", JSON.stringify(wrongQuestionBank));
+            }
         }
+
+        // 發送雲端即時上傳
+        syncWithCloud("save", {
+            stats: { lastScore: session.score, lastTotal: session.currentIdx + 1, timestamp: new Date().toLocaleString() },
+            wrongBook: wrongQuestionBank
+        });
+
         showPanel('step3');
         renderExplanationStage();
     }
 
+    // 利用 KaTeX array 語法動態拼裝嚴格垂直對齊的數學直式
+    function generateVerticalLatex() {
+        let opSymbol = polyData.op === '+' ? '+' : '-';
+        
+        function getTerm(val, label, isFirstColumn) {
+            if (val === 0) return ["", ""];
+            let sign = val > 0 ? "+" : "-";
+            let text = (Math.abs(val) === 1 && label !== "") ? label : Math.abs(val) + label;
+            return isFirstColumn ? ["", val > 0 ? text : "-" + text] : [sign, text];
+        }
+
+        let [s1_2, t1_2] = getTerm(polyData.a1, "x^2", true);
+        let [s1_1, t1_1] = getTerm(polyData.b1, "x", polyData.a1 === 0);
+        let [s1_0, t1_0] = getTerm(polyData.c1, "", polyData.a1 === 0 && polyData.b1 === 0);
+
+        let [s2_2, t2_2] = getTerm(polyData.a2, "x^2", true);
+        let [s2_1, t2_1] = getTerm(polyData.b2, "x", polyData.a2 === 0);
+        let [s2_0, t2_0] = getTerm(polyData.c2, "", polyData.a2 === 0 && polyData.b2 === 0);
+
+        let [s3_2, t3_2] = getTerm(polyData.ansA, "x^2", true);
+        let [s3_1, t3_1] = getTerm(polyData.ansB, "x", polyData.ansA === 0);
+        let [s3_0, t3_0] = getTerm(polyData.ansC, "", polyData.ansA === 0 && polyData.ansB === 0);
+
+        if (polyData.isQuad) {
+            return `\\begin{array}{rrcrcrc}
+                & ${s1_2} & ${t1_2} & ${s1_1} & ${t1_1} & ${s1_0} & ${t1_0} \\\\
+            ${opSymbol} & ${s2_2} & ${t2_2} & ${s2_1} & ${t2_1} & ${s2_0} & ${t2_0} \\\\ \\hline
+                & ${s3_2} & ${t3_2} & ${s3_1} & ${t3_1} & ${s3_0} & ${t3_0}
+            \\end{array}`;
+        } else {
+            return `\\begin{array}{rrcrc}
+                & ${s1_1} & ${t1_1} & ${s1_0} & ${t1_0} \\\\
+            ${opSymbol} & ${s2_1} & ${t2_1} & ${s2_0} & ${t2_0} \\\\ \\hline
+                & ${s3_1} & ${t3_1} & ${s3_0} & ${t3_0}
+            \\end{array}`;
+        }
+    }
+
     function renderExplanationStage() {
-        // 1. 頂部答案渲染
         katex.render(polyData.texAns, document.getElementById('interactiveStageBox'), { throwOnError: false });
 
-        // 2. 橫式併項步驟渲染
         let step1 = `\\text{原式} = (${polyData.p1}) ${polyData.op} (${polyData.p2})`;
-        let step2 = polyData.op === '+' ? `= ${polyData.p1} + ${polyData.p2}` : `= ${polyData.p1} - (${polyData.p2})`;
+        let step2 = polyData.op === '+' 
+            ? `= ${polyData.p1} + ${polyData.p2}` 
+            : `= ${polyData.p1} - ${polyData.p2.includes('-') || polyData.p2.includes('+') ? '('+polyData.p2+')' : polyData.p2}`;
         let step3 = `= ${polyData.texAns}`;
         
-        document.getElementById('horizontalStepBox').innerHTML = `
-            <div id="hStep1"></div>
-            <div id="hStep2"></div>
-            <div id="hStep3"></div>
-        `;
+        document.getElementById('horizontalStepBox').innerHTML = `<div id="hStep1"></div><div id="hStep2"></div><div id="hStep3"></div>`;
         katex.render(step1, document.getElementById('hStep1'), { throwOnError: false });
         katex.render(step2, document.getElementById('hStep2'), { throwOnError: false });
         katex.render(step3, document.getElementById('hStep3'), { throwOnError: false });
 
-        // 3. 直式排版對齊渲染
-        document.getElementById('verticalStepBox').innerHTML = `
-            <div class="vertical-math-block">
-                <div>${polyData.v1}</div>
-                <div class="vertical-line">${polyData.v2}</div>
-                <div style="color:#fffb00; margin-top:4px;">${polyData.vAns}</div>
-            </div>
-        `;
+        document.getElementById('verticalStepBox').innerHTML = `<div id="vKaTeXBlock" style="padding: 15px; background: rgba(0,0,0,0.3); border-radius:8px; display:inline-block; color:#00ffc4; font-size:1.4em;"></div>`;
+        katex.render(generateVerticalLatex(), document.getElementById('vKaTeXBlock'), { throwOnError: false });
 
         document.getElementById('nextBtn').style.display = "block";
     }
@@ -353,7 +439,6 @@
         }
     }
 
-    // 限時賽計時器
     function startSessionTimer(seconds) {
         stopSessionTimer(); timeLeft = seconds;
         document.getElementById('globalTimerBox').style.display = 'inline-block';
@@ -362,17 +447,30 @@
             let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
             let s = (timeLeft % 60).toString().padStart(2, '0');
             document.getElementById('globalTimerBox').innerText = `⏱️ ${m}:${s}`;
-            if (timeLeft <= 0) { stopSessionTimer(); switchSetupConfig('STATS'); }
+            if (timeLeft <= 0) { 
+                stopSessionTimer(); 
+                if(document.getElementById('timeModeResultSummary')) {
+                    document.getElementById('timeModeResultSummary').style.display = 'block';
+                    document.getElementById('timeModeResultSummary').innerHTML = `🏁 限時賽完賽：你斬獲了 <span style='font-size:20px;color:var(--danger);'>${session.score}</span> 分！`;
+                }
+                switchSetupConfig('STATS'); 
+            }
         }, 1000);
     }
+    
     function stopSessionTimer() { if(timerInterval) { clearInterval(timerInterval); timerInterval = null; } document.getElementById('globalTimerBox').style.display = 'none'; }
-
     function resetToMainMenu(nc) { stopSessionTimer(); window.location.href = "home.html"; }
     function logoutSession() { stopSessionTimer(); localStorage.clear(); window.location.href = "index.html"; }
 
-    (function init() {
+    (async function init() {
         currentRole = localStorage.getItem("Active_User_Role") || "GUEST";
         document.getElementById('topCenterAccount').innerText = `挑戰者: ${currentRole}`;
+        
+        const cloudData = await syncWithCloud("load");
+        if (cloudData && cloudData.wrongBook && cloudData.wrongBook.poly) {
+            localStorage.setItem("Poly_Wrong_Bank", JSON.stringify(cloudData.wrongBook.poly));
+        }
+        updateReviewCardUI();
     })();
 </script>
 </body>
