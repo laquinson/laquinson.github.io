@@ -620,7 +620,7 @@
     function toggleOverlay(s, t="讀取中...") { let o = document.getElementById('loadingOverlay'); if(o) { document.getElementById('loadingText').innerText=t; o.style.display=s?'flex':'none'; } }
     function toggleLoginMode(m) { document.getElementById('studentLoginBox').style.display=m==='TEACHER'?'none':'block'; document.getElementById('teacherLoginBox').style.display=m==='TEACHER'?'block':'none'; }
     
-    function showPanel(id) { 
+function showPanel(id) { 
         document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active')); 
         const targetPanel = document.getElementById(id);
         if (targetPanel) targetPanel.classList.add('active'); 
@@ -647,9 +647,16 @@
             if(navRight) navRight.style.display = 'none'; 
             if(accCenter) accCenter.style.display = 'none'; 
             if(box) box.style.display = 'none';
-            if(loginBox) loginBox.style.display = 'flex';
+            if(loginBox) {
+                loginBox.style.display = 'flex';
+                loginBox.classList.add('active'); // 確保登入顯示
+            }
         } else {
-            if(loginBox) loginBox.style.display = 'none'; 
+            // 🎯 核心修復：只要不是登入頁面，強制把登入大面板徹底隱藏 (display: none)
+            if(loginBox) {
+                loginBox.style.display = 'none'; 
+                loginBox.classList.remove('active');
+            }
             
             if(navLeft) navLeft.style.display = 'block'; 
             if(navRight) navRight.style.display = 'block'; 
