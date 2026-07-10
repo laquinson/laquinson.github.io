@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>多項式智能練習系統 - 挑戰選單</title>
+    <title>中一多項式智能練習系統 - 挑戰選單</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,24 +11,24 @@
 <div id="topCenterAccount" class="top-center-account"></div>
 
 <div id="topLeftNav" class="top-left-nav" style="display: block;">
-    <button class="top-nav-btn" onclick="resetToMainMenu()">↩️ 返回主目錄</button>
+    <button class="top-nav-btn" onclick="resetToMainMenu(true)" title="返回主選單">↩️ 返回主目錄</button>
 </div>
 
 <div id="topRightNav" class="top-right-nav">
-    <button class="top-nav-btn logout-btn-text" onclick="logoutSession()">🚪 登出</button>
+    <button class="top-nav-btn logout-btn-text" onclick="logoutSession()" title="登出">🚪 登出</button>
 </div>
 
 <div class="container" id="mainContainer">
     <div id="step1" class="step-panel dashboard-wrapper active">
-        <div class="greeting-text" id="welcomeText">請選擇挑戰模式</div>
+        <div class="greeting-text">請選擇挑戰模式</div>
         <div class="dashboard-grid">
             <div class="dash-btn bg-purple" onclick="switchSetupConfig('CHALLENGE')">
                 <div><div class="dash-icon">🎮</div><div class="dash-title">智能闖關模式</div></div>
-                <div class="dash-desc">自由選擇題型核心，自動生成關卡與原地補答！</div>
+                <div class="dash-desc">自由選擇題型核心，自動生成關卡與終點機制！</div>
             </div>
             <div class="dash-btn bg-orange" onclick="switchSetupConfig('STATS')">
                 <div><div class="dash-icon">🏆</div><div class="dash-title">學習數據報告</div></div>
-                <div class="dash-desc">統計各題型正確率與未消滅錯題，支援匯出PDF！</div>
+                <div class="dash-desc">查看化簡與展開的正確率，支援匯出PDF記錄！</div>
             </div>
             <div class="dash-btn bg-teal" onclick="switchSetupConfig('SOLVER')">
                 <div><div class="dash-icon"><i>f(x)</i></div><div class="dash-title">智慧解答模式</div></div>
@@ -51,26 +51,60 @@
             </div>
         </div>
         <div class="form-group"><label>🎯 子題型結構：</label><select id="typeSelect"></select></div>
-        <button onclick="initChallengeSession()" class="screenshot-btn">🎲 建立關卡，出發！</button>
+        
+        <div class="form-group">
+            <label>終點條件：</label>
+            <div class="radio-group">
+                <label><input type="radio" name="endCondition" value="COUNT" checked onchange="toggleConditionUI()"> 固定題數模式</label>
+                <label><input type="radio" name="endCondition" value="TARGET_SCORE" onchange="toggleConditionUI()"> 特定積分達標模式</label>
+                <label><input type="radio" name="endCondition" value="TIME_LIMIT" onchange="toggleConditionUI()"> ⏳ 限時瘋狂衝分模式</label>
+            </div>
+        </div>
+        <div class="form-group" id="countInputWrapper"><label>🔢 挑戰題數：</label><input type="number" id="totalQuestionsInput" value="5" min="1" max="25"></div>
+        <div class="form-group" id="targetScoreInputWrapper" style="display: none;"><label>🏆 目標達標分數：</label><input type="number" id="targetScoreInput" value="5" min="1"></div>
+        <div class="form-group" id="timeLimitInputWrapper" style="display: none;">
+            <label>⏱️ 限制時間選擇：</label>
+            <select id="timeLimitSelect">
+                <option value="180" selected>3 分鐘衝刺賽</option>
+                <option value="300">5 分鐘標準賽</option>
+                <option value="420">7 分鐘拉鋸賽</option>
+                <option value="600">10 分鐘大師賽</option>
+            </select>
+        </div>
+        <button onclick="initChallengeSession()" class="screenshot-btn">🎲 生成關卡，出發！</button>
     </div>
 
     <div id="step1_solver" class="step-panel">
-        <h2>🛠️ 智慧解答模式</h2>
-        <div class="form-group"><label>✏️ 請輸入多項式算式：</label><input type="text" id="eqInput" placeholder="例如：(3x+2)-(x-5)"></div>
-        <button onclick="handleManualSolverInput()" class="screenshot-btn">開始逐步教學引導</button>
+        <h2>🛠️ 智慧解答模式 (自訂計算)</h2>
+        <div class="form-group"><label>✏️ 請輸入多項式算式：</label><input type="text" id="eqInput" placeholder="例如: (3x+2)-(x-5)"></div>
+        <button onclick="handleManualSolverInput()" class="screenshot-btn">開始多項式逐步教學引導</button>
     </div>
 
     <div id="step2" class="step-panel">
+        <div class="progress-banner">
+            <div class="progress-banner-header">
+                <span id="progressText">進度載入中...</span>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <span id="globalTimerBox" class="timer-badge">⏱️ 00:00</span>
+                    <span id="scoreText" style="background:var(--stage-bg);color:#fffb00;padding:4px 8px;border-radius:20px;">積分：0</span>
+                </div>
+            </div>
+        </div>
         <h2>請計算化簡以下多項式</h2>
-        <div class="stage-box" id="displayEq"></div>
-        <div class="form-group"><label>你的最終結果：</label><input type="text" id="ansInput" placeholder="例如: 2x+5"></div>
-        <button id="submitAnsBtn" onclick="checkFirstAnswer()">提交結果並驗證</button>
+        <div class="stage-box" id="displayEq">題目載入中...</div>
+        <div id="studentAnswerFormContainer">
+            <div class="form-group" id="primaryInputWrapper">
+                <label id="inputLabel">你的最終結果：</label>
+                <input type="text" id="ansInput" placeholder="例如: 2x+7">
+            </div>
+        </div>
+        <button id="submitAnsBtn" onclick="checkFirstAnswer()">提交結果並驗證答案</button>
     </div>
 
     <div id="step3" class="step-panel">
         <h2>多項式逐步分解思維</h2>
-        <div class="stage-box" id="interactiveStageBox"></div>
-        <div class="teaching-row">
+        <div class="stage-box" id="interactiveStageBox">展示台</div>
+        <div id="teachingZone" class="teaching-row">
             <div class="teaching-column">
                 <h3>📝 步驟動態黑板</h3>
                 <div class="math-step-box" id="mathStepBox"></div>
@@ -83,36 +117,42 @@
         <h2>📊 學生歷程練習數據報告</h2>
         <div id="printOutputRenderZone">
             <div class="print-student-page">
-                <h3>多項式學生成績結算</h3>
+                <h3 id="printStudentInfo">挑戰者歷程報告</h3>
                 <p>化簡與展開綜合練習完成度：100%</p>
+                <table class="stats-table">
+                    <thead><tr><th>題型核心</th><th>挑戰結構</th><th>答對狀態</th></tr></thead>
+                    <tbody id="statsTableBody">
+                        <tr><td>多項式算式</td><td>綜合運算</td><td>首答對 (模擬數據)</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
         <div class="btn-group" style="display:flex;gap:15px;margin-top:20px;">
             <button onclick="window.print()" class="btn-info">🖨️ 匯出 PDF</button>
-            <button class="btn-secondary" onclick="resetToMainMenu()">↩️ 返回主目錄</button>
+            <button class="btn-secondary" onclick="resetToMainMenu(false)">↩️ 返回主目錄</button>
         </div>
     </div>
 </div>
 
 <script>
     let currentRole = "";
-    let session = { questionList: [], currentIdx: 0 };
-    let mockEquation = "(3x + 2) - (x - 5)";
+    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, score: 0, currentIdx: 0, questionList: [] };
+    let mockData = { currentEq: "(3x + 2) - (x - 5)", stdAns: "2x+7" };
 
-    // 🎯 修正後的顯示面板函數：確保在 step1 (模式選擇介面) 也絕對顯示返回鍵
-    function showPanel(id) { 
-        document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active')); 
+    // 介面切換核心函數
+    function showPanel(id) {
+        document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
         const targetPanel = document.getElementById(id);
         if (targetPanel) {
-            targetPanel.classList.add('active'); 
+            targetPanel.classList.add('active');
         }
-        
-        // 修正：不論在哪個面板，左上角返回主目錄鍵永遠維持顯示狀態
         document.getElementById('topLeftNav').style.display = 'block'; 
-        window.scrollTo({ top: 0, behavior: 'smooth' }); 
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+    // 模式選擇分流處理
     function switchSetupConfig(mode) {
+        session.currentMode = mode;
         if (mode === 'CHALLENGE') {
             onGameEngineChange();
             showPanel('step1_challenge');
@@ -121,43 +161,77 @@
         } else if (mode === 'STATS') {
             showPanel('step_stats_panel');
         } else if (mode === 'REVIEW') {
-            alert("錯題本暫無快照！");
+            alert("目前錯題庫尚無資料！");
         }
     }
 
+    // 依據選擇的引擎(化簡/展開)動態生成子題型下拉選單
     function onGameEngineChange() {
         let eng = document.querySelector('input[name="gameEngine"]:checked').value;
         let select = document.getElementById('typeSelect');
         if (eng === 'SIMPLIFY') {
-            select.innerHTML = `<option value="1">(ax+b)+(cx+d)</option><option value="3">(ax+b)-(cx+d)</option>`;
+            select.innerHTML = `
+                <option value="1">1. (ax + b) + (cx + d) 型</option>
+                <option value="2">2. (ax + b) - (cx + d) 型</option>
+                <option value="MIX" selected>3. 🔀 化簡綜合亂鬥</option>
+            `;
         } else {
-            select.innerHTML = `<option value="1">(ax+b)(cx+d)</option><option value="4">單項式型態展開</option>`;
+            select.innerHTML = `
+                <option value="1">1. 單項式 × 多項式展開</option>
+                <option value="2">2. (ax + b)(cx + d) 雙項展開</option>
+                <option value="MIX" selected>3. 🔀 展開綜合亂鬥</option>
+            `;
         }
     }
 
+    // 控制終點條件 UI 切換
+    function toggleConditionUI() {
+        let c = document.querySelector('input[name="endCondition"]:checked').value;
+        document.getElementById('countInputWrapper').style.display = c === 'COUNT' ? 'block' : 'none';
+        document.getElementById('targetScoreInputWrapper').style.display = c === 'TARGET_SCORE' ? 'block' : 'none';
+        document.getElementById('timeLimitInputWrapper').style.display = c === 'TIME_LIMIT' ? 'block' : 'none';
+    }
+
+    // 初始化闖關模式
     function initChallengeSession() {
-        session.questionList = [mockEquation];
+        session.score = 0;
         session.currentIdx = 0;
+        session.questionList = [mockData.currentEq];
+        
+        // 讀取設定的終點條件
+        session.endCondition = document.querySelector('input[name="endCondition"]:checked').value;
+        
         loadPolynomialToStage();
     }
 
+    // 手動輸入模式
     function handleManualSolverInput() {
-        let val = document.getElementById('eqInput').value || mockEquation;
+        let val = document.getElementById('eqInput').value || mockData.currentEq;
         session.questionList = [val];
         session.currentIdx = 0;
         loadPolynomialToStage();
     }
 
+    // 將多項式題目載入到舞台
     function loadPolynomialToStage() {
-        document.getElementById('displayEq').innerText = session.questionList[session.currentIdx];
+        document.getElementById('scoreText').innerText = `積分：${session.score}`;
+        document.getElementById('progressText').innerText = `題驗進度：第 ${session.currentIdx + 1} 題`;
+        document.getElementById('displayEq').innerHTML = `<div style="font-size: 1.5rem; letter-spacing: 1px;">${session.questionList[session.currentIdx]}</div>`;
         showPanel('step2');
     }
 
+    // 驗證答案並跳轉到動態黑板
     function checkFirstAnswer() {
-        let ans = document.getElementById('ansInput').value;
+        let ans = document.getElementById('ansInput').value.trim();
         showPanel('step3');
-        document.getElementById('interactiveStageBox').innerText = `最簡答案展示`;
-        document.getElementById('mathStepBox').innerHTML = `<div>題目：${session.questionList[session.currentIdx]}</div><div>輸入：${ans}</div>`;
+        
+        document.getElementById('interactiveStageBox').innerText = `您的答案：${ans}`;
+        document.getElementById('mathStepBox').innerHTML = `
+            <div><strong>原式：</strong>${session.questionList[session.currentIdx]}</div>
+            <div style="margin-top: 5px; color: #38bdf8;"><strong>去括號與併項過程：</strong></div>
+            <div style="padding-left: 15px; font-style: italic; color: #cbd5e1;">= 3x + 2 - x + 5<br>= (3x - x) + (2 + 5)</div>
+            <div style="margin-top: 5px;"><strong>標準最簡結果：</strong> <span style="color: #4ade80;">${mockData.stdAns}</span></div>
+        `;
         document.getElementById('nextBtn').style.display = "block";
     }
 
@@ -166,8 +240,9 @@
     }
 
     function resetToMainMenu() { window.location.href = "home.html"; }
-    function logoutSession() { localStorage.clear(); window.location.href = "index.html"; }
+    function logoutSession() { if(confirm("確定登出嗎？")) { localStorage.clear(); window.location.href = "index.html"; } }
 
+    // 初始化角色檢測
     (function init() {
         currentRole = localStorage.getItem("Active_User_Role") || "GUEST";
         document.getElementById('topCenterAccount').innerText = `挑戰者: ${currentRole}`;
