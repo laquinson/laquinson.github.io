@@ -696,9 +696,11 @@ function showPanel(id) {
     }
 
     function setupLayoutForStudent() {
-        document.querySelectorAll('.id-student-only').forEach(el=>el.style.display="flex"); document.querySelectorAll('.id-teacher-only').forEach(el=>el.style.display="none");
-        updateReviewMenuUI(); showPanel('step1');
-    }
+    document.querySelectorAll('.id-student-only').forEach(el => el.style.display = "flex"); 
+    document.querySelectorAll('.id-teacher-only').forEach(el => el.style.display = "none");
+    updateReviewMenuUI(); 
+    showPanel('step1');
+}
 
     function initLocalFallback(tC, tS) {
         try {
