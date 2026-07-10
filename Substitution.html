@@ -98,7 +98,7 @@
     <div id="step1_solver" class="step-panel">
         <h2>🛠️ 數學有問必答 (自訂代入)</h2>
         <div class="form-group"><label>✏️ 請輸入代數式或公式：</label><input type="text" id="eqInput" placeholder="例如: F = 1.8C + 32"></div>
-        <div class="form-group"><label>🔢 指定各變數的值：</label><input type="text" id="xValueInput" placeholder="placeholder"></div>
+        <div class="form-group"><label>🔢 指定各變數的值：</label><input type="text" id="xValueInput" placeholder="例如: C=20"></div>
         <button onclick="handleManualSolverInput()" class="screenshot-btn">開始多變數代入教學引導</button>
     </div>
 
@@ -175,8 +175,6 @@
     let eqData = { targetLetter: "A", formulaName: "", variablesText: "", ansStr: "", substitutedTex: "", formulaTex: "", rawExpr: "", varsMap: {}, subPlainCorrect: "" };
     let timerInterval = null; let timeLeft = 0;
     let wrongQuestionBank = [];
-    
-    // 鷹架狀態控制：'INIT' (初次嘗試), 'GUIDE_SUB' (引導代入), 'GUIDE_CALC' (引導核心運算)
     let scaffoldingStage = 'INIT'; 
 
     const GOOGLE_SHEET_API = "https://script.google.com/macros/s/AKfycbwIK7Mqd4WEDpbuZR-PDt4pq-8EkZ74POUDDe9WgxZA_5QqPvIBdGdD2jVFjsVOZRIj/exec";
@@ -192,9 +190,18 @@
             { name: "幾何：三角形面積", target: "A", expr: "bh / 2", tex: "\\frac{bh}{2}", vars: ["b", "h"], range: { b: [4, 14], h: [3, 10] } }
         ],
         3: [
-            { name: "幾幾何：梯形面積", target: "A", expr: "(a + b)h / 2", tex: "\\frac{(a + b)h}{2}", vars: ["a", "b", "h"], range: { a: [2, 6], b: [7, 12], h: [4, 10] } }
+            { name: "幾何：梯形面積", target: "A", expr: "(a + b)h / 2", tex: "\\frac{(a + b)h}{2}", vars: ["a", "b", "h"], range: { a: [2, 6], b: [7, 12], h: [4, 10] } }
         ]
     };
+
+    // 核心修正點：補回面板切換底層函數
+    function showPanel(id) {
+        document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+        const targetPanel = document.getElementById(id);
+        if (targetPanel) targetPanel.classList.add('active');
+        document.getElementById('topLeftNav').style.display = 'block'; 
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
     async function syncWithCloud(action, payload = null) {
         const userKey = localStorage.getItem("Active_User_Role") || "GUEST";
@@ -273,7 +280,6 @@
         formula.vars.forEach(v => { rawCalc = rawCalc.replace(new RegExp(v, 'g'), rMap[v]); });
         let finalAns = Math.round(Function(`return (${rawCalc})`)() * 10) / 10;
 
-        // 封裝額外參數以便引導解析
         return `${formula.name}|${formula.target}|${formula.expr}|${varAssigns.join(', ')}|${subTex}|${finalAns}|${formula.tex}`;
     }
 
@@ -286,14 +292,12 @@
         eqData.ansStr = parts[5];
         eqData.formulaTex = parts[6];
 
-        // 解析變數 Map
         eqData.varsMap = {};
         eqData.variablesText.split(',').forEach(p => {
             let [v, val] = p.split('=').map(s => s.trim());
             if(v) eqData.varsMap[v] = val;
         });
 
-        // 產生標準的文字代入對比答案 (例如 1.8(20)+32)
         let plainSub = eqData.rawExpr;
         Object.keys(eqData.varsMap).forEach(v => {
             plainSub = plainSub.replace(new RegExp(v, 'g'), `(${eqData.varsMap[v]})`);
@@ -326,14 +330,12 @@
         showPanel('step2');
     }
 
-    // 智能引導決策流
     function evaluateSubmissionFlow() {
         if (scaffoldingStage === 'INIT') {
             let ans = document.getElementById('ansInput').value.trim();
             if (ans === eqData.ansStr) {
                 processCorrectAnswer();
             } else {
-                // 答錯，不直接給答案，攔截並開啟步驟 1 鷹架
                 alert("❌ 計算結果不太對喔！別氣餒，系統已為你記錄此題。現在讓我們進入「動態黑板」一步步解開它！");
                 registerDataToWrongBank();
                 
@@ -341,7 +343,6 @@
                 document.getElementById('primaryInputWrapper').style.display = 'none';
                 document.getElementById('guideStep1Wrapper').style.display = 'block';
                 
-                // 動態提示結構格式
                 let hintFormat = eqData.rawExpr;
                 Object.keys(eqData.varsMap).forEach(v => { hintFormat = hintFormat.replace(new RegExp(v, 'g'), `(${v})`); });
                 document.getElementById('guideFormatHint').innerText = hintFormat;
@@ -358,7 +359,6 @@
                 document.getElementById('guideStep1Wrapper').style.display = 'none';
                 document.getElementById('guideStep2Wrapper').style.display = 'block';
                 
-                // 動態決定核心運算步驟的文字提示
                 if (eqData.rawExpr.includes('^2')) {
                     document.getElementById('guideStep2Prompt').innerText = `請先計算平方項部分的值。`;
                 } else if (eqData.rawExpr.includes('/') || eqData.rawExpr.includes('*') || eqData.rawExpr.includes('1.8')) {
@@ -372,8 +372,6 @@
             }
         } 
         else if (scaffoldingStage === 'GUIDE_CALC') {
-            let input2 = document.getElementById('guideInput2').value.trim();
-            // 由於核心運算各異，此處引導可以直接校對最終集成或第一步值，為了中一流暢度，此步完成後直接倒灌至成功結算
             alert("🎯 核心運算正確！你已經掌握了關鍵。現在讓我們來看完整的思維黑板！");
             processCorrectAfterGuidance();
         }
@@ -401,7 +399,6 @@
     }
 
     function processCorrectAfterGuidance() {
-        // 經過引導答對者，本題不重複加分，但能順利前進並觀看完整教科書步驟
         showPanel('step3');
         executeDirectSuccess();
     }
