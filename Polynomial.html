@@ -119,6 +119,7 @@
             <div class="print-student-page">
                 <h3 id="printStudentInfo">挑戰者歷程報告</h3>
                 <p>化簡與展開綜合練習完成度：100%</p>
+                <div id="timeModeResultSummary" style="margin: 15px 0; padding: 12px; background: #fffbeb; border-radius: 8px; font-weight: bold; border-left: 4px solid var(--warning); display: none; color: #0f172a;"></div>
                 <table class="stats-table">
                     <thead><tr><th>題型核心</th><th>挑戰結構</th><th>答對狀態</th></tr></thead>
                     <tbody id="statsTableBody">
@@ -136,21 +137,18 @@
 
 <script>
     let currentRole = "";
-    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, score: 0, currentIdx: 0, questionList: [] };
+    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, targetScore: 5, timeLimitSetting: 300, score: 0, currentIdx: 0, questionList: [] };
     let mockData = { currentEq: "(3x + 2) - (x - 5)", stdAns: "2x+7" };
+    let timerInterval = null; let timeLeft = 0;
 
-    // 介面切換核心函數
     function showPanel(id) {
         document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
         const targetPanel = document.getElementById(id);
-        if (targetPanel) {
-            targetPanel.classList.add('active');
-        }
+        if (targetPanel) targetPanel.classList.add('active');
         document.getElementById('topLeftNav').style.display = 'block'; 
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // 模式選擇分流處理
     function switchSetupConfig(mode) {
         session.currentMode = mode;
         if (mode === 'CHALLENGE') {
@@ -165,7 +163,6 @@
         }
     }
 
-    // 依據選擇的引擎(化簡/展開)動態生成子題型下拉選單
     function onGameEngineChange() {
         let eng = document.querySelector('input[name="gameEngine"]:checked').value;
         let select = document.getElementById('typeSelect');
@@ -184,7 +181,6 @@
         }
     }
 
-    // 控制終點條件 UI 切換
     function toggleConditionUI() {
         let c = document.querySelector('input[name="endCondition"]:checked').value;
         document.getElementById('countInputWrapper').style.display = c === 'COUNT' ? 'block' : 'none';
@@ -192,35 +188,65 @@
         document.getElementById('timeLimitInputWrapper').style.display = c === 'TIME_LIMIT' ? 'block' : 'none';
     }
 
-    // 初始化闖關模式
+    // 🎯 核心追加：完善的計時器控制引擎項目
+    function startSessionTimer(seconds) {
+        stopSessionTimer();timeLeft = seconds;
+        document.getElementById('globalTimerBox').style.display = 'inline-block';
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            let s = (timeLeft % 60).toString().padStart(2, '0');
+            document.getElementById('globalTimerBox').innerText = `⏱️ ${m}:${s}`;
+            if (timeLeft <= 0) {
+                stopSessionTimer();
+                alert("⏱️ 時間到！即將為您結算本次挑戰分數！");
+                finishTimeLimitSession();
+            }
+        }, 1000);
+    }
+
+    function stopSessionTimer() {
+        if(timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+        document.getElementById('globalTimerBox').style.display = 'none';
+    }
+
+    function finishTimeLimitSession() {
+        stopSessionTimer();
+        document.getElementById('timeModeResultSummary').style.display = 'block';
+        document.getElementById('timeModeResultSummary').innerHTML = `🏁 限時挑戰完賽：你成功斬獲了 <span style="font-size:20px;color:var(--danger);">${session.score}</span> 分！`;
+        switchSetupConfig('STATS');
+    }
+
     function initChallengeSession() {
-        session.score = 0;
-        session.currentIdx = 0;
-        session.questionList = [mockData.currentEq];
-        
-        // 讀取設定的終點條件
+        session.score = 0; session.currentIdx = 0; session.questionList = [mockData.currentEq];
         session.endCondition = document.querySelector('input[name="endCondition"]:checked').value;
-        
+        document.getElementById('timeModeResultSummary').style.display = 'none';
+
+        if (session.endCondition === 'TIME_LIMIT') {
+            let sec = parseInt(document.getElementById('timeLimitSelect').value) || 180;
+            session.timeLimitSetting = sec;
+            startSessionTimer(sec);
+        } else {
+            stopSessionTimer();
+        }
         loadPolynomialToStage();
     }
 
-    // 手動輸入模式
     function handleManualSolverInput() {
+        stopSessionTimer();
         let val = document.getElementById('eqInput').value || mockData.currentEq;
-        session.questionList = [val];
-        session.currentIdx = 0;
+        session.questionList = [val]; session.currentIdx = 0;
         loadPolynomialToStage();
     }
 
-    // 將多項式題目載入到舞台
     function loadPolynomialToStage() {
+        document.getElementById('ansInput').value = '';
         document.getElementById('scoreText').innerText = `積分：${session.score}`;
-        document.getElementById('progressText').innerText = `題驗進度：第 ${session.currentIdx + 1} 題`;
+        document.getElementById('progressText').innerText = session.endCondition === 'TIME_LIMIT' ? `⏳ 限時瘋狂衝分中！` : `題驗進度：第 ${session.currentIdx + 1} 題`;
         document.getElementById('displayEq').innerHTML = `<div style="font-size: 1.5rem; letter-spacing: 1px;">${session.questionList[session.currentIdx]}</div>`;
         showPanel('step2');
     }
 
-    // 驗證答案並跳轉到動態黑板
     function checkFirstAnswer() {
         let ans = document.getElementById('ansInput').value.trim();
         showPanel('step3');
@@ -236,13 +262,33 @@
     }
 
     function advanceQuestion() {
-        switchSetupConfig('STATS');
+        if (session.endCondition === 'TIME_LIMIT' && timeLeft > 0) {
+            // 限時模式下，若時間還沒到，無限自動塞題供學生瘋狂刷分
+            session.score++;
+            session.currentIdx++;
+            session.questionList.push(mockData.currentEq);
+            loadPolynomialToStage();
+        } else if (session.endCondition === 'TARGET_SCORE' && session.score < session.targetScore) {
+            session.score++;
+            session.currentIdx++;
+            session.questionList.push(mockData.currentEq);
+            loadPolynomialToStage();
+        } else if (session.endCondition === 'COUNT' && session.currentIdx < (parseInt(document.getElementById('totalQuestionsInput').value) - 1)) {
+            session.score++;
+            session.currentIdx++;
+            session.questionList.push(mockData.currentEq);
+            loadPolynomialToStage();
+        } else {
+            if (session.endCondition !== 'TIME_LIMIT') session.score++;
+            stopSessionTimer();
+            switchSetupConfig('STATS');
+        }
     }
 
-    function resetToMainMenu() { window.location.href = "home.html"; }
-    function logoutSession() { if(confirm("確定登出嗎？")) { localStorage.clear(); window.location.href = "index.html"; } }
+    // 🎯 修正：讓返回主選單能百分之百相容引數傳入，防範點擊失靈
+    function resetToMainMenu(nc) { stopSessionTimer(); window.location.href = "home.html"; }
+    function logoutSession() { stopSessionTimer(); localStorage.clear(); window.location.href = "index.html"; }
 
-    // 初始化角色檢測
     (function init() {
         currentRole = localStorage.getItem("Active_User_Role") || "GUEST";
         document.getElementById('topCenterAccount').innerText = `挑戰者: ${currentRole}`;
