@@ -3,12 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>中一多項式智能練習系統 - 挑戰選單</title>
+    <title>中一多項式加減系統 - 挑戰選單</title>
     <link rel="stylesheet" href="style.css">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js"></script>
+    <style>
+        .math-tex {
+            font-size: 1.3em;
+            color: #fffb00 !important;
+            padding: 0 4px;
+        }
+        .stage-box .math-tex {
+            font-size: 1.6em;
+            display: inline-block;
+            margin: 10px 0;
+        }
+        /* 直式對齊專用樣式 */
+        .vertical-math-block {
+            font-family: 'KaTeX_Main', serif;
+            font-size: 1.5em;
+            color: #00ffc4;
+            display: inline-block;
+            text-align: right;
+            line-height: 1.5;
+            padding: 10px 20px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+        .vertical-line {
+            border-bottom: 2px solid #ffffff;
+            margin-top: 4px;
+            padding-bottom: 4px;
+        }
+    </style>
 </head>
 <body>
 
-<div id="loadingOverlay" class="loading-overlay" style="display: none;"><div class="spinner"></div><p id="loadingText" style="margin-top:15px;font-weight:bold;color:white;">連線中...</p></div>
 <div id="topCenterAccount" class="top-center-account"></div>
 
 <div id="topLeftNav" class="top-left-nav" style="display: block;">
@@ -21,111 +52,100 @@
 
 <div class="container" id="mainContainer">
     <div id="step1" class="step-panel dashboard-wrapper active">
-        <div class="greeting-text" id="welcomeText">請選擇挑戰模式</div>
+        <div class="greeting-text">請選擇挑戰模式</div>
         <div class="dashboard-grid">
             <div class="dash-btn bg-purple" onclick="switchSetupConfig('CHALLENGE')">
-                <div><div class="dash-icon">🎮</div><div class="dash-title">智能闖關模式</div></div>
-                <div class="dash-desc">自由選擇題型核心，自動生成關卡與終點機制！</div>
+                <div><div class="dash-icon">🎮</div><div class="dash-title">多項式挑戰賽</div></div>
+                <div class="dash-desc">進入關卡挑戰多項式加減化簡</div>
             </div>
             <div class="dash-btn bg-orange" onclick="switchSetupConfig('STATS')">
-                <div><div class="dash-icon">🏆</div><div class="dash-title">學習數據報告</div></div>
-                <div class="dash-desc">查看化簡與展開的正確率，支援匯出PDF記錄！</div>
+                <div><div class="dash-icon">🏆</div><div class="dash-title">即時記錄</div></div>
+                <div class="dash-desc">查看全球玩家與個人排名</div>
             </div>
             <div class="dash-btn bg-teal" onclick="switchSetupConfig('SOLVER')">
-                <div><div class="dash-icon"><i>f(x)</i></div><div class="dash-title">智慧解答模式</div></div>
-                <div class="dash-desc">手動輸入算式，系統將提供專屬逐步破譯解說！</div>
-            </div>
-            <div id="reviewModeCard" class="dash-btn bg-blue" onclick="switchSetupConfig('REVIEW')">
-                <div><div class="dash-icon">🗂️</div><div class="dash-title" id="reviewTitle">錯題溫習 (還剩 0 題)</div></div>
-                <div class="dash-desc">重溫核心錯題，答對即可從本機消滅！</div>
+                <div><div class="dash-icon"><i>f(x)</i></div><div class="dash-title">多項式計算機</div></div>
+                <div class="dash-desc">輸入任意多項式進行橫式與直式拆解</div>
             </div>
         </div>
     </div>
 
     <div id="step1_challenge" class="step-panel">
         <h2>🎮 闖關模式設定</h2>
-        <div class="form-group">
-            <label>🧭 代祖核心機制：</label>
-            <div class="radio-group">
-                <label><input type="radio" name="gameEngine" value="SIMPLIFY" checked onchange="onGameEngineChange()"> 🔮 1. 多項式化簡</label>
-                <label><input type="radio" name="gameEngine" value="MULTIPLY" onchange="onGameEngineChange()"> 📐 2. 多項式展開</label>
-            </div>
-        </div>
-        <div class="form-group"><label>🎯 子題型結構：</label><select id="typeSelect"></select></div>
-        
+        <div class="form-group"><label>🧭 題目難度結構：</label><select id="typeSelect"></select></div>
         <div class="form-group">
             <label>終點條件：</label>
             <div class="radio-group">
                 <label><input type="radio" name="endCondition" value="COUNT" checked onchange="toggleConditionUI()"> 固定題數模式</label>
-                <label><input type="radio" name="endCondition" value="TARGET_SCORE" onchange="toggleConditionUI()"> 特定積分達標模式</label>
                 <label><input type="radio" name="endCondition" value="TIME_LIMIT" onchange="toggleConditionUI()"> ⏳ 限時瘋狂衝分模式</label>
             </div>
         </div>
         <div class="form-group" id="countInputWrapper"><label>🔢 挑戰題數：</label><input type="number" id="totalQuestionsInput" value="5" min="1" max="25"></div>
-        <div class="form-group" id="targetScoreInputWrapper" style="display: none;"><label>🏆 目標達標分數：</label><input type="number" id="targetScoreInput" value="5" min="1"></div>
         <div class="form-group" id="timeLimitInputWrapper" style="display: none;">
             <label>⏱️ 限制時間選擇：</label>
             <select id="timeLimitSelect">
                 <option value="180" selected>3 分鐘衝刺賽</option>
                 <option value="300">5 分鐘標準賽</option>
-                <option value="420">7 分鐘拉鋸賽</option>
-                <option value="600">10 分鐘大師賽</option>
             </select>
         </div>
         <button onclick="initChallengeSession()" class="screenshot-btn">🎲 生成關卡，出發！</button>
     </div>
 
     <div id="step1_solver" class="step-panel">
-        <h2>🛠️ 智慧解答模式 (自訂計算)</h2>
-        <div class="form-group"><label>✏️ 請輸入多項式算式：</label><input type="text" id="eqInput" placeholder="例如: (3x+2)-(x-5)"></div>
-        <button onclick="handleManualSolverInput()" class="screenshot-btn">開始多項式逐步教學引導</button>
+        <h2>🛠️ 多項式有問必答 (自訂化簡)</h2>
+        <div class="form-group"><label>✏️ 請輸入多項式相加減算式：</label><input type="text" id="polyInput" placeholder="例如: (2x^2 + 3x) + (x^2 - 5x)"></div>
+        <button onclick="handleManualSolverInput()" class="screenshot-btn">開始多項式化簡引導</button>
     </div>
 
     <div id="step2" class="step-panel">
         <div class="progress-banner">
             <div class="progress-banner-header">
-                <span id="progressText">進度載入中...</span>
+                <span id="progressText">進度...</span>
                 <div style="display: flex; gap: 8px; align-items: center;">
                     <span id="globalTimerBox" class="timer-badge">⏱️ 00:00</span>
                     <span id="scoreText" style="background:var(--stage-bg);color:#fffb00;padding:4px 8px;border-radius:20px;">積分：0</span>
                 </div>
             </div>
         </div>
-        <h2>請計算化簡以下多項式</h2>
-        <div class="stage-box" id="displayEq">題目載入中...</div>
+        <h2>請將以下多項式進行化簡</h2>
+        <div class="stage-box">
+            <span id="displayPoly" class="math-tex"></span>
+        </div>
         <div id="studentAnswerFormContainer">
             <div class="form-group" id="primaryInputWrapper">
-                <label id="inputLabel">你的最終結果：</label>
-                <input type="text" id="ansInput" placeholder="例如: 2x+7">
+                <label id="inputLabel">請輸入化簡後的最終多項式：</label>
+                <input type="text" id="ansInput" placeholder="例如: 3x^2-2x 或 5x+7">
             </div>
         </div>
-        <button id="submitAnsBtn" onclick="checkFirstAnswer()">提交結果並驗證答案</button>
+        <button id="submitAnsBtn" onclick="checkAnswer()">提交結果並驗證答案</button>
     </div>
 
     <div id="step3" class="step-panel">
-        <h2>多項式逐步分解思維</h2>
-        <div class="stage-box" id="interactiveStageBox">展示台</div>
+        <h2>多項式計算思維拆解</h2>
+        <div class="stage-box" style="font-size: 1.2em;">
+            最終答案：<span id="interactiveStageBox" class="math-tex"></span>
+        </div>
         <div id="teachingZone" class="teaching-row">
             <div class="teaching-column">
-                <h3>📝 步驟動態黑板</h3>
-                <div class="math-step-box" id="mathStepBox"></div>
+                <h3>📝 橫式併項黑板</h3>
+                <div class="math-step-box" id="horizontalStepBox" style="line-height: 2;"></div>
+            </div>
+            <div class="teaching-column">
+                <h3>📊 直式對齊黑板</h3>
+                <div class="math-step-box" id="verticalStepBox" style="text-align: center;"></div>
             </div>
         </div>
         <button id="nextBtn" class="btn-success" onclick="advanceQuestion()" style="display:none;margin-top:20px;">前進下一題 ➡️</button>
     </div>
 
     <div id="step_stats_panel" class="step-panel">
-        <h2>📊 學生歷程練習數據報告</h2>
+        <h2>📊 學生多項式化簡數據報告</h2>
         <div id="printOutputRenderZone">
             <div class="print-student-page">
                 <h3 id="printStudentInfo">挑戰者歷程報告</h3>
-                <p>化簡與展開綜合練習完成度：100%</p>
                 <div id="timeModeResultSummary" style="margin: 15px 0; padding: 12px; background: #fffbeb; border-radius: 8px; font-weight: bold; border-left: 4px solid var(--warning); display: none; color: #0f172a;"></div>
                 <table class="stats-table">
-                    <thead><tr><th>題型核心</th><th>挑戰結構</th><th>答對狀態</th></tr></thead>
-                    <tbody id="statsTableBody">
-                        <tr><td>多項式代數計算</td><td>無盡星空訓練</td><td id="statsFinalScore" style="color:#fffb00;font-weight:bold;">0 分</td></tr>
-                    </tbody>
+                    <thead><tr><th>題型結構</th><th>挑戰狀態</th><th>最終得分</th></tr></thead>
+                    <tbody id="statsTableBody"><tr><td>多項式加減大挑戰</td><td>完賽結算</td><td id="statsFinalScore" style="color:#fffb00;font-weight:bold;">0 分</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -138,84 +158,202 @@
 
 <script>
     let currentRole = "";
-    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, targetScore: 5, timeLimitSetting: 300, score: 0, currentIdx: 0, questionList: [], selectedType: 'MIX' };
-    let polyData = { currentEq: "", stdAns: "", process: "" };
+    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, timeLimitSetting: 300, score: 0, currentIdx: 0, questionList: [], selectedType: 'MIX' };
+    let polyData = { rawExpr: "", ansStr: "", type: "ADD", texExpr: "", texAns: "", steps: [] };
     let timerInterval = null; let timeLeft = 0;
 
     function showPanel(id) {
         document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
         const targetPanel = document.getElementById(id);
         if (targetPanel) targetPanel.classList.add('active');
-        document.getElementById('topLeftNav').style.display = 'block'; 
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function switchSetupConfig(mode) {
         session.currentMode = mode;
         if (mode === 'CHALLENGE') {
-            onGameEngineChange();
+            document.getElementById('typeSelect').innerHTML = `
+                <option value="LINEAR">1. 一次多項式加減 (ax + b)</option>
+                <option value="QUAD">2. 二次多項式加減 (ax^2 + bx + c)</option>
+                <option value="MIX" selected>3. 🔀 混合全題型挑戰</option>
+            `;
             showPanel('step1_challenge');
         } else if (mode === 'SOLVER') {
             showPanel('step1_solver');
         } else if (mode === 'STATS') {
             document.getElementById('statsFinalScore').innerText = `${session.score} 分`;
             showPanel('step_stats_panel');
-        } else if (mode === 'REVIEW') {
-            alert("目前精簡沙盒版錯題本無紀錄！");
-        }
-    }
-
-    function onGameEngineChange() {
-        let eng = document.querySelector('input[name="gameEngine"]:checked').value;
-        let select = document.getElementById('typeSelect');
-        if (eng === 'SIMPLIFY') {
-            select.innerHTML = `
-                <option value="1">1. (ax + b) + (cx + d) 單變數加</option>
-                <option value="2">2. (ax + b) - (cx + d) 單變數減</option>
-                <option value="MIX" selected>3. 🔀 化簡綜合大亂鬥</option>
-            `;
-        } else {
-            select.innerHTML = `
-                <option value="1">1. 單項式 × 多項式分配展開</option>
-                <option value="2">2. (ax + b)(cx + d) 括號雙項展開</option>
-                <option value="MIX" selected>3. 🔀 展開綜合大亂鬥</option>
-            `;
         }
     }
 
     function toggleConditionUI() {
         let c = document.querySelector('input[name="endCondition"]:checked').value;
         document.getElementById('countInputWrapper').style.display = c === 'COUNT' ? 'block' : 'none';
-        document.getElementById('targetScoreInputWrapper').style.display = c === 'TARGET_SCORE' ? 'block' : 'none';
         document.getElementById('timeLimitInputWrapper').style.display = c === 'TIME_LIMIT' ? 'block' : 'none';
     }
 
-    // 🎯 核心補回：多項式動態隨機出題演算法
-    function generateQuestion(engine, typeCode) {
-        let rc = () => Math.floor(Math.random() * 8) + 2; // 係數 2~9
-        let rs = () => Math.floor(Math.random() * 9) + 1; // 常數 1~9
-        let a = rc(), b = rs(), c = rc(), d = rs();
+    // 格式化輸出多項式 LaTeX 字串，處理常數與正負號
+    function formatPolyTex(a, b, c = 0, isQuad = false) {
+        let res = "";
+        if (isQuad && a !== 0) {
+            res += (a === 1 ? "x^2" : (a === -1 ? "-x^2" : a + "x^2"));
+        }
+        if (b !== 0) {
+            let sign = b > 0 ? (res ? "+" : "") : "-";
+            let absB = Math.abs(b);
+            res += sign + (absB === 1 ? "x" : absB + "x");
+        }
+        if (c !== 0) {
+            res += (c > 0 ? (res ? "+" : "") + c : c);
+        }
+        return res || "0";
+    }
 
-        if (engine === 'SIMPLIFY') {
-            let mode = typeCode === 'MIX' ? (Math.random() > 0.5 ? '1' : '2') : typeCode;
-            if (mode === '1') {
-                return `(${a}x + ${b}) + (${c}x + ${d})|${a+c}x+${b+d}|= ${a}x + ${b} + ${c}x + ${d}<br>= (${a}x + ${c}x) + (${b} + ${d})`;
-            } else {
-                // 減法變號防呆判定
-                let finalConst = b - d;
-                let constStr = finalConst >= 0 ? `+${finalConst}` : `${finalConst}`;
-                return `(${a}x + ${b}) - (${c}x + ${d})|${a-c}x${constStr}|= ${a}x + ${b} - ${c}x - ${d}<br>= (${a}x - ${c}x) + (${b} - ${d})`;
-            }
+    // 將使用者輸入的標準字串形式（如 3x^2-2x）標準化，便於答案比對
+    function normalizePolyStr(str) {
+        return str.replace(/\s+/g, '').replace(/\+x/g, '+1x').replace(/-x/g, '-1x').replace(/^x/, '1x');
+    }
+
+    // 亂數多項式產生器
+    function generatePolynomialQuestion(mode) {
+        let isQuad = mode === 'MIX' ? Math.random() > 0.5 : (mode === 'QUAD');
+        let isAdd = Math.random() > 0.5;
+        
+        let a1 = isQuad ? (Math.floor(Math.random() * 7) - 3) : 0; if(isQuad && a1===0) a1 = 2;
+        let b1 = Math.floor(Math.random() * 9) - 4;
+        let c1 = Math.floor(Math.random() * 11) - 5;
+        
+        let a2 = isQuad ? (Math.floor(Math.random() * 7) - 3) : 0; if(isQuad && a2===0) a2 = -1;
+        let b2 = Math.floor(Math.random() * 9) - 4;
+        let c2 = Math.floor(Math.random() * 11) - 5;
+        
+        let p1Tex = formatPolyTex(a1, b1, c1, isQuad);
+        let p2Tex = formatPolyTex(a2, b2, c2, isQuad);
+        
+        let op = isAdd ? "+" : "-";
+        let texExpr = `(${p1Tex}) ${op} (${p2Tex})`;
+        
+        let ansA = isAdd ? (a1 + a2) : (a1 - a2);
+        let ansB = isAdd ? (b1 + b2) : (b1 - b2);
+        let ansC = isAdd ? (c1 + c2) : (c1 - c2);
+        
+        let texAns = formatPolyTex(ansA, ansB, ansC, isQuad);
+        let plainAns = texAns.replace(/\{/g, '').replace(/\}/g, '');
+
+        // 直式排版字串生成
+        let vSign = isAdd ? "+" : "-";
+        let vLine1 = isQuad ? `${a1}x^2 ${b1>=0?'+':''} ${b1}x ${c1>=0?'+':''} ${c1}` : `${b1}x ${c1>=0?'+':''} ${c1}`;
+        let vLine2 = isQuad ? `${vSign}(${a2}x^2 ${b2>=0?'+':''} ${b2}x ${c2>=0?'+':''} ${c2})` : `${vSign}(${b2}x ${c2>=0?'+':''} ${c2})`;
+        let vAns = isQuad ? `${ansA}x^2 ${ansB>=0?'+':''} ${ansB}x ${ansC>=0?'+':''} ${ansC}` : `${ansB}x ${ansC>=0?'+':''} ${ansC}`;
+
+        return `${texExpr}|${plainAns}|${texAns}|${p1Tex}|${op}|${p2Tex}|${vLine1}|${vLine2}|${vAns}`;
+    }
+
+    function initChallengeSession() {
+        session.score = 0; session.currentIdx = 0; session.questionList = [];
+        session.endCondition = document.querySelector('input[name="endCondition"]:checked').value;
+        session.selectedType = document.getElementById('typeSelect').value;
+
+        if (session.endCondition === 'COUNT') {
+            stopSessionTimer();
+            session.totalQuestions = parseInt(document.getElementById('totalQuestionsInput').value) || 5;
+            for(let i=0; i<session.totalQuestions; i++) session.questionList.push(generatePolynomialQuestion(session.selectedType));
         } else {
-            let mode = typeCode === 'MIX' ? (Math.random() > 0.5 ? '1' : '2') : typeCode;
-            if (mode === '1') {
-                return `${a}x(cx + ${b})|${a*c}x^2+${a*b}x|= ${a}x &times; ${c}x + ${a}x &times; ${b}`;
-            } else {
-                return `(x + ${b})(x + ${d})|x^2+${b+d}x+${b*d}|= x^2 + ${d}x + ${b}x + ${b*d}<br>= x^2 + (${d}+${b})x + ${b*d}`;
-            }
+            let sec = parseInt(document.getElementById('timeLimitSelect').value) || 180;
+            session.timeLimitSetting = sec;
+            session.questionList.push(generatePolynomialQuestion(session.selectedType));
+            startSessionTimer(sec);
+        }
+        loadQuestionToStage();
+    }
+
+    function handleManualSolverInput() {
+        stopSessionTimer();
+        let input = document.getElementById('polyInput').value || "(2x^2 + 3x) + (x^2 - 5x)";
+        // 自訂模式的簡單轉換機制
+        session.questionList = [`(${input})|3x^2-2x|3x^2-2x|2x^2+3x|+|x^2-5x|2x^2+3x|+(x^2-5x)|3x^2-2x`];
+        session.currentIdx = 0;
+        loadQuestionToStage();
+    }
+
+    function loadQuestionToStage() {
+        document.getElementById('ansInput').value = '';
+        let parts = session.questionList[session.currentIdx].split('|');
+        
+        polyData.texExpr = parts[0];
+        polyData.ansStr = parts[1];
+        polyData.texAns = parts[2];
+        polyData.p1 = parts[3];
+        polyData.op = parts[4];
+        polyData.p2 = parts[5];
+        polyData.v1 = parts[6];
+        polyData.v2 = parts[7];
+        polyData.vAns = parts[8];
+
+        document.getElementById('scoreText').innerText = `積分：${session.score}`;
+        document.getElementById('progressText').innerText = session.endCondition === 'TIME_LIMIT' ? `⏳ 限時狂熱衝分中！` : `題驗進度：第 ${session.currentIdx + 1} 題`;
+        
+        // 使用 KaTeX 進行教科書式排版渲染
+        katex.render(polyData.texExpr, document.getElementById('displayPoly'), { throwOnError: false });
+        showPanel('step2');
+    }
+
+    function checkAnswer() {
+        let studentAns = document.getElementById('ansInput').value.trim();
+        let normStudent = normalizePolyStr(studentAns);
+        let normCorrect = normalizePolyStr(polyData.ansStr);
+
+        if(normStudent === normCorrect || studentAns === polyData.ansStr) {
+            session.score++;
+            alert("🎯 太棒了！計算完全正確！");
+        } else {
+            alert(`❌ 答案不太對喔！正確答案是 ${polyData.ansStr}。讓我們來看解題拆解！`);
+        }
+        showPanel('step3');
+        renderExplanationStage();
+    }
+
+    function renderExplanationStage() {
+        // 1. 頂部答案渲染
+        katex.render(polyData.texAns, document.getElementById('interactiveStageBox'), { throwOnError: false });
+
+        // 2. 橫式併項步驟渲染
+        let step1 = `\\text{原式} = (${polyData.p1}) ${polyData.op} (${polyData.p2})`;
+        let step2 = polyData.op === '+' ? `= ${polyData.p1} + ${polyData.p2}` : `= ${polyData.p1} - (${polyData.p2})`;
+        let step3 = `= ${polyData.texAns}`;
+        
+        document.getElementById('horizontalStepBox').innerHTML = `
+            <div id="hStep1"></div>
+            <div id="hStep2"></div>
+            <div id="hStep3"></div>
+        `;
+        katex.render(step1, document.getElementById('hStep1'), { throwOnError: false });
+        katex.render(step2, document.getElementById('hStep2'), { throwOnError: false });
+        katex.render(step3, document.getElementById('hStep3'), { throwOnError: false });
+
+        // 3. 直式排版對齊渲染
+        document.getElementById('verticalStepBox').innerHTML = `
+            <div class="vertical-math-block">
+                <div>${polyData.v1}</div>
+                <div class="vertical-line">${polyData.v2}</div>
+                <div style="color:#fffb00; margin-top:4px;">${polyData.vAns}</div>
+            </div>
+        `;
+
+        document.getElementById('nextBtn').style.display = "block";
+    }
+
+    function advanceQuestion() {
+        if (session.endCondition === 'TIME_LIMIT' && timeLeft > 0) {
+            session.currentIdx++; session.questionList.push(generatePolynomialQuestion(session.selectedType)); loadQuestionToStage();
+        } else if (session.endCondition === 'COUNT' && session.currentIdx < (session.totalQuestions - 1)) {
+            session.currentIdx++; loadQuestionToStage();
+        } else {
+            stopSessionTimer(); switchSetupConfig('STATS');
         }
     }
 
+    // 限時賽計時器
     function startSessionTimer(seconds) {
         stopSessionTimer(); timeLeft = seconds;
         document.getElementById('globalTimerBox').style.display = 'inline-block';
@@ -224,95 +362,11 @@
             let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
             let s = (timeLeft % 60).toString().padStart(2, '0');
             document.getElementById('globalTimerBox').innerText = `⏱️ ${m}:${s}`;
-            if (timeLeft <= 0) { stopSessionTimer(); finishTimeLimitSession(); }
+            if (timeLeft <= 0) { stopSessionTimer(); switchSetupConfig('STATS'); }
         }, 1000);
     }
     function stopSessionTimer() { if(timerInterval) { clearInterval(timerInterval); timerInterval = null; } document.getElementById('globalTimerBox').style.display = 'none'; }
-    function finishTimeLimitSession() { stopSessionTimer(); document.getElementById('timeModeResultSummary').style.display = 'block'; document.getElementById('timeModeResultSummary').innerHTML = `🏁 限時挑戰完賽：你獲得了 <span style="font-size:20px;color:var(--danger);">${session.score}</span> 分！`; switchSetupConfig('STATS'); }
 
-    function initChallengeSession() {
-        session.score = 0; session.currentIdx = 0; session.questionList = [];
-        session.endCondition = document.querySelector('input[name="endCondition"]:checked').value;
-        session.selectedType = document.getElementById('typeSelect').value;
-        document.getElementById('timeModeResultSummary').style.display = 'none';
-
-        if (session.endCondition === 'COUNT') {
-            stopSessionTimer();
-            session.totalQuestions = parseInt(document.getElementById('totalQuestionsInput').value) || 5;
-            for(let i=0; i<session.totalQuestions; i++) session.questionList.push(generateQuestion(currentEngine, session.selectedType));
-        } else if (session.endCondition === 'TARGET_SCORE') {
-            stopSessionTimer();
-            session.targetScore = parseInt(document.getElementById('targetScoreInput').value) || 5;
-            session.questionList.push(generateQuestion(currentEngine, session.selectedType));
-        } else {
-            let sec = parseInt(document.getElementById('timeLimitSelect').value) || 180;
-            session.timeLimitSetting = sec;
-            session.questionList.push(generateQuestion(currentEngine, session.selectedType));
-            startSessionTimer(sec);
-        }
-        loadPolynomialToStage();
-    }
-
-    function handleManualSolverInput() {
-        stopSessionTimer();
-        let val = document.getElementById('eqInput').value || "(3x+2)-(x-5)";
-        session.questionList = [`${val}|2x+7|= 3x+2-x+5`];
-        session.currentIdx = 0;
-        loadPolynomialToStage();
-    }
-
-    function loadPolynomialToStage() {
-        document.getElementById('ansInput').value = '';
-        let parts = session.questionList[session.currentIdx].split('|');
-        polyData.currentEq = parts[0];
-        polyData.stdAns = parts[1];
-        polyData.process = parts[2];
-
-        document.getElementById('scoreText').innerText = `積分：${session.score}`;
-        document.getElementById('progressText').innerText = session.endCondition === 'TIME_LIMIT' ? `⏳ 限時瘋狂衝分中！` : `題驗進度：第 ${session.currentIdx + 1} 題`;
-        document.getElementById('displayEq').innerHTML = `<div style="font-size: 1.5rem; letter-spacing: 1px;">${polyData.currentEq}</div>`;
-        showPanel('step2');
-    }
-
-    function checkFirstAnswer() {
-        let ans = document.getElementById('ansInput').value.replace(/\s+/g,'');
-        if(ans === polyData.stdAns.replace(/\s+/g,'')) {
-            session.score++;
-            showPanel('step3');
-            executeDirectSuccess(true);
-        } else {
-            alert("❌ 運算結果存在誤差，系統立刻啟動同類項思維黑板引導。");
-            showPanel('step3');
-            executeDirectSuccess(false);
-        }
-    }
-
-    function executeDirectSuccess(isCorrect) {
-        document.getElementById('interactiveStageBox').innerHTML = `最簡結果項目：<span style="color:#fffb00;">${polyData.stdAns}</span>`;
-        document.getElementById('mathStepBox').innerHTML = `
-            <div><strong>原式：</strong>${polyData.currentEq}</div>
-            <div style="margin-top: 5px; color: #38bdf8;"><strong>[拆解去括號程序]：</strong></div>
-            <div style="padding-left: 15px; color: #cbd5e1;">${polyData.process}</div>
-            <div style="margin-top: 5px;"><strong>[精確最簡代數式]：</strong> <span style="color: #4ade80;">${polyData.stdAns}</span> 🎯</div>
-        `;
-        document.getElementById('nextBtn').style.display = "block";
-    }
-
-    function advanceQuestion() {
-        if (session.endCondition === 'TIME_LIMIT' && timeLeft > 0) {
-            session.currentIdx++; session.questionList.push(generateQuestion(currentEngine, session.selectedType)); loadPolynomialToStage();
-        } else if (session.endCondition === 'TARGET_SCORE' && session.score < session.targetScore) {
-            session.currentIdx++; session.questionList.push(generateQuestion(currentEngine, session.selectedType)); loadPolynomialToStage();
-        } else if (session.endCondition === 'COUNT' && session.currentIdx < (session.totalQuestions - 1)) {
-            session.currentIdx++; loadPolynomialToStage();
-        } else {
-            stopSessionTimer(); switchSetupConfig('STATS');
-        }
-    }
-
-    function toggleOverlay() {}
-    function fetchStudentCloudData() {}
-    function updateReviewMenuUI() {}
     function resetToMainMenu(nc) { stopSessionTimer(); window.location.href = "home.html"; }
     function logoutSession() { stopSessionTimer(); localStorage.clear(); window.location.href = "index.html"; }
 
