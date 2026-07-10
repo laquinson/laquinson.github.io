@@ -8,6 +8,7 @@
 </head>
 <body>
 
+<div id="loadingOverlay" class="loading-overlay" style="display: none;"><div class="spinner"></div><p id="loadingText" style="margin-top:15px;font-weight:bold;color:white;">連線中...</p></div>
 <div id="topCenterAccount" class="top-center-account"></div>
 
 <div id="topLeftNav" class="top-left-nav" style="display: block;">
@@ -20,7 +21,7 @@
 
 <div class="container" id="mainContainer">
     <div id="step1" class="step-panel dashboard-wrapper active">
-        <div class="greeting-text">請選擇挑戰模式</div>
+        <div class="greeting-text" id="welcomeText">請選擇挑戰模式</div>
         <div class="dashboard-grid">
             <div class="dash-btn bg-purple" onclick="switchSetupConfig('CHALLENGE')">
                 <div><div class="dash-icon">🎮</div><div class="dash-title">智能闖關模式</div></div>
@@ -44,7 +45,7 @@
     <div id="step1_challenge" class="step-panel">
         <h2>🎮 闖關模式設定</h2>
         <div class="form-group">
-            <label>🧭 代數核心機制：</label>
+            <label>🧭 代祖核心機制：</label>
             <div class="radio-group">
                 <label><input type="radio" name="gameEngine" value="SIMPLIFY" checked onchange="onGameEngineChange()"> 🔮 1. 多項式化簡</label>
                 <label><input type="radio" name="gameEngine" value="MULTIPLY" onchange="onGameEngineChange()"> 📐 2. 多項式展開</label>
@@ -123,7 +124,7 @@
                 <table class="stats-table">
                     <thead><tr><th>題型核心</th><th>挑戰結構</th><th>答對狀態</th></tr></thead>
                     <tbody id="statsTableBody">
-                        <tr><td>多項式算式</td><td>綜合運算</td><td>首答對 (模擬數據)</td></tr>
+                        <tr><td>多項式代數計算</td><td>無盡星空訓練</td><td id="statsFinalScore" style="color:#fffb00;font-weight:bold;">0 分</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -137,8 +138,8 @@
 
 <script>
     let currentRole = "";
-    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, targetScore: 5, timeLimitSetting: 300, score: 0, currentIdx: 0, questionList: [] };
-    let mockData = { currentEq: "(3x + 2) - (x - 5)", stdAns: "2x+7" };
+    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, targetScore: 5, timeLimitSetting: 300, score: 0, currentIdx: 0, questionList: [], selectedType: 'MIX' };
+    let polyData = { currentEq: "", stdAns: "", process: "" };
     let timerInterval = null; let timeLeft = 0;
 
     function showPanel(id) {
@@ -157,9 +158,10 @@
         } else if (mode === 'SOLVER') {
             showPanel('step1_solver');
         } else if (mode === 'STATS') {
+            document.getElementById('statsFinalScore').innerText = `${session.score} 分`;
             showPanel('step_stats_panel');
         } else if (mode === 'REVIEW') {
-            alert("目前錯題庫尚無資料！");
+            alert("目前精簡沙盒版錯題本無紀錄！");
         }
     }
 
@@ -168,15 +170,15 @@
         let select = document.getElementById('typeSelect');
         if (eng === 'SIMPLIFY') {
             select.innerHTML = `
-                <option value="1">1. (ax + b) + (cx + d) 型</option>
-                <option value="2">2. (ax + b) - (cx + d) 型</option>
-                <option value="MIX" selected>3. 🔀 化簡綜合亂鬥</option>
+                <option value="1">1. (ax + b) + (cx + d) 單變數加</option>
+                <option value="2">2. (ax + b) - (cx + d) 單變數減</option>
+                <option value="MIX" selected>3. 🔀 化簡綜合大亂鬥</option>
             `;
         } else {
             select.innerHTML = `
-                <option value="1">1. 單項式 × 多項式展開</option>
-                <option value="2">2. (ax + b)(cx + d) 雙項展開</option>
-                <option value="MIX" selected>3. 🔀 展開綜合亂鬥</option>
+                <option value="1">1. 單項式 × 多項式分配展開</option>
+                <option value="2">2. (ax + b)(cx + d) 括號雙項展開</option>
+                <option value="MIX" selected>3. 🔀 展開綜合大亂鬥</option>
             `;
         }
     }
@@ -188,104 +190,129 @@
         document.getElementById('timeLimitInputWrapper').style.display = c === 'TIME_LIMIT' ? 'block' : 'none';
     }
 
-    // 🎯 核心追加：完善的計時器控制引擎項目
+    // 🎯 核心補回：多項式動態隨機出題演算法
+    function generateQuestion(engine, typeCode) {
+        let rc = () => Math.floor(Math.random() * 8) + 2; // 係數 2~9
+        let rs = () => Math.floor(Math.random() * 9) + 1; // 常數 1~9
+        let a = rc(), b = rs(), c = rc(), d = rs();
+
+        if (engine === 'SIMPLIFY') {
+            let mode = typeCode === 'MIX' ? (Math.random() > 0.5 ? '1' : '2') : typeCode;
+            if (mode === '1') {
+                return `(${a}x + ${b}) + (${c}x + ${d})|${a+c}x+${b+d}|= ${a}x + ${b} + ${c}x + ${d}<br>= (${a}x + ${c}x) + (${b} + ${d})`;
+            } else {
+                // 減法變號防呆判定
+                let finalConst = b - d;
+                let constStr = finalConst >= 0 ? `+${finalConst}` : `${finalConst}`;
+                return `(${a}x + ${b}) - (${c}x + ${d})|${a-c}x${constStr}|= ${a}x + ${b} - ${c}x - ${d}<br>= (${a}x - ${c}x) + (${b} - ${d})`;
+            }
+        } else {
+            let mode = typeCode === 'MIX' ? (Math.random() > 0.5 ? '1' : '2') : typeCode;
+            if (mode === '1') {
+                return `${a}x(cx + ${b})|${a*c}x^2+${a*b}x|= ${a}x &times; ${c}x + ${a}x &times; ${b}`;
+            } else {
+                return `(x + ${b})(x + ${d})|x^2+${b+d}x+${b*d}|= x^2 + ${d}x + ${b}x + ${b*d}<br>= x^2 + (${d}+${b})x + ${b*d}`;
+            }
+        }
+    }
+
     function startSessionTimer(seconds) {
-        stopSessionTimer();timeLeft = seconds;
+        stopSessionTimer(); timeLeft = seconds;
         document.getElementById('globalTimerBox').style.display = 'inline-block';
         timerInterval = setInterval(() => {
             timeLeft--;
             let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
             let s = (timeLeft % 60).toString().padStart(2, '0');
             document.getElementById('globalTimerBox').innerText = `⏱️ ${m}:${s}`;
-            if (timeLeft <= 0) {
-                stopSessionTimer();
-                alert("⏱️ 時間到！即將為您結算本次挑戰分數！");
-                finishTimeLimitSession();
-            }
+            if (timeLeft <= 0) { stopSessionTimer(); finishTimeLimitSession(); }
         }, 1000);
     }
-
-    function stopSessionTimer() {
-        if(timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-        document.getElementById('globalTimerBox').style.display = 'none';
-    }
-
-    function finishTimeLimitSession() {
-        stopSessionTimer();
-        document.getElementById('timeModeResultSummary').style.display = 'block';
-        document.getElementById('timeModeResultSummary').innerHTML = `🏁 限時挑戰完賽：你成功斬獲了 <span style="font-size:20px;color:var(--danger);">${session.score}</span> 分！`;
-        switchSetupConfig('STATS');
-    }
+    function stopSessionTimer() { if(timerInterval) { clearInterval(timerInterval); timerInterval = null; } document.getElementById('globalTimerBox').style.display = 'none'; }
+    function finishTimeLimitSession() { stopSessionTimer(); document.getElementById('timeModeResultSummary').style.display = 'block'; document.getElementById('timeModeResultSummary').innerHTML = `🏁 限時挑戰完賽：你獲得了 <span style="font-size:20px;color:var(--danger);">${session.score}</span> 分！`; switchSetupConfig('STATS'); }
 
     function initChallengeSession() {
-        session.score = 0; session.currentIdx = 0; session.questionList = [mockData.currentEq];
+        session.score = 0; session.currentIdx = 0; session.questionList = [];
         session.endCondition = document.querySelector('input[name="endCondition"]:checked').value;
+        session.selectedType = document.getElementById('typeSelect').value;
         document.getElementById('timeModeResultSummary').style.display = 'none';
 
-        if (session.endCondition === 'TIME_LIMIT') {
+        if (session.endCondition === 'COUNT') {
+            stopSessionTimer();
+            session.totalQuestions = parseInt(document.getElementById('totalQuestionsInput').value) || 5;
+            for(let i=0; i<session.totalQuestions; i++) session.questionList.push(generateQuestion(currentEngine, session.selectedType));
+        } else if (session.endCondition === 'TARGET_SCORE') {
+            stopSessionTimer();
+            session.targetScore = parseInt(document.getElementById('targetScoreInput').value) || 5;
+            session.questionList.push(generateQuestion(currentEngine, session.selectedType));
+        } else {
             let sec = parseInt(document.getElementById('timeLimitSelect').value) || 180;
             session.timeLimitSetting = sec;
+            session.questionList.push(generateQuestion(currentEngine, session.selectedType));
             startSessionTimer(sec);
-        } else {
-            stopSessionTimer();
         }
         loadPolynomialToStage();
     }
 
     function handleManualSolverInput() {
         stopSessionTimer();
-        let val = document.getElementById('eqInput').value || mockData.currentEq;
-        session.questionList = [val]; session.currentIdx = 0;
+        let val = document.getElementById('eqInput').value || "(3x+2)-(x-5)";
+        session.questionList = [`${val}|2x+7|= 3x+2-x+5`];
+        session.currentIdx = 0;
         loadPolynomialToStage();
     }
 
     function loadPolynomialToStage() {
         document.getElementById('ansInput').value = '';
+        let parts = session.questionList[session.currentIdx].split('|');
+        polyData.currentEq = parts[0];
+        polyData.stdAns = parts[1];
+        polyData.process = parts[2];
+
         document.getElementById('scoreText').innerText = `積分：${session.score}`;
         document.getElementById('progressText').innerText = session.endCondition === 'TIME_LIMIT' ? `⏳ 限時瘋狂衝分中！` : `題驗進度：第 ${session.currentIdx + 1} 題`;
-        document.getElementById('displayEq').innerHTML = `<div style="font-size: 1.5rem; letter-spacing: 1px;">${session.questionList[session.currentIdx]}</div>`;
+        document.getElementById('displayEq').innerHTML = `<div style="font-size: 1.5rem; letter-spacing: 1px;">${polyData.currentEq}</div>`;
         showPanel('step2');
     }
 
     function checkFirstAnswer() {
-        let ans = document.getElementById('ansInput').value.trim();
-        showPanel('step3');
-        
-        document.getElementById('interactiveStageBox').innerText = `您的答案：${ans}`;
+        let ans = document.getElementById('ansInput').value.replace(/\s+/g,'');
+        if(ans === polyData.stdAns.replace(/\s+/g,'')) {
+            session.score++;
+            showPanel('step3');
+            executeDirectSuccess(true);
+        } else {
+            alert("❌ 運算結果存在誤差，系統立刻啟動同類項思維黑板引導。");
+            showPanel('step3');
+            executeDirectSuccess(false);
+        }
+    }
+
+    function executeDirectSuccess(isCorrect) {
+        document.getElementById('interactiveStageBox').innerHTML = `最簡結果項目：<span style="color:#fffb00;">${polyData.stdAns}</span>`;
         document.getElementById('mathStepBox').innerHTML = `
-            <div><strong>原式：</strong>${session.questionList[session.currentIdx]}</div>
-            <div style="margin-top: 5px; color: #38bdf8;"><strong>去括號與併項過程：</strong></div>
-            <div style="padding-left: 15px; font-style: italic; color: #cbd5e1;">= 3x + 2 - x + 5<br>= (3x - x) + (2 + 5)</div>
-            <div style="margin-top: 5px;"><strong>標準最簡結果：</strong> <span style="color: #4ade80;">${mockData.stdAns}</span></div>
+            <div><strong>原式：</strong>${polyData.currentEq}</div>
+            <div style="margin-top: 5px; color: #38bdf8;"><strong>[拆解去括號程序]：</strong></div>
+            <div style="padding-left: 15px; color: #cbd5e1;">${polyData.process}</div>
+            <div style="margin-top: 5px;"><strong>[精確最簡代數式]：</strong> <span style="color: #4ade80;">${polyData.stdAns}</span> 🎯</div>
         `;
         document.getElementById('nextBtn').style.display = "block";
     }
 
     function advanceQuestion() {
         if (session.endCondition === 'TIME_LIMIT' && timeLeft > 0) {
-            // 限時模式下，若時間還沒到，無限自動塞題供學生瘋狂刷分
-            session.score++;
-            session.currentIdx++;
-            session.questionList.push(mockData.currentEq);
-            loadPolynomialToStage();
+            session.currentIdx++; session.questionList.push(generateQuestion(currentEngine, session.selectedType)); loadPolynomialToStage();
         } else if (session.endCondition === 'TARGET_SCORE' && session.score < session.targetScore) {
-            session.score++;
-            session.currentIdx++;
-            session.questionList.push(mockData.currentEq);
-            loadPolynomialToStage();
-        } else if (session.endCondition === 'COUNT' && session.currentIdx < (parseInt(document.getElementById('totalQuestionsInput').value) - 1)) {
-            session.score++;
-            session.currentIdx++;
-            session.questionList.push(mockData.currentEq);
-            loadPolynomialToStage();
+            session.currentIdx++; session.questionList.push(generateQuestion(currentEngine, session.selectedType)); loadPolynomialToStage();
+        } else if (session.endCondition === 'COUNT' && session.currentIdx < (session.totalQuestions - 1)) {
+            session.currentIdx++; loadPolynomialToStage();
         } else {
-            if (session.endCondition !== 'TIME_LIMIT') session.score++;
-            stopSessionTimer();
-            switchSetupConfig('STATS');
+            stopSessionTimer(); switchSetupConfig('STATS');
         }
     }
 
-    // 🎯 修正：讓返回主選單能百分之百相容引數傳入，防範點擊失靈
+    function toggleOverlay() {}
+    function fetchStudentCloudData() {}
+    function updateReviewMenuUI() {}
     function resetToMainMenu(nc) { stopSessionTimer(); window.location.href = "home.html"; }
     function logoutSession() { stopSessionTimer(); localStorage.clear(); window.location.href = "index.html"; }
 
