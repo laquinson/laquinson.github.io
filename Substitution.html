@@ -524,36 +524,57 @@ function switchSetupConfig(configMode) {
     };
 
     (function initFormOptions(){
-        let cHtml = "", sHtml = "", tHtml = "";
-        for(let g=1;g<=6;g++) ['A','B','C','D'].forEach(l => cHtml+=`<option value="${g}${l}">${g}${l} 班</option>`);
-        for(let i=1;i<=35;i++) sHtml+=`<option value="${i}">${i} 號</option>`;
-        for(let i=1;i<=5;i++) { 
-            tHtml+=`<option value="Teacher_0${i}">💼 0${i}號 管理員</option>`; 
-            try { if(!localStorage.getItem(`Teacher_Pwd_0${i}`)) localStorage.setItem(`Teacher_Pwd_0${i}`,"1007"); } catch(e){}
-        }
-        document.getElementById('loginClass').innerHTML = cHtml; 
-        document.getElementById('loginSeat').innerHTML = sHtml; 
-        document.getElementById('teacherSelect').innerHTML = tHtml;
-        cacheStorage.EQ.stats = getInitialStatsObject();
-        renderTypeSelectOptions();
-        checkActiveSessionOnLoad();
-    })();
+    let cHtml = "", sHtml = "", tHtml = "";
+    for(let g=1;g<=6;g++) ['A','B','C','D'].forEach(l => cHtml+=`<option value="${g}${l}">${g}${l} 班</option>`);
+    for(let i=1;i<=35;i++) sHtml+=`<option value="${i}">${i} 號</option>`;
+    for(let i=1;i<=5;i++) { 
+        tHtml+=`<option value="Teacher_0${i}">💼 0${i}號 管理員</option>`; 
+        try { if(!localStorage.getItem(`Teacher_Pwd_0${i}`)) localStorage.setItem(`Teacher_Pwd_0${i}`,"1007"); } catch(e){}
+    }
+    
+    // 安全掛載 DOM 元素
+    if(document.getElementById('loginClass')) document.getElementById('loginClass').innerHTML = cHtml; 
+    if(document.getElementById('loginSeat')) document.getElementById('loginSeat').innerHTML = sHtml; 
+    if(document.getElementById('teacherSelect')) document.getElementById('teacherSelect').innerHTML = tHtml;
+    
+    cacheStorage.EQ.stats = getInitialStatsObject();
+    renderTypeSelectOptions();
+    
+    // 🎯 核心鎖定：在所有組件就緒後，立刻進行身分驗證跳轉
+    checkActiveSessionOnLoad();
+})();
 
     function checkActiveSessionOnLoad() {
-        let savedClass = localStorage.getItem("Active_User_Class");
-        let savedSeat = localStorage.getItem("Active_User_Seat");
-        let savedRole = localStorage.getItem("Active_User_Role");
-        if (savedRole === "GUEST") {
-            loginGuest();
-        } else if (savedClass && savedSeat) {
-            currentRole = "STUDENT"; userRawClass = savedClass; userRawSeat = savedSeat;
-            initLocalFallback(userRawClass, userRawSeat);
-            let seatStr = String(userRawSeat).padStart(2, '0');
-            document.getElementById('topCenterAccount').innerText = `挑戰者: ${userRawClass}班${seatStr}號`;
-            setupLayoutForStudent();
-            syncWithCloud("load");
-        }
+    let savedClass = localStorage.getItem("Active_User_Class");
+    let savedSeat = localStorage.getItem("Active_User_Seat");
+    let savedRole = localStorage.getItem("Active_User_Role");
+    
+    if (savedRole === "GUEST") {
+        // 訪客免登入自動跳轉
+        currentRole = "GUEST"; userRawClass = "GUEST"; userRawSeat = "VISITOR";
+        cacheStorage.EQ.wrongBook = []; 
+        cacheStorage.EQ.stats = getInitialStatsObject();
+        document.getElementById('topCenterAccount').innerText = `挑戰者: 訪客體驗`;
+        setupLayoutForStudent();
+        showPanel('step1'); // 核心：強制直達主選單
+    } else if (savedClass && savedSeat) {
+        // 學生免登入自動跳轉
+        currentRole = "STUDENT"; userRawClass = savedClass; userRawSeat = savedSeat;
+        initLocalFallback(userRawClass, userRawSeat);
+        let seatStr = String(userRawSeat).padStart(2, '0');
+        document.getElementById('topCenterAccount').innerText = `挑戰者: ${userRawClass}班${seatStr}號`;
+        setupLayoutForStudent();
+        showPanel('step1'); // 核心：強制直達主選單
+        syncWithCloud("load");
+    } else if (savedRole === "TEACHER") {
+        // 教師免登入自動跳轉
+        currentRole = "TEACHER";
+        document.querySelectorAll('.id-student-only').forEach(el=>el.style.display="none"); 
+        document.querySelectorAll('.id-teacher-only').forEach(el=>el.style.display="flex");
+        document.getElementById('topCenterAccount').innerText = `管理員後台`;
+        showPanel('step1');
     }
+}
 
     function getInitialStatsObject() {
         return {
