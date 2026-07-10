@@ -99,10 +99,10 @@
         <div class="stage-box" id="interactiveStageBox">展示台</div>
         <div id="teachingZone" class="teaching-row">
             <div class="teaching-column">
-                <h3>🛠️ 逐步動態驗證解讀</h3>
+                <h3>🛠️ 逐步動態操作驗證</h3>
                 <div class="block-form">
-                    <p class="camp-tip">💡 概念引導：多變數計算需遵循「隱形括號對號入座」與「先乘除、後加減」原則。</p>
-                    <div class="form-group"><label>第一步：寫出帶括號代入算式 (或直接算答案)：</label><input type="text" id="rightCampInput" placeholder="例如: (8)(11)/2"></div>
+                    <p class="camp-tip">💡 概念引導：請寫出括號代入過程或最終答案來完成驗證。</p>
+                    <div class="form-group"><label>請寫出代入算式 (例如 (8)(11)/2 或答案) 以通過防禦認證：</label><input type="text" id="rightCampInput" placeholder="例如: (8)(11)/2 或 44"></div>
                     <button onclick="executeFinalVerify()" class="btn-success">執行集成驗證</button>
                 </div>
             </div>
@@ -121,8 +121,8 @@
                 <h3 id="printStudentInfo">挑戰者歷程報告</h3>
                 <div id="timeModeResultSummary" style="margin: 15px 0; padding: 12px; background: #fffbeb; border-radius: 8px; font-weight: bold; border-left: 4px solid var(--warning); display: none; color: #0f172a;"></div>
                 <table class="stats-table">
-                    <thead><tr><th>題型結構</th><th>挑戰次數</th><th>當前積分狀態</th><th>成就判定</th></tr></thead>
-                    <tbody id="statsTableBody"><tr><td>多變數公式計算</td><td>綜合結構項目</td><td id="statsFinalScore">0 分</td><td>關卡完賽</td></tr></tbody>
+                    <thead><tr><th>題型結構</th><th>挑戰狀態</th><th>最終得分</th></tr></thead>
+                    <tbody id="statsTableBody"><tr><td>多變數公式求值大挑戰</td><td>完賽結算</td><td id="statsFinalScore" style="color:#fffb00;font-weight:bold;">0 分</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -135,9 +135,25 @@
 
 <script>
     let currentRole = "", userRawClass = "", userRawSeat = "";
-    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, targetScore: 5, timeLimitSetting: 300, score: 0, currentIdx: 0, questionList: [] };
+    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, targetScore: 5, timeLimitSetting: 300, score: 0, currentIdx: 0, questionList: [], selectedType: 'MIX' };
     let eqData = { targetLetter: "A", formulaName: "bh/2", variablesText: "b=8, h=11", ansStr: "44", substituted: "(8)(11)/2" };
     let timerInterval = null; let timeLeft = 0;
+
+    // 🎯 核心補回：完整的跨學科多變數公式代入數據庫項目
+    const FORMULA_BANK = {
+        1: [
+            { name: "幾何：正方形面積", target: "A", expr: "s^2", vars: ["s"], range: { s: [3, 12] } },
+            { name: "幾何：圓周長", target: "C", expr: "6r", vars: ["r"], range: { r: [2, 10] } },
+            { name: "生活：華氏/攝氏溫度轉換", target: "F", expr: "2C + 32", vars: ["C"], range: { C: [0, 35] } }
+        ],
+        2: [
+            { name: "幾何：長方形面積", target: "A", expr: "lw", vars: ["l", "w"], range: { l: [4, 12], w: [3, 8] } },
+            { name: "幾何：三角形面積", target: "A", expr: "bh / 2", vars: ["b", "h"], range: { b: [4, 14], h: [3, 10] } }
+        ],
+        3: [
+            { name: "幾何：梯形面積", target: "A", expr: "(a + b)h / 2", vars: ["a", "b", "h"], range: { a: [2, 6], b: [7, 12], h: [4, 10] } }
+        ]
+    };
 
     function showPanel(id) {
         document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
@@ -158,15 +174,15 @@
             document.getElementById('statsFinalScore').innerText = `${session.score} 分`;
             showPanel('step_stats_panel');
         } else if (mode === 'REVIEW') {
-            alert("目前錯題庫尚無資料！");
+            alert("目前精簡沙盒版錯題本無紀錄！");
         }
     }
 
     function renderTypeSelectOptions() {
         document.getElementById('typeSelect').innerHTML = `
-            <option value="1">1. 雙變數公式求值 (代入1~2項)</option>
-            <option value="2">2. 三變數公式求值 (幾何長寬高)</option>
-            <option value="MIX" selected>3. 🔀 跨學科多變數綜合大亂鬥</option>
+            <option value="1">1. 雙變數基礎公式</option>
+            <option value="2">2. 三變數幾何公式</option>
+            <option value="MIX" selected>3. 🔀 跨學科綜合大亂鬥</option>
         `;
     }
 
@@ -177,7 +193,40 @@
         document.getElementById('timeLimitInputWrapper').style.display = c === 'TIME_LIMIT' ? 'block' : 'none';
     }
 
-    // 🎯 核心補正：限時狂熱衝分倒數計時引擎
+    // 🎯 核心補回：隨機題目演算法引擎
+    function generateQuestion(typeCode) {
+        let poolKey = typeCode === 'MIX' ? ['1', '2', '3'][Math.floor(Math.random() * 3)] : typeCode;
+        let pool = FORMULA_BANK[poolKey] || FORMULA_BANK[1];
+        let formula = pool[Math.floor(Math.random() * pool.length)];
+        let varAssigns = [];
+        let rMap = {};
+        formula.vars.forEach(v => {
+            let r = formula.range[v];
+            let val = Math.floor(Math.random() * (r[1] - r[0] + 1)) + r[0];
+            rMap[v] = val;
+            varAssigns.push(`${v} = ${val}`);
+        });
+        
+        let subExpr = formula.expr;
+        formula.vars.forEach(v => { subExpr = subExpr.replace(new RegExp(v, 'g'), `(${rMap[v]})`); });
+        
+        // 簡單的內建 eval 核心模擬
+        let rawCalc = formula.expr;
+        formula.vars.forEach(v => { rawCalc = rawCalc.replace(new RegExp(v, 'g'), rMap[v]); });
+        let finalAns = Math.round(Function(`return (${rawCalc})`)() * 10) / 10;
+
+        return `${formula.name}|${formula.target}|${formula.expr}|${varAssigns.join(', ')}|${subExpr}|${finalAns}`;
+    }
+
+    function parseEquationStructure(str) {
+        let parts = str.split('|');
+        eqData.formulaName = parts[2];
+        eqData.targetLetter = parts[1];
+        eqData.variablesText = parts[3];
+        eqData.substituted = parts[4];
+        eqData.ansStr = parts[5];
+    }
+
     function startSessionTimer(seconds) {
         stopSessionTimer(); timeLeft = seconds;
         document.getElementById('globalTimerBox').style.display = 'inline-block';
@@ -186,37 +235,31 @@
             let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
             let s = (timeLeft % 60).toString().padStart(2, '0');
             document.getElementById('globalTimerBox').innerText = `⏱️ ${m}:${s}`;
-            if (timeLeft <= 0) {
-                stopSessionTimer();
-                alert("⏱️ 時間到！多變數瘋狂衝分賽挑戰結束！");
-                finishTimeLimitSession();
-            }
+            if (timeLeft <= 0) { stopSessionTimer(); finishTimeLimitSession(); }
         }, 1000);
     }
-
-    function stopSessionTimer() {
-        if(timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-        document.getElementById('globalTimerBox').style.display = 'none';
-    }
-
-    function finishTimeLimitSession() {
-        stopSessionTimer();
-        document.getElementById('timeModeResultSummary').style.display = 'block';
-        document.getElementById('timeModeResultSummary').innerHTML = `🏁 限時衝分完賽：你成功斬獲了 <span style="font-size:20px;color:var(--danger);">${session.score}</span> 分！`;
-        switchSetupConfig('STATS');
-    }
+    function stopSessionTimer() { if(timerInterval) { clearInterval(timerInterval); timerInterval = null; } document.getElementById('globalTimerBox').style.display = 'none'; }
+    function finishTimeLimitSession() { stopSessionTimer(); document.getElementById('timeModeResultSummary').style.display = 'block'; document.getElementById('timeModeResultSummary').innerHTML = `🏁 限時賽完賽：你斬獲了 <span style="font-size:20px;color:var(--danger);">${session.score}</span> 分！`; switchSetupConfig('STATS'); }
 
     function initChallengeSession() {
-        session.score = 0; session.currentIdx = 0; session.questionList = ["綜合求值題"];
+        session.score = 0; session.currentIdx = 0; session.questionList = [];
         session.endCondition = document.querySelector('input[name="endCondition"]:checked').value;
+        session.selectedType = document.getElementById('typeSelect').value;
         document.getElementById('timeModeResultSummary').style.display = 'none';
 
-        if (session.endCondition === 'TIME_LIMIT') {
+        if (session.endCondition === 'COUNT') {
+            stopSessionTimer();
+            session.totalQuestions = parseInt(document.getElementById('totalQuestionsInput').value) || 5;
+            for(let i=0; i<session.totalQuestions; i++) session.questionList.push(generateQuestion(session.selectedType));
+        } else if (session.endCondition === 'TARGET_SCORE') {
+            stopSessionTimer();
+            session.targetScore = parseInt(document.getElementById('targetScoreInput').value) || 5;
+            session.questionList.push(generateQuestion(session.selectedType));
+        } else {
             let sec = parseInt(document.getElementById('timeLimitSelect').value) || 180;
             session.timeLimitSetting = sec;
+            session.questionList.push(generateQuestion(session.selectedType));
             startSessionTimer(sec);
-        } else {
-            stopSessionTimer();
         }
         loadEquationToStage();
     }
@@ -225,62 +268,57 @@
         stopSessionTimer();
         let eq = document.getElementById('eqInput').value || "A = bh / 2";
         let vars = document.getElementById('xValueInput').value || "b=8, h=11";
-        eqData.formulaName = eq.includes('=') ? eq.split('=')[1].trim() : eq;
-        eqData.targetLetter = eq.includes('=') ? eq.split('=')[0].trim() : "Y";
-        eqData.variablesText = vars;
-        session.questionList = ["自訂引導題"];
+        let rightSide = eq.includes('=') ? eq.split('=')[1].trim() : eq;
+        let leftSide = eq.includes('=') ? eq.split('=')[0].trim() : "Y";
+        session.questionList = [`自訂驗證|${leftSide}|${rightSide}|${vars}|(8)(11)/2|44`];
+        session.currentIdx = 0;
         loadEquationToStage();
     }
 
     function loadEquationToStage() {
         document.getElementById('ansInput').value = '';
+        parseEquationStructure(session.questionList[session.currentIdx]);
         document.getElementById('scoreText').innerText = `積分：${session.score}`;
-        document.getElementById('progressText').innerText = session.endCondition === 'TIME_LIMIT' ? `⏳ 限時瘋狂衝分中！` : `題驗進度：第 ${session.currentIdx + 1} 題`;
+        document.getElementById('progressText').innerText = session.endCondition === 'TIME_LIMIT' ? `⏳ 限時狂熱衝分中！` : `題驗進度：第 ${session.currentIdx + 1} 題`;
         document.getElementById('displayEq').innerHTML = `<div>已知 ${eqData.targetLetter} = ${eqData.formulaName}</div><div style='margin-top:20px; color:#cbd5e1; font-size: 22px;'>當 ${eqData.variablesText}，求 ${eqData.targetLetter} = ?</div>`;
         showPanel('step2');
     }
 
     function checkFirstAnswer() {
         let ans = document.getElementById('ansInput').value.trim();
-        showPanel('step3');
-        document.getElementById('rightCampInput').value = '';
-        document.getElementById('interactiveStageBox').innerText = `已鎖定數值：求值公式 ${eqData.targetLetter}`;
-        document.getElementById('mathStepBox').innerHTML = `
-            <div><strong>原式：</strong> ${eqData.targetLetter} = ${eqData.formulaName}</div>
-            <div style="color:#cbd5e1; margin-top:5px;">[已知條件]: ${eqData.variablesText}</div>
-            <div style="margin-top:10px; color:#fffb00;">請在左側填寫動態分配代入過程。</div>
-        `;
-        document.getElementById('nextBtn').style.display = "none";
+        if(ans === eqData.ansStr) {
+            session.score++;
+            showPanel('step3');
+            executeDirectSuccess();
+        } else {
+            alert("❌ 計算結果不對喔！別氣餒，系統直接啟動動態拆解引導卡片。");
+            showPanel('step3');
+            executeDirectSuccess(); // 自動導引進入黑板程序
+        }
     }
 
-    function executeFinalVerify() {
-        let uVal = document.getElementById('rightCampInput').value.replace(/\s+/g,'');
-        if (uVal === eqData.ansStr || uVal === eqData.substituted) {
-            alert("🎯 破譯成功！結構與數值計算完全吻合！");
-            document.getElementById('mathStepBox').innerHTML += `
-                <div style="color:#10b981; margin-top:10px;"><strong>[破譯成功]：</strong>代入得 = ${eqData.substituted}</div>
-                <div style="color:#00ff00;"><strong>最終精確求值 = ${eqData.ansStr} 🎯</strong></div>
-            `;
-            document.getElementById('nextBtn').style.display = "block";
-        } else {
-            alert("❌ 計算數值或帶括號格式不太對喔，防卡死小提示：正確數值是 " + eqData.ansStr);
-        }
+    function executeDirectSuccess() {
+        document.getElementById('interactiveStageBox').innerHTML = `公式最簡集成結果：<span style='color:#fffb00;'>${eqData.ansStr}</span>`;
+        document.getElementById('mathStepBox').innerHTML = `
+            <div><strong>原式：</strong> ${eqData.targetLetter} = ${eqData.formulaName}</div>
+            <div style="color:#cbd5e1; margin-top:5px;"><strong>[帶入步驟]：</strong> = ${eqData.substituted}</div>
+            <div style="color:#00ff00; margin-top:5px;"><strong>[算值集成]：</strong> = ${eqData.ansStr} 🎯</div>
+        `;
+        document.getElementById('nextBtn').style.display = "block";
     }
 
     function advanceQuestion() {
         if (session.endCondition === 'TIME_LIMIT' && timeLeft > 0) {
-            session.score++; session.currentIdx++; session.questionList.push("綜合求值題"); loadEquationToStage();
+            session.currentIdx++; session.questionList.push(generateQuestion(session.selectedType)); loadEquationToStage();
         } else if (session.endCondition === 'TARGET_SCORE' && session.score < session.targetScore) {
-            session.score++; session.currentIdx++; session.questionList.push("綜合求值題"); loadEquationToStage();
-        } else if (session.endCondition === 'COUNT' && session.currentIdx < (parseInt(document.getElementById('totalQuestionsInput').value) - 1)) {
-            session.score++; session.currentIdx++; session.questionList.push("綜合求值題"); loadEquationToStage();
+            session.currentIdx++; session.questionList.push(generateQuestion(session.selectedType)); loadEquationToStage();
+        } else if (session.endCondition === 'COUNT' && session.currentIdx < (session.totalQuestions - 1)) {
+            session.currentIdx++; loadEquationToStage();
         } else {
-            if (session.endCondition !== 'TIME_LIMIT') session.score++;
             stopSessionTimer(); switchSetupConfig('STATS');
         }
     }
 
-    function updateProgressBarUI() {}
     function resetToMainMenu(nc) { stopSessionTimer(); window.location.href = "home.html"; }
     function logoutSession() { stopSessionTimer(); localStorage.clear(); window.location.href = "index.html"; }
 
