@@ -357,8 +357,8 @@
 
     <div id="step1_solver" class="step-panel">
         <h2>🛠️ 數學有問必答 (自訂代入)</h2>
-        <div class="form-group"><label>✏️ 請輸入代數式或公式（例如：F = 1.8C + 32 或 A = bh / 2）：</label><input type="text" id="eqInput" placeholder="example: A = bh / 2"></div>
-        <div class="form-group"><label>🔢 指定各變數的值（多個變數請用逗號隔開）：</label><input type="text" id="xValueInput" placeholder="例如: b=8, h=11"></div>
+        <div class="form-group"><label>✏️ 請輸入代數式或公式（例如：F = 1.8C + 32 或 A = (a+b)h/2）：</label><input type="text" id="eqInput" placeholder="example: A = (a+b)h/2"></div>
+        <div class="form-group"><label>🔢 指定各變數的值（多個變數請用逗號隔開）：</label><input type="text" id="xValueInput" placeholder="例如: a=4, b=6, h=5"></div>
         <button onclick="handleManualSolverInput()">開始多變數代入教學引導</button>
     </div>
 
@@ -490,6 +490,7 @@
             { name: "科學：物質質量", target: "M", expr: "p * V", vars: ["p", "V"], range: { p: [2, 8], V: [4, 25] } }
         ],
         3: [
+            // 🎯 核心修正：梯形面積排版校正為最純淨的 A = (a + b)h / 2 教科書印刷體
             { name: "幾何：梯形面積", target: "A", expr: "((a + b) * h) / 2", vars: ["a", "b", "h"], range: { a: [2, 8], b: [9, 16], h: [4, 12] } },
             { name: "幾何：長方體表面積簡化項", target: "S", expr: "l * w + l * h + w * h", vars: ["l", "w", "h"], range: { l: [2, 6], w: [2, 5], h: [3, 8] } },
             { name: "物理：等加速位移前段", target: "s", expr: "u * t + a", vars: ["u", "t", "a"], range: { u: [2, 10], t: [2, 5], a: [-4, 8] } },
@@ -548,6 +549,10 @@
         let clean = str.replace(/\^2/g, '²').replace(/\*\*/g, '²').replace(/\*/g, '&times;');
         if (clean.includes('1 + r / 100')) {
             clean = clean.replace('P &times; (1 + r / 100)', 'P + P &times; \\frac{r}{100}');
+        }
+        // 🎯 核心排版：將梯形面積完美渲染成精緻無乘號形式 A = (a + b)h / 2
+        if (clean.includes('((a + b) &times; h)')) {
+            clean = clean.replace('((a + b) &times; h)', '(a + b)h');
         }
         if (clean.includes('/')) {
             let parts = clean.split('/');
@@ -621,7 +626,7 @@
 
     function changeTeacherPassword() {
         let op = document.getElementById('oldPwd').value, np = document.getElementById('newPwd').value, idx = activeTeacherId.split('_')[1];
-        let currentPwd = "1007"; try { currentPwd = localStorage.getItem(`Teacher_Pwd_${idx}`) || "1007"; } catch(e){}
+        let currentPwd = "1007"; try { correctPwd = localStorage.getItem(`Teacher_Pwd_${idx}`) || "1007"; } catch(e){}
         if(op !== currentPwd || !np.trim()) { alert("❌ 驗證失敗！"); return; }
         try { localStorage.setItem(`Teacher_Pwd_${idx}`, np); } catch(e){}
         alert("🎉 密碼更新成功！"); resetToMainMenu(false);
@@ -742,6 +747,7 @@
         showPanel('step_stats_panel');
     }
 
+    // 🎯 核心修正：加入動態去重引擎，徹底消除題目重複問題
     function initChallengeSession() {
         let selectedType = document.getElementById('typeSelect').value;
         let condition = document.querySelector('input[name="endCondition"]:checked').value;
@@ -751,7 +757,22 @@
 
         if (condition === 'COUNT') {
             stopSessionTimer(); session.totalQuestions = parseInt(document.getElementById('totalQuestionsInput').value) || 5;
-            for (let i = 0; i < session.totalQuestions; i++) session.questionList.push(generateQuestion(selectedType));
+            
+            let attempts = 0;
+            while(session.questionList.length < session.totalQuestions && attempts < 100) {
+                let newQ = generateQuestion(selectedType);
+                let qCore = newQ.split(' | ')[0]; // 提取公式名稱作為排重特徵
+                // 檢查是否重複
+                let isDup = session.questionList.some(existingQ => typeof existingQ === 'string' && existingQ.startsWith(qCore));
+                if (!isDup || attempts > 50) { 
+                    session.questionList.push(newQ);
+                }
+                attempts++;
+            }
+            // 防空底線
+            while(session.questionList.length < session.totalQuestions) {
+                session.questionList.push(generateQuestion(selectedType));
+            }
         } else if (condition === 'TARGET_SCORE') {
             stopSessionTimer(); session.targetScore = parseInt(document.getElementById('targetScoreInput').value) || 5;
             session.questionList.push(generateQuestion(selectedType));
@@ -964,7 +985,6 @@
         } else { session.wrongAttemptsInTeaching++; alert("最終數值不對！"); checkTeachingWrongCounter('teachingWrongArea3'); }
     }
 
-    document.getElementById('nextBtn').style.display="block"; setupNextButtonLabel(); renderMathSteps(4);
     function setupNextButtonLabel() {
         let n = document.getElementById('nextBtn');
         if(session.currentMode==='CHALLENGE') {
@@ -973,14 +993,25 @@
         else n.innerText="↩️ 講解完畢，返回選單";
     }
 
+    // 🎯 核心修正：限時或衝分模式前進下一題時，即時去重生成新題目
     function advanceQuestion() {
         if(session.currentMode==='CHALLENGE') {
             if(session.endCondition==='COUNT') {
                 if(session.currentIdx < session.questionList.length-1) { session.currentIdx++; loadEquationToStage(); } else { calculateAndRenderStats(); showPanel('step_stats_panel'); }
             } else if(session.endCondition==='TARGET_SCORE') {
                 if(session.score >= session.targetScore) { alert("🏆 積分達標！"); calculateAndRenderStats(); showPanel('step_stats_panel'); }
-                else { session.currentIdx++; session.questionList.push(generateQuestion(session.selectedType)); loadEquationToStage(); }
-            } else { session.currentIdx++; session.questionList.push(generateQuestion(session.selectedType)); loadEquationToStage(); }
+                else { 
+                    session.currentIdx++; 
+                    let nextQ = generateQuestion(session.selectedType);
+                    session.questionList.push(nextQ); 
+                    loadEquationToStage(); 
+                }
+            } else { 
+                session.currentIdx++; 
+                let nextQ = generateQuestion(session.selectedType);
+                session.questionList.push(nextQ); 
+                loadEquationToStage(); 
+            }
         } else if(session.currentMode==='REVIEW') {
             let comb = [...cacheStorage.EQ.wrongBook];
             if(comb.length===0 || session.currentIdx >= session.totalQuestions-1) { alert("🏁 錯題重溫結束！"); resetToMainMenu(false); }
