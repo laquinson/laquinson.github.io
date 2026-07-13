@@ -504,18 +504,6 @@
         ]
     };
 
-    function handleNavigationBack() {
-        const isMainMenuActive = document.getElementById('step1').classList.contains('active');
-        if (isMainMenuActive) {
-            window.location.href = "home.html";
-        } else {
-            if (document.getElementById('step2').classList.contains('active') || document.getElementById('step3').classList.contains('active')) {
-                if (!confirm("確定要中途退出挑戰嗎？")) return;
-            }
-            resetToMainMenu(false);
-        }
-    }
-
     function switchSetupConfig(configMode) {
         if (configMode === 'CHALLENGE') {
             showPanel('step1_challenge');
@@ -536,91 +524,8 @@
         }
     }
 
-    (function initFormOptions(){
-        let cHtml = "", sHtml = "", tHtml = "";
-        for(let g=1;g<=6;g++) ['A','B','C','D'].forEach(l => cHtml+=`<option value="${g}${l}">${g}${l} 班</option>`);
-        for(let i=1;i<=35;i++) sHtml+=`<option value="${i}">${i} 號</option>`;
-        for(let i=1;i<=5;i++) { 
-            tHtml+=`<option value="Teacher_0${i}">💼 0${i}號 管理員</option>`; 
-            try { if(!localStorage.getItem(`Teacher_Pwd_0${i}`)) localStorage.setItem(`Teacher_Pwd_0${i}`,"1007"); } catch(e){}
-        }
-        
-        if(document.getElementById('loginClass')) document.getElementById('loginClass').innerHTML = cHtml; 
-        if(document.getElementById('loginSeat')) document.getElementById('loginSeat').innerHTML = sHtml; 
-        if(document.getElementById('teacherSelect')) document.getElementById('teacherSelect').innerHTML = tHtml;
-        
-        cacheStorage.EQ.stats = getInitialStatsObject();
-        renderTypeSelectOptions();
-        
-        checkActiveSessionOnLoad();
-    })();
-
-    function checkActiveSessionOnLoad() {
-        let savedClass = localStorage.getItem("Active_User_Class");
-        let savedSeat = localStorage.getItem("Active_User_Seat");
-        let savedRole = localStorage.getItem("Active_User_Role");
-        
-        if (savedRole === "GUEST") {
-            currentRole = "GUEST"; userRawClass = "GUEST"; userRawSeat = "VISITOR";
-            cacheStorage.EQ.wrongBook = []; 
-            cacheStorage.EQ.stats = getInitialStatsObject();
-            document.getElementById('topCenterAccount').innerText = `挑戰者: 訪客體驗`;
-            setupLayoutForStudent();
-        } else if (savedClass && savedSeat) {
-            currentRole = "STUDENT"; userRawClass = savedClass; userRawSeat = savedSeat;
-            initLocalFallback(userRawClass, userRawSeat);
-            let seatStr = String(userRawSeat).padStart(2, '0');
-            document.getElementById('topCenterAccount').innerText = `挑戰者: ${userRawClass}班${seatStr}號`;
-            setupLayoutForStudent();
-            syncWithCloud("load");
-        } else if (savedRole === "TEACHER") {
-            currentRole = "TEACHER";
-            document.querySelectorAll('.id-student-only').forEach(el=>el.style.display="none"); 
-            document.querySelectorAll('.id-teacher-only').forEach(el=>el.style.display="flex");
-            document.getElementById('topCenterAccount').innerText = `管理員後台`;
-            showPanel('step1');
-        }
-    }
-
-    function getInitialStatsObject() {
-        return {
-            1: { name: "雙變數公式代入求值", total:0, firstMatch:0, retryMatch:0, failed:0 },
-            2: { name: "三變數公式代入求值", total:0, firstMatch:0, retryMatch:0, failed:0 },
-            3: { name: "多變數綜合公式求值", total:0, firstMatch:0, retryMatch:0, failed:0 },
-            4: { name: "進階多變數大挑戰 (含次方結構)", total:0, firstMatch:0, retryMatch:0, failed:0 }
-        };
-    }
-
-    function convertToRichMathHTML(str) {
-        let clean = str.replace(/\^2/g, '²').replace(/\*\*/g, '²').replace(/\s*\*\s*/g, '');
-        
-        if (clean.includes('P+(Pr)/100') || clean.includes('P+(P*r)/100')) {
-            return `<div class="math-expr-wrapper">A = P + <div class="math-fraction"><div class="fraction-numerator">Pr</div><div class="fraction-denominator">100</div></div></div>`;
-        }
-        if (clean.includes('((a+b)h)')) {
-            clean = clean.replace('((a+b)h)', '(a+b)h');
-        }
-        if (clean.includes('/')) {
-            let parts = clean.split('/');
-            let num = parts[0].trim(); let den = parts[1].trim(); let leftPart = "";
-            if (num.includes('=')) {
-                let eqIdx = num.indexOf('='); leftPart = num.substring(0, eqIdx + 1) + " "; num = num.substring(eqIdx + 1).trim();
-            }
-            return `<div class="math-expr-wrapper">${leftPart}<div class="math-fraction"><div class="fraction-numerator">${num}</div><div class="fraction-denominator">${den}</div></div></div>`;
-        }
-        return clean;
-    }
-
-    function convertToStandardMath(str) {
-        let res = str.replace(/\s+/g, '').replace(/÷/g, '/').replace(/×/g, '*').replace(/\^2/g, '**2');
-        res = res.replace(/(\d+)([a-zA-7])/g, '$1*$2').replace(/([a-zA-Z])([a-zA-Z])/g, '$1*$2').replace(/([a-zA-Z])(\()/g, '$1*$2').replace(/(\))([a-zA-Z])/g, '$1*$2').replace(/(\d+)([\(])/g, '$1*$2').replace(/([ \)])([\(])/g, '$1*$2');
-        return res;
-    }
-
-    function toggleOverlay(s, t="讀取中...") { let o = document.getElementById('loadingOverlay'); if(o) { document.getElementById('loadingText').innerText=t; o.style.display=s?'flex':'none'; } }
-    function toggleLoginMode(m) { document.getElementById('studentLoginBox').style.display=m==='TEACHER'?'none':'block'; document.getElementById('teacherLoginBox').style.display=m==='TEACHER'?'block':'none'; }
-    
-function showPanel(id) { 
+    // 🎯 核心修復：調整 showPanel 邏輯，非登入頁面時強制隱藏登入區塊
+    function showPanel(id) { 
         document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active')); 
         const targetPanel = document.getElementById(id);
         if (targetPanel) targetPanel.classList.add('active'); 
@@ -649,10 +554,9 @@ function showPanel(id) {
             if(box) box.style.display = 'none';
             if(loginBox) {
                 loginBox.style.display = 'flex';
-                loginBox.classList.add('active'); // 確保登入顯示
+                loginBox.classList.add('active'); 
             }
         } else {
-            // 🎯 核心修復：只要不是登入頁面，強制把登入大面板徹底隱藏 (display: none)
             if(loginBox) {
                 loginBox.style.display = 'none'; 
                 loginBox.classList.remove('active');
