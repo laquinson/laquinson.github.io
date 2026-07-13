@@ -411,6 +411,7 @@
         <div id="feedbackArea" class="feedback"></div>
         <button id="solveBtn" class="btn-warning" onclick="startInteractiveSolving()">🔮 啟動隱形括號逐步破譯教學</button>
 
+        <!-- 🎯 完美結構版教學驗證區：移除多餘重複黏貼 DOM，完全閉合並鎖死 autocomplete -->
         <div id="teachingZone" class="teaching-row" style="display: none;">
             <div class="teaching-column">
                 <h3>🛠️ 逐步動態操作驗證</h3>
@@ -467,44 +468,46 @@
 </div>
 
 <script>
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwIK7Mqd4WEDpbuZR-PDt4pq-8EkZ74POUDDe9WgxZA_5QqPvIBdGdD2jVFjsVOZRIj/exec";
-    let currentRole = "STUDENT", activeTeacherId = "", userRawClass = "", userRawSeat = "";
-    let cacheStorage = { EQ: { wrongBook: [], stats: {} } };
-    let timerInterval = null; let timeLeft = 0;
+    // 🎯 核心修復 2（續）：免登入快取追蹤校驗引擎（完美對接大廳傳遞過來的快取欄位，發動自動隱藏與面板跳轉指令）
+    function checkActiveSessionOnLoad() {
+        let savedClass = localStorage.getItem("Active_User_Class");
+        let savedSeat = localStorage.getItem("Active_User_Seat");
+        let savedRole = localStorage.getItem("Active_User_Role");
+        
+        // 判斷條件全面相容大廳的 "STUDENT" 快取與內部身分物件
+        if (savedRole === "GUEST") {
+            currentRole = "GUEST"; userRawClass = "GUEST"; userRawSeat = "VISITOR";
+            cacheStorage.EQ.wrongBook = []; 
+            cacheStorage.EQ.stats = getInitialStatsObject();
+            window.addEventListener('DOMContentLoaded', () => {
+                document.getElementById('topCenterAccount').innerText = `挑戰者: 訪客體驗`;
+                setupLayoutForStudent();
+                showPanel('step1'); // 🌟 秒速跳轉至大廳
+            });
+        } else if (savedRole === "STUDENT" || (savedClass && savedSeat)) {
+            currentRole = "STUDENT"; userRawClass = savedClass || "1A"; userRawSeat = savedSeat || "1";
+            initLocalFallback(userRawClass, userRawSeat);
+            let seatStr = String(userRawSeat).padStart(2, '0');
+            window.addEventListener('DOMContentLoaded', () => {
+                document.getElementById('topCenterAccount').innerText = `挑戰者: ${userRawClass}班${seatStr}號`;
+                setupLayoutForStudent();
+                showPanel('step1'); // 🌟 秒速跳轉至大廳
+                syncWithCloud("load");
+            });
+        } else if (savedRole === "TEACHER") {
+            currentRole = "TEACHER";
+            window.addEventListener('DOMContentLoaded', () => {
+                document.querySelectorAll('.id-student-only').forEach(el=>el.style.display="none"); 
+                document.querySelectorAll('.id-teacher-only').forEach(el=>el.style.display="flex");
+                document.getElementById('topCenterAccount').innerText = `管理員後台`;
+                showPanel('step1'); // 🌟 秒速跳轉至教師大廳
+            });
+        }
+    }
 
-    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, targetScore: 5, timeLimitSetting: 300, currentIdx: 0, score: 0, selectedType: 'MIX', questionList: [], currentTypeNum: 1, wrongAttemptsThisQuestion: 0, wrongAttemptsIn教學: 0, hasAddedToWrongBookThisQuestion: false };
-    let eqData = { type: 1, rawStr: "", formulaTitle: "", formulaName: "", targetLetter: "", variablesText: "", targetRightCamp: "", midStepStr: "", ansStr: "" };
+    // 🌟 在腳本解析第一步，就發動防禦性攔截判定，避免渲染出登入卡片
+    checkActiveSessionOnLoad();
 
-    const FORMULA_BANK = {
-        1: [
-            { name: "幾何：正方形面積", target: "A", expr: "s^2", vars: ["s"], range: { s: [3, 15] } },
-            { name: "幾何：圓周長", target: "C", expr: "6 * r", vars: ["r"], range: { r: [2, 12] } },
-            { name: "物理：歐姆定律求電壓", target: "V", expr: "I * R", vars: ["I", "R"], range: { I: [1, 6], R: [2, 15] } },
-            { name: "生活：華氏/攝氏溫度轉換", target: "F", expr: "1.8 * C + 32", vars: ["C"], range: { C: [-10, 35] } },
-            { name: "理財：定額儲蓄總額", target: "T", expr: "100 + m", vars: ["m"], range: { m: [5, 150] } }
-        ],
-        2: [
-            { name: "幾何：長方形面積", target: "A", expr: "l * w", vars: ["l", "w"], range: { l: [5, 18], w: [3, 10] } },
-            { name: "物理：運動學路徑", target: "d", expr: "v * t", vars: ["v", "t"], range: { v: [10, 90], t: [2, 6] } },
-            { name: "幾何：三角形面積", target: "A", expr: "(b * h) / 2", vars: ["b", "h"], range: { b: [4, 16], h: [3, 12] } },
-            { name: "物理：牛頓第二定律", target: "F", expr: "m * a", vars: ["m", "a"], range: { m: [2, 45], a: [1, 9] } },
-            { name: "科學：物質質量", target: "M", expr: "p * V", vars: ["p", "V"], range: { p: [2, 8], V: [4, 25] } }
-        ],
-        3: [
-            { name: "幾何：梯形面積", target: "A", expr: "((a + b) * h) / 2", vars: ["a", "b", "h"], range: { a: [2, 8], b: [9, 16], h: [4, 12] } },
-            { name: "幾何：長方體表面積簡化項", target: "S", expr: "l * w + l * h + w * h", vars: ["l", "w", "h"], range: { l: [2, 6], w: [2, 5], h: [3, 8] } },
-            { name: "物理：等加速位移前段 (s = ut + a)", target: "s", expr: "u * t + a", vars: ["u", "t", "a"], range: { u: [2, 10], t: [2, 5], a: [-4, 8] } },
-            { name: "理財：簡單利息結餘", target: "A", expr: "P + (P * r) / 100", vars: ["P", "r"], range: { P: [20, 100], r: [1, 8] } } 
-        ],
-        4: [
-            { name: "幾何：兩點距離平方", target: "D", expr: "(y - b)^2 + (x - a)^2", vars: ["y", "b", "x", "a"], range: { y: [4, 10], b: [-2, 3], x: [5, 11], a: [1, 4] } },
-            { name: "物理：等加速位移完整版 (s = ut + 2a²)", target: "s", expr: "u * t + 2 * a^2", vars: ["u", "t", "a"], range: { u: [0, 8], t: [2, 5], a: [-3, 4] } },
-            { name: "數學：二次函數判別式", target: "D", expr: "b^2 - 4 * a * c", vars: ["b", "a", "c"], range: { b: [3, 8], a: [1, 3], c: [-5, 4] } },
-            { name: "槓桿：力矩平衡未知項", target: "X", expr: "(F * d - f) / D", vars: ["F", "d", "f", "D"], range: { F: [8, 15], d: [2, 5], f: [2, 6], D: [2, 4] } }
-        ]
-    };
-
-    // 🎯 核心修復 1：提升 showPanel 權限，確保切換時百分之百關閉舊登入面板
     function showPanel(id) { 
         document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active')); 
         const targetPanel = document.getElementById(id);
@@ -537,7 +540,7 @@
                 loginBox.classList.add('active'); 
             }
         } else {
-            // 強制封鎖並隱藏登入板
+            // 只要進入選單或題目頁面，強制把登入大面板徹底 display: none 隱藏
             if(loginBox) {
                 loginBox.style.display = 'none'; 
                 loginBox.classList.remove('active');
@@ -560,44 +563,28 @@
         }
     }
 
-    // 🎯 核心修復 2：免登入快取追蹤引擎修正（加入主動切換面板命令）
-    function checkActiveSessionOnLoad() {
-        let savedClass = localStorage.getItem("Active_User_Class");
-        let savedSeat = localStorage.getItem("Active_User_Seat");
-        let savedRole = localStorage.getItem("Active_User_Role");
-        
-        if (savedRole === "GUEST") {
-            currentRole = "GUEST"; userRawClass = "GUEST"; userRawSeat = "VISITOR";
-            cacheStorage.EQ.wrongBook = []; 
-            cacheStorage.EQ.stats = getInitialStatsObject();
-            if(document.getElementById('topCenterAccount')) document.getElementById('topCenterAccount').innerText = `挑戰者: 訪客體驗`;
-            setupLayoutForStudent();
-            showPanel('step1'); // 🌟 補上自動切換，直達大廳
-        } else if (savedClass && savedSeat) {
-            currentRole = "STUDENT"; userRawClass = savedClass; userRawSeat = savedSeat;
-            initLocalFallback(userRawClass, userRawSeat);
-            let seatStr = String(userRawSeat).padStart(2, '0');
-            if(document.getElementById('topCenterAccount')) document.getElementById('topCenterAccount').innerText = `挑戰者: ${userRawClass}班${seatStr}號`;
-            setupLayoutForStudent();
-            showPanel('step1'); // 🌟 補上自動切換，直達大廳
-            syncWithCloud("load");
-        } else if (savedRole === "TEACHER") {
-            currentRole = "TEACHER";
-            document.querySelectorAll('.id-student-only').forEach(el=>el.style.display="none"); 
-            document.querySelectorAll('.id-teacher-only').forEach(el=>el.style.display="flex");
-            if(document.getElementById('topCenterAccount')) document.getElementById('topCenterAccount').innerText = `管理員後台`;
-            showPanel('step1');
+    function switchSetupConfig(configMode) {
+        if (configMode === 'CHALLENGE') {
+            showPanel('step1_challenge');
+        } else if (configMode === 'STATS') {
+            calculateAndRenderStats();
+            showPanel('step_stats_panel');
+        } else if (configMode === 'SOLVER') {
+            showPanel('step1_solver');
+        } else if (configMode === 'REVIEW') {
+            let count = (cacheStorage.EQ.wrongBook || []).length;
+            if (count > 0) {
+                initReviewSession();
+            } else {
+                alert("🎉 太棒了！目前沒有未消滅的錯題。");
+            }
+        } else if (configMode === 'CHG_PWD') {
+            showPanel('step1_chgpwd');
         }
     }
 
-    function setupLayoutForStudent() {
-        document.querySelectorAll('.id-student-only').forEach(el => el.style.display = "flex"); 
-        document.querySelectorAll('.id-teacher-only').forEach(el => el.style.display = "none");
-        updateReviewMenuUI(); 
-    }
-
-    // 🎯 核心修復 3：安全重組 DOM 生命週期初始化，防堵變數因加載順序未定義而卡死
-    (function initFormOptions(){
+    // 🎯 核心修復 3：安全重組 DOM 生命週期初始化，解決與大廳互卡、選單空白的報錯 Bug
+    window.addEventListener('DOMContentLoaded', () => {
         let cHtml = "", sHtml = "", tHtml = "";
         for(let g=1;g<=6;g++) ['A','B','C','D'].forEach(l => cHtml+=`<option value="${g}${l}">${g}${l} 班</option>`);
         for(let i=1;i<=35;i++) sHtml+=`<option value="${i}">${i} 號</option>`;
@@ -612,44 +599,19 @@
         
         cacheStorage.EQ.stats = getInitialStatsObject();
         renderTypeSelectOptions();
-        
-        // 所有網頁節點解析完畢後，發動免登入身份判定驗證
-        checkActiveSessionOnLoad();
-    })();
+    });
 
-    function convertToRichMathHTML(str) {
-        let clean = str.replace(/\^2/g, '²').replace(/\*\*/g, '²').replace(/\s*\*\s*/g, '');
-        if (clean.includes('P+(Pr)/100') || clean.includes('P+(P*r)/100')) {
-            return `<div class="math-expr-wrapper">A = P + <div class="math-fraction"><div class="fraction-numerator">Pr</div><div class="fraction-denominator">100</div></div></div>`;
-        }
-        if (clean.includes('((a+b)h)')) {
-            clean = clean.replace('((a+b)h)', '(a+b)h');
-        }
-        if (clean.includes('/')) {
-            let parts = clean.split('/');
-            let num = parts[0].trim(); let den = parts[1].trim(); let leftPart = "";
-            if (num.includes('=')) {
-                let eqIdx = num.indexOf('='); leftPart = num.substring(0, eqIdx + 1) + " "; num = num.substring(eqIdx + 1).trim();
-            }
-            return `<div class="math-expr-wrapper">${leftPart}<div class="math-fraction"><div class="fraction-numerator">${num}</div><div class="fraction-denominator">${den}</div></div></div>`;
-        }
-        return clean;
+    function setupLayoutForStudent() {
+        document.querySelectorAll('.id-student-only').forEach(el => el.style.display = "flex"); 
+        document.querySelectorAll('.id-teacher-only').forEach(el => el.style.display = "none");
+        updateReviewMenuUI(); 
     }
-
-    function convertToStandardMath(str) {
-        let res = str.replace(/\s+/g, '').replace(/÷/g, '/').replace(/×/g, '*').replace(/\^2/g, '**2');
-        res = res.replace(/(\d+)([a-zA-7])/g, '$1*$2').replace(/([a-zA-Z])([a-zA-Z])/g, '$1*$2').replace(/([a-zA-Z])(\()/g, '$1*$2').replace(/(\))([a-zA-Z])/g, '$1*$2').replace(/(\d+)([\(])/g, '$1*$2').replace(/([ \)])([\(])/g, '$1*$2');
-        return res;
-    }
-
-    function toggleOverlay(s, t="讀取中...") { let o = document.getElementById('loadingOverlay'); if(o) { document.getElementById('loadingText').innerText=t; o.style.display=s?'flex':'none'; } }
-    function toggleLoginMode(m) { document.getElementById('studentLoginBox').style.display=m==='TEACHER'?'none':'block'; document.getElementById('teacherLoginBox').style.display=m==='TEACHER'?'block':'none'; }
 
     function loginStudent() {
         currentRole = "STUDENT"; userRawClass = document.getElementById('loginClass').value; userRawSeat = document.getElementById('loginSeat').value;
         localStorage.setItem("Active_User_Class", userRawClass);
         localStorage.setItem("Active_User_Seat", userRawSeat);
-        localStorage.setItem("Active_User_Role", `${userRawClass}_${userRawSeat}`);
+        localStorage.setItem("Active_User_Role", "STUDENT");
         toggleOverlay(true, "連線雲端資料庫中...");
         setTimeout(() => {
             initLocalFallback(userRawClass, userRawSeat);
@@ -800,254 +762,15 @@
         loadEquationToStage();
     }
 
-    function generateQuestion(typeCode) {
-        let t = typeCode === 'MIX' ? ['1', '2', '3', '4'][Math.floor(Math.random() * 4)] : typeCode;
-        let pool = FORMULA_BANK[t]; let formula = pool[Math.floor(Math.random() * pool.length)];
-        let varAssigns = []; let randVal = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-        
-        formula.vars.forEach(v => {
-            let range = formula.range[v]; let val = randVal(range[0], range[1]);
-            if (v === 'D' && val === 0) val = 2;
-            if (v === 'x' && val === formula.range['a'][0]) val += 3;
-            varAssigns.push(`${v} = ${val}`);
-        });
-        return `${formula.name} | 已知 ${formula.target} = ${formula.expr}。當 ${varAssigns.join(', ')}，${formula.target} = ? #|#${t}`;
-    }
-
-    function parseEquationStructure(str) {
-        eqData.rawStr = str;
-        try {
-            let typeMarker = str.split('#|#')[1] || "1";
-            session.currentTypeNum = parseInt(typeMarker); eqData.type = session.currentTypeNum;
-            let corePart = str.split('#|#')[0].trim(); let infoSegments = corePart.split('|');
-            let displayTitle = infoSegments[0].trim(); let mathQuestion = infoSegments[1].trim(); 
-
-            let formulaMatch = mathQuestion.match(/已知\s*([a-zA-Z])\s*=\s*([^。]+)。/);
-            let targetLetter = formulaMatch[1]; let formulaPart = formulaMatch[2].trim(); 
-            let dataPart = mathQuestion.match(/當\s*([^，]+)，/)[1].trim(); 
-            
-            eqData.formulaTitle = displayTitle; eqData.formulaName = formulaPart; eqData.targetLetter = targetLetter;
-
-            let varMap = {};
-            dataPart.split(',').forEach(segment => {
-                let kv = segment.split('='); if (kv.length === 2) varMap[kv[0].trim()] = kv[1].trim();
-            });
-
-            let varList = Object.keys(varMap).sort(); 
-            
-            let sortedVarsText = varList.map(v => `${v} = ${varMap[v]}`).join(', ');
-            eqData.variablesText = sortedVarsText;
-
-            let replaceList = [...varList].sort((a,b) => b.length - a.length);
-            let substitutedExpr = formulaPart;
-            for (let v of replaceList) {
-                let val = varMap[v]; 
-                let regex = new RegExp('\\b' + v + '\\b', 'g'); 
-                substitutedExpr = substitutedExpr.replace(regex, `(${val})`);
-            }
-            eqData.targetRightCamp = substitutedExpr;
-
-            let calcExpr = convertToStandardMath(substitutedExpr); let finalVal = eval(calcExpr);
-            if (finalVal % 1 !== 0) finalVal = Math.round(finalVal * 10) / 10;
-            eqData.ansStr = "" + finalVal;
-
-            let mid = calcExpr; mid = mid.replace(/\((-?\d+(\.\d+)?)\)\*\*2/g, (m, p1) => Math.pow(parseFloat(p1), 2));
-            let multRegex = /(?:-?\d+(\.\d+)?|\(-?\d+(\.\d+)?\))(?:\*(?:-?\d+(\.\d+)?|\(-?\d+(\.\d+)?\)))+/g;
-            mid = mid.replace(multRegex, function(m) {
-                try { let res = eval(m); return res % 1 !== 0 ? Math.round(res * 10) / 10 : res; } catch(e) { return m; }
-            });
-            eqData.midStepStr = mid.replace(/\+ -/g, '- ').replace(/\* \*/g, '**');
-            return true;
-        } catch(e) { console.error(e); return false; }
-    }
-
-    function loadEquationToStage() {
-        session.wrongAttemptsThisQuestion = 0; session.wrongAttemptsIn教學 = 0; session.hasAddedToWrongBookThisQuestion = false;
-        document.getElementById('initialFeedbackArea').innerHTML = '';
-        document.getElementById('ansInput').disabled = false; document.getElementById('ansInput').value = '';
-        document.getElementById('retryInputWrapper').style.display = 'none'; document.getElementById('ansRetryInput').value = '';
-        document.getElementById('teachingWrongArea1').innerHTML = ''; document.getElementById('teachingWrongArea2').innerHTML = ''; document.getElementById('teachingWrongArea3').innerHTML = '';
-
-        let expr = session.questionList[session.currentIdx];
-        if(!parseEquationStructure(expr)) { alert("題目解析失敗！"); resetToMainMenu(false); return; }
-        if(session.currentMode==='CHALLENGE') { cacheStorage.EQ.stats[session.currentTypeNum].total++; cloudSaveData(); }
-        
-        document.getElementById('step2Title').innerText = session.currentMode==='REVIEW'?"👹 魔王錯題重溫挑戰":"請依各變數數值求出最終結果";
-        document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`;
-        
-        let displayStr = `
-            <div style="font-size: 28px; letter-spacing: 0.5px; margin-top: 10px;">
-                已知 ${convertToRichMathHTML(eqData.targetLetter + " = " + eqData.formulaName)}
-            </div>
-            <div style="font-size: 22px; color: #cbd5e1; margin-top: 20px; font-weight: normal;">
-                當 ${eqData.variablesText}，求 ${eqData.targetLetter} = ?
-            </div>
-        `;
-        document.getElementById('displayEq').innerHTML = displayStr;
-        document.getElementById('submitAnsBtn').className = ""; document.getElementById('submitAnsBtn').innerText = "提交結果並驗證答案";
-        updateProgressBarUI(); showPanel('step2');
-    }
-
-    function checkFirstAnswer() {
-        let userAns = (session.wrongAttemptsThisQuestion === 1 && session.currentMode !== 'SOLVER') ? 
-            document.getElementById('ansRetryInput').value.replace(/\s+/g,'') : document.getElementById('ansInput').value.replace(/\s+/g,'');
-
-        if(userAns === eqData.ansStr) {
-            if(session.currentMode==='CHALLENGE' && session.wrongAttemptsThisQuestion===0) cacheStorage.EQ.stats[session.currentTypeNum].firstMatch++;
-            showPanel('step3'); executeDirectSuccess();
-        } else {
-            session.wrongAttemptsThisQuestion++;
-            if(session.currentMode==='CHALLENGE' && !session.hasAddedToWrongBookThisQuestion) {
-                if(!cacheStorage.EQ.wrongBook.includes(session.questionList[session.currentIdx])) cacheStorage.EQ.wrongBook.push(session.questionList[session.currentIdx]);
-                cacheStorage.EQ.stats[session.currentTypeNum].failed++; session.hasAddedToWrongBookThisQuestion=true;
-            }
-            
-            if(session.currentMode !== 'SOLVER' && session.wrongAttemptsThisQuestion === 1) {
-                document.getElementById('ansInput').disabled = true; document.getElementById('retryInputWrapper').style.display = 'block'; 
-                let area = document.getElementById('initialFeedbackArea'); area.className="feedback warning";
-                area.innerHTML = "❌ 計算不太對哦！<b>首答不扣分</b>。請在下方開闢的<b>補答欄位</b>重新核對修正答案！";
-                document.getElementById('submitAnsBtn').innerText = "提交修正補答答案"; document.getElementById('submitAnsBtn').className="btn-warning";
-            } else {
-                if(session.currentMode === 'CHALLENGE') session.score--;
-                document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`;
-                updateProgressBarUI(); showPanel('step3'); executeFinalFailure();
-            }
-            cloudSaveData();
+    function stopSessionTimer() {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
         }
-    }
-
-    function executeDirectSuccess() {
-        document.getElementById('interactiveStageBox').innerHTML = `
-            <div style="font-size: 40px; margin-bottom: 10px;">✅</div>
-            <div style="font-size: 26px; font-weight: bold; white-space: nowrap;">
-                ${eqData.targetLetter} = <span style='color:#00ffc4;'>${eqData.ansStr}</span> <span style="font-size: 20px; color: #cbd5e1; font-weight: normal; margin-left: 10px;">(計算完全正確！)</span>
-            </div>
-        `;
-        document.getElementById('teachingZone').style.display = "none"; 
-        document.getElementById('solveBtn').style.display = "none"; 
-        document.getElementById('nextBtn').style.display = "block";
-        
-        let f = document.getElementById('feedbackArea'); f.className = "feedback success";
-        if(session.currentMode==='CHALLENGE') {
-            session.score++; document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`; updateProgressBarUI(); 
-            if(session.wrongAttemptsThisQuestion===1) { cacheStorage.EQ.stats[session.currentTypeNum].failed--; cacheStorage.EQ.stats[session.currentTypeNum].retryMatch++; }
-            f.innerHTML = "🎉 太棒了！你的心算與代入邏輯毫無破綻，直接斬獲積分！";
-        } else if(session.currentMode==='REVIEW') {
-            let expr = session.questionList[session.currentIdx]; cacheStorage.EQ.wrongBook = cacheStorage.EQ.wrongBook.filter(i=>i!==expr);
-            f.innerHTML = "🎉 成功擊破多變數錯題！本題已被移出錯題庫！";
-        } else f.innerHTML = "🎉 計算完全正確！概念非常精準。";
-        
-        cloudSaveData(); setupNextButtonLabel();
-    }
-
-    function executeFinalFailure() {
-        document.getElementById('interactiveStageBox').innerHTML = `已知 ${convertToRichMathHTML(eqData.targetLetter + " = " + eqData.formulaName)} <br> ⚖️ 當 ${eqData.variablesText}`;
-        document.getElementById('nextBtn').style.display = "none"; 
-        document.getElementById('solveBtn').style.display = "block"; 
-        document.getElementById('teachingZone').style.display = "none"; 
-        
-        let f=document.getElementById('feedbackArea'); f.className = "feedback error";
-        f.innerHTML = session.currentMode==='CHALLENGE' ? "❌ 補答依然有些微誤差。<span style='color:red;'>[挑戰失敗] 積分 -1 分！</span>請點擊下方按鈕啟動隱形括號逐步解題。" : "❌ 計算有誤。請點擊下方開啟逐步拆解教學。";
-    }
-
-    function startInteractiveSolving() {
-        document.getElementById('solveBtn').style.display = "none";
-        document.getElementById('teachingZone').style.display = "flex"; 
-        document.getElementById('stageCampArea').style.display = "block";
-        document.getElementById('stageCombineArea').style.display = "none"; document.getElementById('stageFinalArea').style.display = "none";
-        document.getElementById('rightCampInput').value = "";
-        document.getElementById('campLabelContainer').innerHTML = `<label style='color:#ffffff; text-shadow:1px 1px 2px rgba(0,0,0,0.8);'><strong>第一步：請寫出主體公式在代入數字後的括號算式：</strong></label>`;
-        renderMathSteps(1); checkTeachingWrongCounter('teachingWrongArea1');
-    }
-
-    function executeCampStage() {
-        let valRaw = document.getElementById('rightCampInput').value.replace(/\s+/g,'');
-        if (valRaw === eqData.ansStr) { alert("🚀 太優秀了！秒殺本題！"); executeDirectSuccess(); return; }
-        let uR = convertToStandardMath(valRaw); let tR = convertToStandardMath(eqData.targetRightCamp);
-        if(uR === tR || eval(uR) === eval(tR)) {
-            session.wrongAttemptsIn教學 = 0; 
-            alert("🎯 變數括號對號入座完全正確！"); document.getElementById('interactiveStageBox').innerHTML = `${eqData.targetLetter} = ${convertToRichMathHTML(eqData.targetRightCamp)}`;
-            document.getElementById('stageCampArea').style.display="none"; document.getElementById('stageCombineArea').style.display="block"; document.getElementById('rightCombineInput').value = ""; renderMathSteps(2);
-        } else { session.wrongAttemptsIn教學++; alert(`❌ 結構位置不對哦。`); checkTeachingWrongCounter('teachingWrongArea1'); }
-    }
-
-    function executeCombineStage() {
-        let valRaw = document.getElementById('rightCombineInput').value.replace(/\s+/g,'');
-        if (valRaw === eqData.ansStr) { alert("🚀 秒殺本題！"); executeDirectSuccess(); return; }
-        let uR = convertToStandardMath(valRaw); let tR = convertToStandardMath(eqData.midStepStr);
-        if(uR === tR || eval(uR) === eval(tR)) {
-            session.wrongAttemptsIn教學 = 0;
-            alert("🎯 乘除與指數部分優先處理正確！"); document.getElementById('interactiveStageBox').innerHTML = `${eqData.targetLetter} = ${convertToRichMathHTML(eqData.midStepStr)}`;
-            document.getElementById('stageCombineArea').style.display="none"; document.getElementById('stageFinalArea').style.display="block"; document.getElementById('finalAnsInput').value = ""; renderMathSteps(3);
-        } else { session.wrongAttemptsIn教學++; alert("❌ 中段階段計算有誤。"); checkTeachingWrongCounter('teachingWrongArea2'); }
-    }
-
-    function executeFinal() {
-        let uAns = document.getElementById('finalAnsInput').value.replace(/\s+/g,'');
-        if(uAns === eqData.ansStr) {
-            session.wrongAttemptsIn教學 = 0;
-            document.getElementById('interactiveStageBox').innerHTML=`求得 ${eqData.targetLetter} = <span style='color:#00ff00;'>${eqData.ansStr}</span> 🎯`;
-            document.getElementById('stageFinalArea').style.display="none"; document.getElementById('nextBtn').style.display="block"; setupNextButtonLabel(); renderMathSteps(4);
-        } else { session.wrongAttemptsIn教學++; alert("最終數值不對！"); checkTeachingWrongCounter('teachingWrongArea3'); }
-    }
-
-    function advanceQuestion() {
-        if(session.currentMode==='CHALLENGE') {
-            if(session.endCondition==='COUNT') {
-                if(session.currentIdx < session.questionList.length-1) { session.currentIdx++; loadEquationToStage(); } else { calculateAndRenderStats(); showPanel('step_stats_panel'); }
-            } else if(session.endCondition==='TARGET_SCORE') {
-                if(session.score >= session.targetScore) { alert("🏆 積分達標！"); calculateAndRenderStats(); showPanel('step_stats_panel'); }
-                else { session.currentIdx++; let nextQ = generateQuestion(session.selectedType); session.questionList.push(nextQ); loadEquationToStage(); }
-            } else { session.currentIdx++; let nextQ = generateQuestion(session.selectedType); session.questionList.push(nextQ); loadEquationToStage(); }
-        } else if(session.currentMode==='REVIEW') {
-            let comb = [...cacheStorage.EQ.wrongBook];
-            if(comb.length===0 || session.currentIdx >= session.totalQuestions-1) { alert("🏁 錯題重溫結束！"); resetToMainMenu(false); }
-            else { session.currentIdx++; session.totalQuestions=comb.length; session.questionList=comb; loadEquationToStage(); }
-        } else resetToMainMenu(false);
-    }
-
-    function handleManualSolverInput() {
-        stopSessionTimer(); let rawInput = document.getElementById('eqInput').value.trim(); let vars = document.getElementById('xValueInput').value.trim();
-        if(!rawInput) { alert("請輸入有效的代數式或公式！"); return; }
-        let target = "組裝項"; let expr = rawInput; if(rawInput.includes("=")) { let parts = rawInput.split("="); target = parts[0].trim(); expr = parts[1].trim(); }
-        session.totalQuestions = 1; session.currentIdx = 0; session.questionList = [`自訂結構引導 | 已知 ${target} = ${expr}。當 ${vars}，${target} = ? #|#1`];
-        document.getElementById('teachingHeaderBadge').innerText = "🛠️ 解答引導模式"; loadEquationToStage();
-    }
-
-    function renderMathSteps(code) {
-        const box = document.getElementById('mathStepBox');
-        let html = `<div class="step-line ${code===1?'active-line':''}">[主體公式]：${convertToRichMathHTML(eqData.targetLetter + " = " + eqData.formulaName)}<br>[已知條件]：${eqData.variablesText}</div>`;
-        if(code>=2) html+=`<div class="step-line ${code===2?'active-line':''}">[第一步：群組變數代入] <br>&rArr; ${eqData.targetLetter} = ${convertToRichMathHTML(eqData.targetRightCamp)}</div>`;
-        if(code>=3) html+=`<div class="step-line ${code===3?'active-line':''}">[第二步：乘除/次方優先] <br>&rArr; ${eqData.targetLetter} = ${convertToRichMathHTML(eqData.midStepStr)}</div>`;
-        if(code>=4) html+=`<div class='step-line active-line'>[最終精確求值] <br>&rArr; 答案 ${eqData.targetLetter} = ${eqData.ansStr} 🎯</div>`;
-        box.innerHTML = html;
-    }
-
-    function calculateAndRenderStats() {
-        const tb = document.getElementById('statsTableBody'); if(!tb) return; tb.innerHTML='';
-        let tr=document.createElement('tr'); tr.className="section-title"; tr.innerHTML=`<th colspan="7">⚖️ 跨學科公式代求值數據分析</th>`; tb.appendChild(tr);
-        let sObj = cacheStorage.EQ.stats;
-        for(let k in sObj) {
-            let r=sObj[k], t=r.total, fRate=t>0?Math.round((r.firstMatch/t)*100)+'%':'0%', cRate=t>0?Math.round(((r.firstMatch+r.retryMatch)/t)*100)+'%':'0%';
-            tb.innerHTML+=`<tr><td style='text-align:left;font-weight:bold;'>${r.name}</td><td>${t}</td><td style='color:var(--success); font-weight:bold;'>${r.firstMatch}</td><td style='color:#b45309;'>${r.retryMatch}</td><td style='color:var(--danger);'>${r.failed}</td><td style='background:#f0fdf4;'>${fRate}</td><td style='background:#eff6ff;'>${cRate}</td></tr>`;
-        }
-        let sWr=(cacheStorage.EQ.wrongBook||[]).length; document.getElementById('statsWrongCount').innerText=sWr;
-        document.getElementById('printStudentInfo').innerHTML = currentRole==='GUEST'?`<span>臨時訪客多變數練習數據摘要</span>` : `<span>學生班別: ${userRawClass}</span> | 學號: ${userRawSeat}`;
-        document.getElementById('printDate').innerText = `產出時間: `+new Date().toLocaleString();
-    }
-
-    function resetToMainMenu(nc) {
-        if(nc && (document.getElementById('step2').classList.contains('active')||document.getElementById('step3').classList.contains('active'))) {
-            if(!confirm("確定要中途退出挑戰嗎？")) return;
-        }
-        stopSessionTimer(); document.getElementById('nextBtn').style.display="none"; document.getElementById('teachingZone').style.display="none";
-        cloudSaveData(); updateReviewMenuUI(); showPanel('step1');
-    }
-
-    function logoutSession() {
-        if(confirm("確定登出系統嗎？")) {
-            stopSessionTimer(); localStorage.clear(); userRawClass=""; userRawSeat=""; toggleLoginMode('STUDENT'); showPanel('step0_login');
-        }
+        const timerBox = document.getElementById('globalTimerBox');
+        const timerBox3 = document.getElementById('globalTimerBoxStage3');
+        if (timerBox) timerBox.style.display = 'none';
+        if (timerBox3) timerBox3.style.display = 'none';
     }
 
     function startSessionTimer(seconds) {
@@ -1074,17 +797,6 @@
                 showPanel('step_stats_panel');
             }
         }, 1000);
-    }
-
-    function stopSessionTimer() {
-        if (timerInterval) {
-            clearInterval(timerInterval);
-            timerInterval = null;
-        }
-        const timerBox = document.getElementById('globalTimerBox');
-        const timerBox3 = document.getElementById('globalTimerBoxStage3');
-        if (timerBox) timerBox.style.display = 'none';
-        if (timerBox3) timerBox3.style.display = 'none';
     }
 </script>
 </body>
