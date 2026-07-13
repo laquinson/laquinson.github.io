@@ -6,7 +6,6 @@
     <title>中一多項式加減系統 - 挑戰選單</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* 確保全域星空背景與磨砂玻璃特效，並加強 z-index 防止 DOM 點擊遮擋 */
         body {
             background: url('https://i.imgur.com/f118Qxn.jpeg') no-repeat center center fixed;
             background-size: cover;
@@ -53,7 +52,6 @@
             letter-spacing: 1px;
         }
 
-        /* 原生教科書排版：直式對齊黑板 */
         .vertical-board-table {
             margin: 15px auto;
             border-collapse: collapse;
@@ -78,7 +76,6 @@
             font-weight: bold;
         }
 
-        /* 橫式併項黑板美化 */
         .horizontal-step-line {
             font-size: 1.2em;
             margin: 12px 0;
@@ -161,7 +158,7 @@
             <label>✏️ 請輸入多項式相加減算式：</label>
             <input type="text" id="polyInput" placeholder="例如: (2x² + 3x) + (x² - 5x)" autocomplete="off">
         </div>
-        <button onclick="handleManualSolverInput()" class="screenshot-btn">開始多項式化簡引引導</button>
+        <button onclick="handleManualSolverInput()" class="screenshot-btn">開始多項式化簡引導</button>
     </div>
 
     <div id="step2" class="step-panel">
@@ -245,7 +242,15 @@
     let timerInterval = null; let timeLeft = 0;
     let wrongQuestionBank = [];
 
-    // 🎯 核心修復 1：安全門校驗防禦（完美與大廳 home.html 的快取閉環對接，阻絕重複登入與空白選單）
+    // 🌟 全域加載校驗防線：防堵生命週期互卡引起的模式按鍵失靈
+    window.onload = function() {
+        renderTypeSelectOptions();
+        updateReviewCardUI();
+        
+        // 函數與DOM全部加載後發動快取校驗門
+        checkActiveSessionOnLoad();
+    };
+
     function checkActiveSessionOnLoad() {
         let savedClass = localStorage.getItem("Active_User_Class");
         let savedSeat = localStorage.getItem("Active_User_Seat");
@@ -254,35 +259,25 @@
         if (savedRole === "GUEST") {
             currentRole = "GUEST"; userRawClass = "GUEST"; userRawSeat = "VISITOR";
             wrongQuestionBank = [];
-            window.addEventListener('DOMContentLoaded', () => {
-                document.getElementById('topCenterAccount').innerText = `挑戰者: 訪客體驗`;
-                document.getElementById('topCenterAccount').style.display = 'block';
-                showPanel('step1'); // 直達主選單
-            });
+            document.getElementById('topCenterAccount').innerText = `挑戰者: 訪客體驗`;
+            document.getElementById('topCenterAccount').style.display = 'block';
+            showPanel('step1'); 
         } else if (savedRole === "STUDENT" || (savedClass && savedSeat)) {
             currentRole = "STUDENT"; userRawClass = savedClass || "1A"; userRawSeat = savedSeat || "1";
             let seatStr = String(userRawSeat).padStart(2, '0');
-            window.addEventListener('DOMContentLoaded', () => {
-                document.getElementById('topCenterAccount').innerText = `挑戰者: ${userRawClass}班${seatStr}號`;
-                document.getElementById('topCenterAccount').style.display = 'block';
-                showPanel('step1'); // 直達主選單
-                loadCloudDataOnInit();
-            });
+            document.getElementById('topCenterAccount').innerText = `挑戰者: ${userRawClass}班${seatStr}號`;
+            document.getElementById('topCenterAccount').style.display = 'block';
+            showPanel('step1'); 
+            loadCloudDataOnInit();
         } else if (savedRole === "TEACHER") {
             currentRole = "TEACHER";
-            window.addEventListener('DOMContentLoaded', () => {
-                document.getElementById('topCenterAccount').innerText = `管理員後台`;
-                document.getElementById('topCenterAccount').style.display = 'block';
-                showPanel('step1');
-            });
+            document.getElementById('topCenterAccount').innerText = `管理員後台`;
+            document.getElementById('topCenterAccount').style.display = 'block';
+            showPanel('step1');
         } else {
-            // 安全阻斷：如果完全沒快取，退回 index 登入
             window.location.href = "index.html";
         }
     }
-
-    // 在腳本解析最起點，立刻發動身分攔截門
-    checkActiveSessionOnLoad();
 
     async function loadCloudDataOnInit() {
         const cloudData = await syncWithCloud("load");
@@ -292,12 +287,6 @@
         updateReviewCardUI();
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-        // 排版選項動態載入
-        renderTypeSelectOptions();
-        updateReviewCardUI();
-    });
-
     function renderTypeSelectOptions() {
         const ts = document.getElementById('typeSelect');
         if(ts) {
@@ -306,6 +295,68 @@
                 <option value="QUAD">2. 二次多項式加減 (題型4)</option>
                 <option value="MIX" selected>3. 🔀 混合全題型挑戰</option>
             `;
+        }
+    }
+
+    function switchSetupConfig(configMode) {
+        if (configMode === 'CHALLENGE') {
+            showPanel('step1_challenge');
+        } else if (configMode === 'STATS') {
+            calculateAndRenderStats();
+            showPanel('step_stats_panel');
+        } else if (configMode === 'SOLVER') {
+            showPanel('step1_solver');
+        } else if (configMode === 'REVIEW') {
+            wrongQuestionBank = JSON.parse(localStorage.getItem("Poly_Wrong_Bank")) || [];
+            if (wrongQuestionBank.length === 0) {
+                alert("🎉 太棒了！目前多項式沒有任何錯題記錄！");
+                return;
+            }
+            stopSessionTimer();
+            session.score = 0; session.currentIdx = 0;
+            session.questionList = [...wrongQuestionBank];
+            session.endCondition = 'COUNT';
+            session.totalQuestions = session.questionList.length;
+            if(document.getElementById('timeModeResultSummary')) {
+                document.getElementById('timeModeResultSummary').style.display = 'none';
+            }
+            loadQuestionToStage();
+        }
+    }
+
+    function calculateAndRenderStats() {
+        if (document.getElementById('statsFinalScore')) {
+            document.getElementById('statsFinalScore').innerText = `${session.score} 分`;
+        }
+    }
+
+    function showPanel(id) {
+        document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+        const targetPanel = document.getElementById(id);
+        if (targetPanel) targetPanel.classList.add('active');
+        currentPanelId = id;
+        
+        const navBtn = document.getElementById('dynamicNavBtn');
+        if (navBtn) {
+            if (id === 'step1') {
+                navBtn.innerText = "← 返回學習大廳";
+            } else {
+                navBtn.innerText = "← 返回主目錄";
+            }
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function handleTopLeftNav() {
+        if (currentPanelId === 'step1') {
+            stopSessionTimer();
+            window.location.href = "home.html";
+        } else {
+            if (currentPanelId === 'step2' || currentPanelId === 'step3') {
+                if (!confirm("確定要中途退出挑戰嗎？")) return;
+            }
+            stopSessionTimer();
+            showPanel('step1');
         }
     }
 
@@ -350,41 +401,6 @@
         if (reviewCard) reviewCard.classList.toggle('disabled', wrongQuestionBank.length === 0);
     }
 
-    function updateNavbarRouting(panelId) {
-        currentPanelId = panelId;
-        const navBtn = document.getElementById('dynamicNavBtn');
-        if (!navBtn) return;
-
-        if (panelId === 'step1') {
-            navBtn.innerText = "← 返回學習大廳";
-            navBtn.title = "跳轉至外部大廳 home.html";
-        } else {
-            navBtn.innerText = "← 返回主目錄";
-            navBtn.title = "返回多項式主選單";
-        }
-    }
-
-    function handleTopLeftNav() {
-        if (currentPanelId === 'step1') {
-            stopSessionTimer();
-            window.location.href = "home.html";
-        } else {
-            if (currentPanelId === 'step2' || currentPanelId === 'step3') {
-                if (!confirm("確定要中途退出挑戰嗎？")) return;
-            }
-            stopSessionTimer();
-            showPanel('step1');
-        }
-    }
-
-    function showPanel(id) {
-        document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
-        const targetPanel = document.getElementById(id);
-        if (targetPanel) targetPanel.classList.add('active');
-        updateNavbarRouting(id);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
     function toggleConditionUI() {
         let c = document.querySelector('input[name="endCondition"]:checked').value;
         document.getElementById('countInputWrapper').style.display = c === 'COUNT' ? 'block' : 'none';
@@ -399,7 +415,7 @@
         return sign + coefStr + variable;
     }
 
-    function normalizePolyStr(str) {
+    UX = function normalizePolyStr(str) {
         let norm = str.replace(/\s+/g, '').replace(/²/g, '^2').replace(/¹/g, '').replace(/⁺/g, '+').replace(/⁻/g, '-');
         return norm.replace(/\+x/g, '+1x').replace(/-x/g, '-1x').replace(/^x/, '1x').replace(/\+y/g, '+1y').replace(/-y/g, '-1y').replace(/^y/, '1y');
     }
@@ -539,8 +555,8 @@
 
     function checkAnswer() {
         let studentAns = document.getElementById('ansInput').value.trim();
-        let normStudent = normalizePolyStr(studentAns);
-        let normCorrect = normalizePolyStr(polyData.ansStr);
+        let normStudent = UX(studentAns);
+        let normCorrect = UX(polyData.ansStr);
         let currentQuestionStr = session.questionList[session.currentIdx];
 
         if(normStudent === normCorrect || studentAns === polyData.ansStr) {
