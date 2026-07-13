@@ -5,6 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>數學智能練習系統 - 中央大廳</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background: url('https://i.imgur.com/f118Qxn.jpeg') no-repeat center center fixed;
+            background-size: cover; color: #fff; font-family: system-ui, sans-serif;
+            margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center;
+        }
+        .top-center-account { position: absolute; top: 20px; font-size: 18px; font-weight: bold; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); z-index: 999 !important; }
+        .top-right-nav { position: absolute; top: 20px; right: 20px; z-index: 999 !important; }
+        .top-nav-btn { background: #fff; padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; }
+        .logout-btn-text { color: #ef4444; }
+        .container {
+            margin-top: 80px; width: 100%; max-width: 800px; padding: 30px; border-radius: 16px;
+            background: rgba(255, 255, 255, 0.12); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.25); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15);
+        }
+        h1 { text-align: center; text-shadow: 1px 1px 4px rgba(0,0,0,0.6); }
+        .welcome-msg { text-align: center; margin-bottom: 30px; font-size: 18px; }
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .game-card {
+            background: rgba(0,0,0,0.3); padding: 20px; border-radius: 12px; text-align: center; cursor: pointer;
+            transition: transform 0.2s, background 0.2s; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .game-card:hover { transform: translateY(-5px); background: rgba(0,0,0,0.5); }
+        .game-icon { font-size: 40px; margin-bottom: 10px; }
+        @media (max-width: 600px) { .menu-grid { grid-template-columns: 1fr; } }
+    </style>
 </head>
 <body>
 
@@ -19,47 +45,59 @@
     <div id="welcomeText" class="welcome-msg">歡迎回來</div>
     
     <div class="menu-grid">
-        <a href="Substitution.html" class="game-card">
+        <!-- 嚴格封殺 <a> 標籤，改用 onclick 確保當前分頁跳轉 -->
+        <div class="game-card" onclick="goToModule('Substitution.html')">
             <div class="game-icon">📐</div>
             <h2 class="game-title">多變數代數式求值</h2>
             <p class="game-desc">探索跨學科公式代入，啟動隱形括號破譯思維逐步解題！</p>
-        </a>
+        </div>
         
-        <a href="Polynomial.html" class="game-card">
+        <div class="game-card" onclick="goToModule('Polynomial.html')">
             <div class="game-icon">🔮</div>
             <h2 class="game-title">多項式化簡與展開</h2>
             <p class="game-desc">啟動田字格魔法陣，輕鬆攻破去括號與同類項合併！</p>
-        </a>
+        </div>
     </div>
 </div>
 
 <script>
-    (function checkSecurityGate(){
-        let role = localStorage.getItem("Active_User_Role");
+    // 腳本最頂端安全門禁：無快取直接秒踢回入口
+    let sysRole = localStorage.getItem("Active_User_Role");
+    if (!sysRole) window.location.replace("index.html");
+
+    // DOM 完成後渲染帳號
+    document.addEventListener('DOMContentLoaded', function() {
         let cls = localStorage.getItem("Active_User_Class");
         let seat = localStorage.getItem("Active_User_Seat");
-        if (!role) { window.location.href = "index.html"; return; }
         
         let badge = document.getElementById('topCenterAccount');
         let welcome = document.getElementById('welcomeText');
         
-        // 🎯 統一身分識別快取命名空間
-        if(role === 'STUDENT' || (role !== 'GUEST' && role !== 'TEACHER' && cls && seat)) {
-            localStorage.setItem("Active_User_Role", "STUDENT"); // 標準化校驗標籤
+        if(sysRole === 'STUDENT' || (sysRole !== 'GUEST' && sysRole !== 'TEACHER' && cls && seat)) {
             let info = `${cls}班${String(seat).padStart(2, '0')}號`;
             if(badge) badge.innerText = `挑戰者: ${info}`;
             if(welcome) welcome.innerText = `👋 準備好接受今日的數學挑戰了嗎，${info} 同學？`;
-        } else if(role === 'GUEST') {
+        } else if(sysRole === 'GUEST') {
             if(badge) badge.innerText = `挑戰者: 訪客體驗`;
             if(welcome) welcome.innerText = `✨ 目前正在以 [訪客身份] 自由體驗沙盒關卡`;
-        } else if(role === 'TEACHER') {
+        } else if(sysRole === 'TEACHER') {
             let teacherId = localStorage.getItem("Active_User_TeacherID") || "Teacher_01";
             if(badge) badge.innerText = `管理員: ${teacherId.replace('Teacher_','')}`;
             if(welcome) welcome.innerText = `👨‍🏫 歡迎回來，管理員教師後台已安全對接`;
         }
-    })();
+    });
 
-    function logoutSession() { if(confirm("確定登出系統嗎？")) { localStorage.clear(); window.location.href = "index.html"; } }
+    // 跨網頁跳轉引擎
+    function goToModule(moduleName) {
+        window.location.replace(moduleName);
+    }
+
+    function logoutSession() { 
+        if(confirm("確定登出系統嗎？")) { 
+            localStorage.clear(); 
+            window.location.replace("index.html"); 
+        } 
+    }
 </script>
 </body>
 </html>
