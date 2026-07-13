@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>數學智能練習系統 - 系統入口</title>
-    <link rel="stylesheet" href="style.css">
     <style>
         body {
             background: url('https://i.imgur.com/f118Qxn.jpeg') no-repeat center center fixed;
@@ -12,47 +11,53 @@
             min-height: 100vh; margin: 0; padding: 20px;
             display: flex; justify-content: center; align-items: center;
             font-family: system-ui, -apple-system, sans-serif;
+            box-sizing: border-box;
         }
+        .login-layout-container { width: 100%; max-width: 400px; }
+        .brand-logo-title { font-size: 36px; font-weight: 900; color: #fff; text-align: center; margin-bottom: 30px; text-shadow: 0 4px 12px rgba(0,0,0,0.8); letter-spacing: 2px; }
         .screenshot-login-card {
             background: rgba(255, 255, 255, 0.12);
             backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
             border: 1px solid rgba(255, 255, 255, 0.25);
-            border-radius: 12px; padding: 40px; width: 100%; max-width: 400px;
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15);
+            border-radius: 16px; padding: 40px; 
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);
         }
-        /* 繼承其他原有樣式 */
-        .brand-logo-title { font-size: 32px; font-weight: 800; color: #fff; text-align: center; margin-bottom: 30px; text-shadow: 0 2px 8px rgba(0,0,0,0.7); }
         .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; color: #fff; font-weight: bold; }
-        select, input { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3); box-sizing: border-box; }
-        .screenshot-btn { width: 100%; padding: 14px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; }
-        .toggle-login-mode { text-align: center; color: #e2e8f0; cursor: pointer; margin-top: 20px; font-size: 14px; }
+        label { display: block; margin-bottom: 8px; color: #fff; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
+        select, input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.4); box-sizing: border-box; font-size: 16px; background: rgba(255,255,255,0.9); }
+        .screenshot-btn { width: 100%; padding: 14px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5); transition: transform 0.2s; }
+        .screenshot-btn:hover { transform: translateY(-2px); }
+        .toggle-login-mode { text-align: center; color: #e2e8f0; cursor: pointer; margin-top: 25px; font-size: 14px; font-weight: bold; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); transition: color 0.2s; }
+        .toggle-login-mode:hover { color: #a855f7; }
+        .screenshot-footer { text-align: center; color: #fff; margin-top: 30px; font-size: 12px; opacity: 0.7; }
     </style>
 </head>
 <body>
 
-<div class="login-layout-container" style="width: 100%; max-width: 400px;">
+<div class="login-layout-container">
     <div class="brand-logo-title"><span>數學智能練習系統</span></div>
     
     <div id="studentLoginBox" class="screenshot-login-card">
         <div class="form-group"><label>班別</label><select id="loginClass"></select></div>
         <div class="form-group"><label>學號</label><select id="loginSeat"></select></div>
         <button onclick="loginStudent()" class="screenshot-btn">登入</button>
-        <button onclick="loginGuest()" style="margin-top:15px; background:rgba(255,255,255,0.75); border:none; color:#0f172a; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%;">🎭 以訪客身份免登入試玩</button>
+        <button onclick="loginGuest()" style="margin-top:15px; background:rgba(255,255,255,0.85); border:none; color:#0f172a; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer; width:100%; transition: transform 0.2s;">🎭 以訪客身份免登入試玩</button>
         <div class="toggle-login-mode" onclick="toggleLoginMode('TEACHER')">⚙️ 教師管理登入</div>
     </div>
 
     <div id="teacherLoginBox" class="screenshot-login-card" style="display: none;">
-        <h2 style="color:white; text-align:center; margin-top:0;">教師數據管理後台</h2>
+        <h2 style="color:white; text-align:center; margin-top:0; text-shadow: 1px 1px 3px rgba(0,0,0,0.8);">教師數據管理後台</h2>
         <div class="form-group"><label>管理員帳號</label><select id="teacherSelect"></select></div>
         <div class="form-group"><label>安全認證密碼</label><input type="password" id="teacherPwd" placeholder="••••••••" autocomplete="off"></div>
-        <button onclick="loginTeacher()" class="screenshot-btn" style="background:#8b5cf6;">驗證登入</button>
+        <button onclick="loginTeacher()" class="screenshot-btn" style="background:#8b5cf6; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.5);">驗證登入</button>
         <div class="toggle-login-mode" onclick="toggleLoginMode('STUDENT')">🎒 返回學生模式</div>
     </div>
+    
+    <div class="screenshot-footer">Copyright @ 2026 La Quinson</div>
 </div>
 
 <script>
-    // 嚴格生命週期：DOM加載完畢後才渲染選單，杜絕 null 崩潰
+    // 生命週期防禦：等待 DOM 構建完畢後再寫入選單
     document.addEventListener('DOMContentLoaded', function() {
         let cHtml = "", sHtml = "", tHtml = "";
         for(let g=1;g<=6;g++) ['A','B','C','D'].forEach(l => cHtml+=`<option value="${g}${l}">${g}${l} 班</option>`);
@@ -68,7 +73,7 @@
         document.getElementById('teacherLoginBox').style.display = m === 'TEACHER' ? 'block' : 'none'; 
     }
 
-    // 全閉環跳轉引擎：嚴格使用 location.replace 覆蓋歷史紀錄
+    // 嚴格使用 window.location.replace 進行快取閉環跳轉
     function loginStudent() {
         localStorage.setItem("Active_User_Role", "STUDENT");
         localStorage.setItem("Active_User_Class", document.getElementById('loginClass').value);
