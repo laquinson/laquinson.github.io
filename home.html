@@ -39,18 +39,23 @@
         let cls = localStorage.getItem("Active_User_Class");
         let seat = localStorage.getItem("Active_User_Seat");
         if (!role) { window.location.href = "index.html"; return; }
+        
         let badge = document.getElementById('topCenterAccount');
         let welcome = document.getElementById('welcomeText');
-        if(role === 'STUDENT') {
+        
+        // 🎯 統一身分識別快取命名空間
+        if(role === 'STUDENT' || (role !== 'GUEST' && role !== 'TEACHER' && cls && seat)) {
+            localStorage.setItem("Active_User_Role", "STUDENT"); // 標準化校驗標籤
             let info = `${cls}班${String(seat).padStart(2, '0')}號`;
-            badge.innerText = `挑戰者: ${info}`;
-            welcome.innerText = `👋 準備好接受今日的數學挑戰了嗎，${info} 同學？`;
+            if(badge) badge.innerText = `挑戰者: ${info}`;
+            if(welcome) welcome.innerText = `👋 準備好接受今日的數學挑戰了嗎，${info} 同學？`;
         } else if(role === 'GUEST') {
-            badge.innerText = `挑戰者: 訪客體驗`;
-            welcome.innerText = `✨ 目前正在以 [訪客身份] 自由體驗沙盒關卡`;
+            if(badge) badge.innerText = `挑戰者: 訪客體驗`;
+            if(welcome) welcome.innerText = `✨ 目前正在以 [訪客身份] 自由體驗沙盒關卡`;
         } else if(role === 'TEACHER') {
-            badge.innerText = `管理員: ${localStorage.getItem("Active_User_TeacherID").replace('Teacher_','')}`;
-            welcome.innerText = `👨‍🏫 歡迎回來，管理員教師後台已安全對接`;
+            let teacherId = localStorage.getItem("Active_User_TeacherID") || "Teacher_01";
+            if(badge) badge.innerText = `管理員: ${teacherId.replace('Teacher_','')}`;
+            if(welcome) welcome.innerText = `👨‍🏫 歡迎回來，管理員教師後台已安全對接`;
         }
     })();
 
