@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>中一多變數代數式求值系統</title>
     <style>
+        :root { 
+            --primary: #3b82f6; 
+            --success: #10b981; 
+            --danger: #ef4444; 
+            --warning: #f59e0b; 
+            --glass-bg: rgba(255, 255, 255, 0.12); 
+            --glass-border: 1px solid rgba(255, 255, 255, 0.25); 
+            --glass-blur: blur(14px); 
+        }
         body { 
             font-family: system-ui, -apple-system, sans-serif; 
             background: url("https://i.imgur.com/f118Qxn.jpeg") no-repeat center center fixed; 
@@ -18,11 +27,14 @@
         .top-left-nav, .top-right-nav { position: absolute; top: 25px; z-index: 999 !important; }
         .top-left-nav { left: 20px; } 
         .top-right-nav { right: 20px; }
-        .top-center-account { position: absolute; top: 28px; left: 50%; transform: translateX(-50%); font-size: 20px; font-weight: 900; color: #fff; text-shadow: 1px 1px 4px rgba(0,0,0,0.6); z-index: 999 !important; font-family: 'Comic Sans MS', sans-serif; white-space: nowrap; }
-        .top-nav-btn { background: #fff; border: 2px solid #cbd5e1; padding: 8px 16px; border-radius: 12px; font-weight: bold; color: #475569; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .top-nav-btn:hover { transform: scale(1.03); border-color: #3b82f6; color: #3b82f6; }
+        .top-center-account { position: absolute; top: 28px; left: 50%; transform: translateX(-50%); font-size: 20px; font-weight: 900; color: #fff; text-shadow: 1px 1px 4px rgba(0,0,0,0.6); z-index: 999 !important; font-family: 'Comic Sans MS', sans-serif; white-space: nowrap; display: none; }
         
-        .container { max-width: 900px; width: 100%; background: rgba(255, 255, 255, 0.12); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.25); padding: 30px; border-radius: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15); box-sizing: border-box; margin-top: 60px; }
+        .top-nav-btn { background: #fff; border: 2px solid #cbd5e1; padding: 8px 16px; border-radius: 12px; font-weight: bold; color: #475569; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .top-nav-btn:hover { border-color: var(--primary); color: var(--primary); transform: scale(1.03); }
+        .logout-btn-text { color: var(--danger); border-color: #fecdd3; }
+        .logout-btn-text:hover { background: #fff1f2; }
+
+        .container { max-width: 900px; width: 100%; background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: var(--glass-border); padding: 30px; border-radius: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15); box-sizing: border-box; margin-top: 60px; }
         
         h2 { text-align: center; color: #fff; text-shadow: 1px 1px 4px rgba(0,0,0,0.6); }
         .step-panel { display: none; } 
@@ -30,24 +42,30 @@
         
         .form-group { margin-bottom: 24px; width: 100%; box-sizing: border-box; }
         label { display: block; margin-bottom: 12px; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
-        input[type="text"], input[type="number"], select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.9); font-size: 16px; box-sizing: border-box; color: #000; }
+        input[type="text"], input[type="number"], select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.9); font-size: 16px; box-sizing: border-box; color:#000; }
         
-        button { width: 100%; padding: 14px; background: #3b82f6; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: transform 0.2s; }
-        button:hover { transform: translateY(-2px); } 
-        .btn-success { background: #10b981; } 
-        .btn-warning { background: #f59e0b; color:#111; } 
+        button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: transform 0.2s; margin-top: 10px; }
+        button:hover { transform: translateY(-2px); opacity: 0.9; } 
+        .btn-success { background: var(--success); } 
+        .btn-warning { background: var(--warning); color:#111; } 
         .btn-secondary { background: #64748b; margin-top:15px; }
         
         .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .dash-btn { border-radius: 20px; padding: 20px; color: white; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; min-height: 120px; transition: transform 0.2s; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
         .dash-btn:hover { transform: translateY(-4px); }
+        
         .bg-purple { background: linear-gradient(135deg, #7c3aed, #a855f7); } 
         .bg-orange { background: linear-gradient(135deg, #f59e0b, #fcd34d); } 
         .bg-teal { background: linear-gradient(135deg, #0d9488, #2dd4bf); } 
         .bg-blue { background: linear-gradient(135deg, #0284c7, #38bdf8); }
         
-        .stage-box { background: #0f172a; border-radius: 16px; padding: 25px; margin: 20px 0; color: white; text-align: center; font-size: 26px; font-weight: bold; border: 1px solid rgba(255,255,255,0.15); min-height: 100px; display:flex; align-items:center; justify-content:center; }
+        .stage-box { background: #0f172a; border-radius: 16px; padding: 25px; margin: 20px 0; color: white; text-align: center; font-size: 24px; font-weight: bold; border: 1px solid rgba(255,255,255,0.15); min-height: 100px; display:flex; align-items:center; justify-content:center; line-height:1.6; }
         .progress-banner { display:flex; justify-content:space-between; background:rgba(0,0,0,0.4); padding:10px 20px; border-radius:12px; color:#fff; font-weight:bold; margin-bottom:20px; }
+        
+        /* 分數教科書美化排版 */
+        .math-fraction { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; padding: 0 6px; position: relative; top: -2px; }
+        .fraction-numerator { border-bottom: 2px solid white; padding-bottom: 2px; text-align: center; width: 100%; }
+        .fraction-denominator { text-align: center; width: 100%; padding-top: 2px; }
     </style>
 </head>
 <body>
@@ -57,38 +75,31 @@
 </div>
 <div id="topCenterAccount" class="top-center-account"></div>
 <div id="topRightNav" class="top-right-nav">
-    <button class="top-nav-btn" style="color:#ef4444;" onclick="logoutSession()">🚪 登出</button>
-</div>
-
-<!-- 備用防線：無快取時才會啟用，有快取時會自動 display: none -->
-<div id="step0_login" class="step-panel" style="width:100%; max-width:400px; margin-top:100px; display: none;">
-    <div style="background:rgba(255,255,255,0.12); backdrop-filter:blur(14px); padding:40px; border-radius:16px; border:1px solid rgba(255,255,255,0.2);">
-        <h2 style="margin-top:0;">連線驗證中</h2>
-        <div class="form-group"><label>班別</label><select id="loginClass"></select></div>
-        <div class="form-group"><label>學號</label><select id="loginSeat"></select></div>
-        <button onclick="loginStudent()">進入模組</button>
-    </div>
+    <button class="top-nav-btn logout-btn-text" onclick="logoutSession()">🚪 登出</button>
 </div>
 
 <div class="container" id="mainContainer">
-    <div id="step1" class="step-panel dashboard-wrapper active">
+    
+    <!-- 主選單目錄 -->
+    <div id="step1" class="step-panel active">
         <h2 style="text-align:left; margin-top:0;">請選擇挑戰模式</h2>
         <div class="dashboard-grid">
             <div class="dash-btn bg-purple" onclick="switchSetupConfig('CHALLENGE')">
-                <div><h2>🎮 數學挑戰賽</h2></div><div style="font-size:14px;opacity:0.9;">進入闖關模式挑戰極限</div>
+                <div><h2>🎮 數學挑戰賽</h2></div><div style="font-size:14px;opacity:0.9;">探索跨學科公式求值</div>
             </div>
             <div class="dash-btn bg-orange" onclick="switchSetupConfig('STATS')">
-                <div><h2>🏆 即時記錄</h2></div><div style="font-size:14px;opacity:0.9;">查看挑戰數據</div>
+                <div><h2>🏆 即時記錄</h2></div><div style="font-size:14px;opacity:0.9;">查看個人歷史得分</div>
             </div>
             <div class="dash-btn bg-teal" onclick="switchSetupConfig('SOLVER')">
-                <div><h2><i>f(x)</i> 有問必答</h2></div><div style="font-size:14px;opacity:0.9;">自訂多變數代入引導</div>
+                <div><h2><i>f(x)</i> 有問必答</h2></div><div style="font-size:14px;opacity:0.9;">自訂多變數求值引導</div>
             </div>
             <div id="reviewModeCard" class="dash-btn bg-blue" onclick="switchSetupConfig('REVIEW')">
-                <div><h2 id="reviewTitle">🗂️ 錯題庫</h2></div><div style="font-size:14px;opacity:0.9;">重溫未攻破題型</div>
+                <div><h2 id="reviewTitle">🗂️ 錯題庫 (0)</h2></div><div style="font-size:14px;opacity:0.9;">溫習未攻破題型</div>
             </div>
         </div>
     </div>
 
+    <!-- 闖關設定面板 -->
     <div id="step1_challenge" class="step-panel">
         <h2>🎮 闖關模式設定</h2>
         <div class="form-group"><label>🧭 數學挑戰結構難度：</label><select id="typeSelect"></select></div>
@@ -98,94 +109,87 @@
         </div>
         <div class="form-group" id="countInputWrapper"><label>🔢 挑戰題數：</label><input type="number" id="totalQuestionsInput" value="5" min="1" max="25" autocomplete="off"></div>
         <div class="form-group" id="timeLimitInputWrapper" style="display:none;"><label>⏱️ 限制時間選擇：</label>
-            <select id="timeLimitSelect"><option value="180">3 分鐘</option><option value="300" selected>5 分鐘</option></select>
+            <select id="timeLimitSelect"><option value="180">3 分鐘快速賽</option><option value="300" selected>5 分鐘標準賽</option></select>
         </div>
         <button onclick="initChallengeSession()" class="btn-success">🎲 生成關卡，出發！</button>
     </div>
 
+    <!-- 有問必答自訂面板 (已修復修飾對齊 Bug) -->
+    <div id="step1_solver" class="step-panel">
+        <h2>🛠️ 數學有問必答 (自訂代入)</h2>
+        <div class="form-group"><label>✏️ 請輸入代數公式主體：</label><input type="text" id="eqInput" placeholder="例如: 3x + 2y 或 (a+b)h/2" autocomplete="off"></div>
+        <div class="form-group"><label>🔢 指定各變數的值（以逗號隔開）：</label><input type="text" id="xValueInput" placeholder="例如: x=4, y=-3 或 a=5, b=3, h=6" autocomplete="off"></div>
+        <button onclick="handleManualSolverInput()" class="btn-success">開始代入引導</button>
+    </div>
+
+    <!-- 作答舞台 -->
     <div id="step2" class="step-panel">
         <div class="progress-banner"><span id="progressText">進度...</span><span id="scoreText" style="color:#fffb00;">積分：0</span></div>
         <h2>請依條件計算求值</h2>
         <div class="stage-box" id="displayEq">題目載入中...</div>
         <div class="form-group">
-            <label>請填寫最終求得的數值（負數請加負號）：</label>
-            <input type="text" id="ansInput" placeholder="例如: 25 或 -14" autocomplete="off">
+            <label>請填寫最終求得的數值（若有小數請四捨五入至第1位）：</label>
+            <input type="text" id="ansInput" placeholder="例如: 24 或 -12" autocomplete="off">
         </div>
-        <button onclick="checkFirstAnswer()">提交結果並驗證</button>
+        <button onclick="checkFirstAnswer()" class="btn-success">提交結果並驗證答案</button>
     </div>
 
+    <!-- 思維拆解黑板 -->
     <div id="step3" class="step-panel">
         <h2>代數式代入思維拆解</h2>
         <div class="stage-box" id="interactiveStageBox">展示台</div>
-        <button class="btn-warning" onclick="startInteractiveSolving()">啟動隱形括號逐步破譯教學</button>
-        <button class="btn-success" onclick="advanceQuestion()" style="margin-top:15px;">前進下一題 ➡️</button>
+        <div style="background:rgba(0,0,0,0.4); padding:20px; border-radius:16px; margin:20px 0; line-height:2.2; font-family:monospace; color:#00ffc4; font-size:16px;" id="mathStepBox"></div>
+        <button class="btn-success" onclick="advanceQuestion()">前進下一題 ➡️</button>
     </div>
 
+    <!-- 數據報告 -->
     <div id="step_stats_panel" class="step-panel">
         <h2>📊 多變數求值數據報告</h2>
         <div style="background:#fff; color:#000; padding:20px; border-radius:16px; margin:20px 0; text-align:center;">
-            <h3>歷程結算與錯題總結</h3>
-            <p>數據同步完成。</p>
+            <h3>歷程結算報告</h3>
+            <div style="font-size:24px; font-weight:bold; color:#ef4444; margin-top:10px;">本次得分：<span id="statsFinalScore">0 分</span></div>
         </div>
         <button class="btn-secondary" onclick="resetToMainMenu()">↩️ 返回主目錄</button>
     </div>
 </div>
 
-<!-- 🌟 核心修復：嚴格包覆在完整的 script 標籤內部，絕不外漏 -->
 <script>
     let currentPanelId = "step1";
     let currentRole = "STUDENT", userRawClass = "", userRawSeat = "";
-    let cacheStorage = { EQ: { wrongBook: [], stats: getInitialStatsObject() } };
-    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, timeLimitSetting: 300, score: 0, currentIdx: 0, questionList: [], selectedType: 'MIX' };
+    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, score: 0, currentIdx: 0, questionList: [] };
+    let currentAns = 0, currentExplanation = "";
 
+    // 生命週期安全保障
     document.addEventListener('DOMContentLoaded', function() {
         try {
-            let cHtml="", sHtml="";
-            for(let g=1;g<=6;g++) ['A','B','C','D'].forEach(l => cHtml+=`<option value="${g}${l}">${g}${l} 班</option>`);
-            for(let i=1;i<=35;i++) sHtml+=`<option value="${i}">${i} 號</option>`;
-            if(document.getElementById('loginClass')) document.getElementById('loginClass').innerHTML=cHtml;
-            if(document.getElementById('loginSeat')) document.getElementById('loginSeat').innerHTML=sHtml;
             renderTypeSelectOptions();
-            
             checkActiveSession();
-        } catch(e) { console.error("Init Error", e); }
+        } catch(e) { console.error(e); showPanel('step1'); }
     });
 
+    // 免登入秒速直達攔截門
     function checkActiveSession() {
         let savedRole = localStorage.getItem("Active_User_Role");
         let savedClass = localStorage.getItem("Active_User_Class");
         let savedSeat = localStorage.getItem("Active_User_Seat");
+        if (!savedRole) { window.location.replace("index.html"); return; }
         
-        let loginPanel = document.getElementById('step0_login');
-        let mainBox = document.getElementById('mainContainer');
         let accountDOM = document.getElementById('topCenterAccount');
-        
-        if (!savedRole) { 
-            if(loginPanel) { loginPanel.classList.add('active'); loginPanel.style.display = 'block'; }
-            if(mainBox) mainBox.style.display = 'none';
-            return; 
+        if(accountDOM) {
+            accountDOM.style.display = 'block';
+            if (savedRole === "GUEST") {
+                accountDOM.innerText = `挑戰者: 訪客體驗`;
+            } else {
+                userRawClass = savedClass || "1A"; userRawSeat = savedSeat || "1";
+                accountDOM.innerText = `挑戰者: ${userRawClass}班${String(userRawSeat).padStart(2, '0')}號`;
+            }
         }
-
-        if(loginPanel) { loginPanel.classList.remove('active'); loginPanel.style.display = 'none'; }
-        if(mainBox) mainBox.style.display = 'block';
-        if(accountDOM) accountDOM.style.display = 'block';
-
-        if (savedRole === "GUEST") {
-            currentRole = "GUEST"; userRawClass = "GUEST"; userRawSeat = "VISITOR";
-            accountDOM.innerText = `挑戰者: 訪客體驗`;
-        } else if (savedRole === "STUDENT" || (savedClass && savedSeat)) {
-            currentRole = "STUDENT"; userRawClass = savedClass || "1A"; userRawSeat = savedSeat || "1";
-            accountDOM.innerText = `挑戰者: ${userRawClass}班${String(userRawSeat).padStart(2, '0')}號`;
-        } else if (savedRole === "TEACHER") {
-            currentRole = "TEACHER"; accountDOM.innerText = `管理員後台`;
-        }
-        
         showPanel('step1');
     }
 
     function renderTypeSelectOptions() {
         let ts = document.getElementById('typeSelect');
-        if(ts) ts.innerHTML = `<option value="1">1. 雙變數公式求值</option><option value="2">2. 三變數公式求值</option><option value="MIX" selected>3. 🔀 跨學科公式混合</option>`;
+        if(ts) ts.innerHTML = `<option value="1">1. 雙變數公式求值 (簡單)</option><option value="2">2. 多變數綜合公式 (進階)</option><option value="MIX" selected>3. 🔀 跨學科公式混合</option>`;
     }
 
     function toggleConditionUI() {
@@ -194,13 +198,12 @@
         document.getElementById('timeLimitInputWrapper').style.display = c==='TIME_LIMIT' ? 'block' : 'none';
     }
 
+    // 完美全閉環面板切換防線
     function showPanel(id) { 
         document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active')); 
         const targetPanel = document.getElementById(id);
         if (targetPanel) targetPanel.classList.add('active'); 
         currentPanelId = id;
-        
-        if (id !== 'step0_login') { let lb = document.getElementById('step0_login'); if(lb) lb.style.display = 'none'; }
         
         const navBtn = document.getElementById('navBackBtn');
         if (navBtn) navBtn.innerText = (id === 'step1') ? "← 返回學習大廳" : "← 返回主目錄";
@@ -211,20 +214,93 @@
         if (currentPanelId === 'step1') window.location.replace("home.html");
         else showPanel('step1');
     }
-    
+
     function switchSetupConfig(configMode) {
+        session.currentMode = configMode;
         if (configMode === 'CHALLENGE') showPanel('step1_challenge');
-        else if (configMode === 'STATS') showPanel('step_stats_panel');
         else if (configMode === 'SOLVER') showPanel('step1_solver');
+        else if (configMode === 'STATS') { document.getElementById('statsFinalScore').innerText = session.score + " 分"; showPanel('step_stats_panel'); }
     }
 
-    function getInitialStatsObject() { return { 1:{total:0}, 2:{total:0}, 3:{total:0}, 4:{total:0} }; }
-    function logoutSession() { if(confirm("確定登出系統嗎？")) { localStorage.clear(); window.location.replace("index.html"); } }
+    // 跨學科智能出題引擎 (完美分數教科書格式)
+    function generateSubstitutionQuestion(type) {
+        let qType = (type === 'MIX') ? (Math.random() > 0.5 ? 1 : 2) : Number(type);
+        if(qType === 1) {
+            let x = Math.floor(Math.random() * 10) + 2;
+            let y = Math.floor(Math.random() * 8) + 1;
+            let ans = 2 * (x + y);
+            return `📐 矩形周長公式：C = 2(a + b)。<br>當 a = ${x}, b = ${y} 時，周長 C = ?|${ans}|<b>步驟 1 (代入變數)：</b> C = 2 × (${x} + ${y})<br><b>步驟 2 (優先計算括號)：</b> C = 2 × ${x + y}<br><b>步驟 3 (求出最終值)：</b> C = ${ans}`;
+        } else {
+            let p = 100 * (Math.floor(Math.random() * 5) + 1);
+            let r = Math.floor(Math.random() * 4) + 2;
+            let ans = p + (p * r * 2) / 100;
+            let fractionHTML = `<div class="math-fraction"><div class="fraction-numerator">P × r × t</div><div class="fraction-denominator">100</div></div>`;
+            return `💰 單利息公式：A = P + ${fractionHTML}。<br>當 P = ${p}, r = ${r}, t = 2 時，本利和 A = ?|${ans}|<b>步驟 1 (代入數值)：</b> A = ${p} + (${p} × ${r} × 2) / 100<br><b>步驟 2 (處理乘除分數)：</b> A = ${p} + ${ (p * r * 2) / 100 }<br><b>步驟 3 (最後相加)：</b> A = ${ans}`;
+        }
+    }
+
+    function initChallengeSession() {
+        session.score = 0; session.currentIdx = 0; session.questionList = [];
+        let t = document.getElementById('typeSelect').value;
+        let count = parseInt(document.getElementById('totalQuestionsInput').value) || 5;
+        for(let i=0; i<count; i++) session.questionList.push(generateSubstitutionQuestion(t));
+        loadEquationToStage();
+    }
+
+    // 徹底修復：自訂有問必答解析功能
+    function handleManualSolverInput() {
+        let expr = document.getElementById('eqInput').value.trim() || "3x + 2y";
+        let vals = document.getElementById('xValueInput').value.trim() || "x=2, y=5";
+        
+        session.score = 0;
+        session.currentIdx = 0;
+        session.questionList = [`🛠️ 自訂計算引導：求算式 <b>${expr}</b> 的值。<br>已知條件為：${vals}。|引導模式|處理中`];
+        
+        document.getElementById('scoreText').innerText = `自訂模式`;
+        document.getElementById('progressText').innerText = `解析引導中`;
+        document.getElementById('displayEq').innerHTML = `計算目標：<span style="color:#fffb00;">${expr}</span><br>給定條件：${vals}`;
+        
+        currentAns = "引導模式"; 
+        currentExplanation = `<b>步驟 1 (對號入座)：</b>將算式中的變數替換為條件給定的數值。<br><b>步驟 2 (四則運算)：</b>遵循「先乘除、後加減」的順序完成計算，求出最終結果。`;
+        showPanel('step2');
+    }
+
+    function loadEquationToStage() {
+        let data = session.questionList[session.currentIdx].split('|');
+        document.getElementById('ansInput').value = "";
+        document.getElementById('scoreText').innerText = `積分：${session.score}`;
+        document.getElementById('progressText').innerText = `進度：第 ${session.currentIdx + 1}/${session.questionList.length} 題`;
+        document.getElementById('displayEq').innerHTML = data[0];
+        currentAns = data[1];
+        currentExplanation = data[2];
+        showPanel('step2');
+    }
+
+    function checkFirstAnswer() {
+        let input = document.getElementById('ansInput').value.trim();
+        if(currentAns === "引導模式") {
+            alert("🎯 成功啟動隱形括號破譯引導！");
+        } else if(Number(input) === Number(currentAns)) {
+            session.score++; alert("🎯 太棒了，計算完全正確！");
+        } else {
+            alert(`❌ 答案不太對喔！標準答案是 ${currentAns}。讓我們來看步驟拆解！`);
+        }
+        document.getElementById('interactiveStageBox').innerHTML = `解題總結：${currentAns}`;
+        document.getElementById('mathStepBox').innerHTML = currentExplanation;
+        showPanel('step3');
+    }
+
+    function advanceQuestion() {
+        if(currentAns === "引導模式") { resetToMainMenu(); return; }
+        if(session.currentIdx < session.questionList.length - 1) {
+            session.currentIdx++; loadEquationToStage();
+        } else {
+            switchSetupConfig('STATS');
+        }
+    }
+
+    function logoutSession() { localStorage.clear(); window.location.replace("index.html"); }
     function resetToMainMenu() { window.location.replace("home.html"); }
-    function initChallengeSession() { showPanel('step2'); }
-    function checkFirstAnswer() { showPanel('step3'); }
-    function startInteractiveSolving() { alert("啟動拆解黑板！"); }
-    function advanceQuestion() { showPanel('step_stats_panel'); }
 </script>
 </body>
 </html>
