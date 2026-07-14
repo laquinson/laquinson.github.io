@@ -134,14 +134,15 @@
             <label>請輸入化簡後的最終多項式：</label>
             <input type="text" id="ansInput" placeholder="例如: 3x²-2x 或 5x+7" autocomplete="off">
         </div>
+        <div class="form-group" id="autoCompleteShield"></div>
         <button onclick="checkAnswer()">提交結果並驗證答案</button>
     </div>
 
-    <!-- 🌟 核心進化：互動式逐步破譯引導黑板 -->
+    <!-- 互動式逐步推導黑板 -->
     <div id="step3" class="step-panel">
         <h2 style="text-align:center;">🔮 多項式智能逐步推導黑板</h2>
         <div style="background: rgba(245, 158, 11, 0.15); border-left: 4px solid #f59e0b; padding: 12px; margin-bottom: 20px; border-radius: 0 8px 8px 0; font-size: 15px; color: #ffe082; font-weight: bold;" id="step3GuideText">
-            請在下方輸入框中，一步一步推出化簡後的正確多項式：
+            請根據原式，在下方輸入框中一步一步推出化簡後的正確多項式：
         </div>
         
         <div style="background:rgba(0,0,0,0.3); padding:20px; border-radius:16px; margin-bottom:20px;">
@@ -188,6 +189,7 @@
         
         if (savedRole === "GUEST") {
             currentRole = "GUEST"; userRawClass = "GUEST"; userRawSeat = "VISITOR";
+            if (accountDOM) accountDOM.innerText = `挑戰者: 訪客體驗`;
         } else {
             currentRole = "STUDENT"; userRawClass = savedClass || "1A"; userRawSeat = savedSeat || "1";
             if (accountDOM) accountDOM.innerText = `挑戰者: ${userRawClass}班${String(userRawSeat).padStart(2, '0')}號`;
@@ -316,7 +318,7 @@
             session.score++;
             alert("🎯 計算正確！進入推導黑板進行複習。");
         } else {
-            alert(`❌ 答案不太對喔！已將此題收入錯題庫，讓我們在黑板中一步一步推導出答案。`);
+            alert(`❌ 答案不太對喔！讓我們在黑板中一步一步推導出正確解答。`);
             if (!wrongQuestionBank.includes(currentQ)) { 
                 wrongQuestionBank.push(currentQ); 
                 localStorage.setItem("Poly_Wrong_Bank", JSON.stringify(wrongQuestionBank)); 
@@ -327,10 +329,10 @@
         initInteractiveBlackboard();
     }
 
-    // 🌟 核心機制：生成互動式逐步推導關卡，隱藏答案，強制學生自主輸入
+    // 🌟 語法安全補強：利用標準物件屬性 style.pointerEvents 完全取代原有連字符 Bug，保障程式順暢執行
     function initInteractiveBlackboard() {
         document.getElementById('nextBtn').style.display = 'none';
-        document.getElementById('step3GuideText').innerText = "請根據原式，在下方輸入框中一步一步推出正確的多項式：";
+        document.getElementById('step3GuideText').innerText = "請根據原式，在下方輸入框中一步一步推出化簡後的正確多項式：";
         
         let correctStep1 = (polyData.op==='+') ? `${polyData.p1}${(!polyData.p2.startsWith('-')?'+':'')+polyData.p2}` : `${polyData.p1}${((-polyData.b2>0?"+":"-")+Math.abs(polyData.b2)+"x").replace(/1x/g,"x")}${((-polyData.c2>0?"+":"-")+Math.abs(polyData.c2)+"y").replace(/1y/g,"y")}`;
         correctStep1 = UX(correctStep1);
@@ -362,40 +364,43 @@
     }
 
     function verifyStep1(correctTarget) {
-        let val = document.getElementById('step1Input').value.trim();
-        if(UX(val) === correctTarget) {
-            document.getElementById('statusIcon1').innerText = "🎯 正確！";
-            document.getElementById('boardLine1').style.background = "rgba(16,185,129,0.2)";
-            // 解鎖下一步
-            document.getElementById('boardLine2').style.opacity = "1";
-            document.getElementById('boardLine2').style.pointer-events = "auto";
-            document.getElementById('boardLine2').style.removeAttribute = "style"; 
-            document.getElementById('boardLine2').removeAttribute("style");
-        } else {
-            document.getElementById('statusIcon1').innerText = "❌ 變號或係數不對，再試一次！";
-        }
+        try {
+            let val = document.getElementById('step1Input').value.trim();
+            if(UX(val) === correctTarget) {
+                document.getElementById('statusIcon1').innerText = "🎯 正確！";
+                document.getElementById('boardLine1').style.background = "rgba(16,185,129,0.2)";
+                
+                // 🌟 使用大駝峰安全修改 CSS 樣式，保證一般/手機模式全面相容不卡死
+                let el2 = document.getElementById('boardLine2');
+                if(el2) {
+                    el2.style.opacity = "1";
+                    el2.style.pointerEvents = "auto";
+                }
+            } else {
+                document.getElementById('statusIcon1').innerText = "❌ 變號或係數不對，再試一次！";
+            }
+        } catch(e) { console.error(e); }
     }
 
     function verifyStep2(correctTarget) {
-        let val = document.getElementById('step2Input').value.trim();
-        if(UX(val) === correctTarget || val === polyData.ansStr) {
-            document.getElementById('statusIcon2').innerText = "🎯 完美完賽！";
-            document.getElementById('boardLine2').style.background = "rgba(16,185,129,0.2)";
-            document.getElementById('step3GuideText').innerText = "🎉 恭喜你完成本題的逐步破譯推導！";
-            document.getElementById('nextBtn').style.display = 'block'; // 推導完畢解鎖前進按鈕
-        } else {
-            document.getElementById('statusIcon2').innerText = "❌ 合併錯誤，注意同類項係數！";
-        }
+        try {
+            let val = document.getElementById('step2Input').value.trim();
+            if(UX(val) === correctTarget || val === polyData.ansStr) {
+                document.getElementById('statusIcon2').innerText = "🎯 完美解鎖！";
+                document.getElementById('boardLine2').style.background = "rgba(16,185,129,0.2)";
+                document.getElementById('step3GuideText').innerText = "🎉 恭喜你完成本題的逐步破譯推導！";
+                document.getElementById('nextBtn').style.display = 'block'; 
+            } else {
+                document.getElementById('statusIcon2').innerText = "❌ 合併錯誤，注意同類項係數！";
+            }
+        } catch(e) { console.error(e); }
     }
 
-    // 🌟 核心路由修正：解答模式解完一題後，按下一題應進行【輸入題目與模式選擇】的畫面
     function advanceQuestion() {
         stopSessionTimer();
-        // 判定如果是自訂單題引導、或者是已經做滿設定題數，則直接重置回模式首頁
         if (session.currentMode === 'SOLVER' || session.currentIdx >= (session.totalQuestions - 1)) {
             showPanel('step1'); 
         } else {
-            // 闖關模式連續答題：前進下一題並回到輸入答題舞台
             session.currentIdx++; 
             loadQuestionToStage();
         }
@@ -415,7 +420,8 @@
         let reviewBtn = document.getElementById('reviewModeCard');
         let currentWrongList = JSON.parse(localStorage.getItem("Poly_Wrong_Bank")) || [];
         if(reviewBtn) reviewBtn.classList.toggle('disabled', currentWrongList.length === 0);
-        document.getElementById('reviewTitle').innerText = `錯題庫 (${currentWrongList.length})`; 
+        let title = document.getElementById('reviewTitle');
+        if(title) title.innerText = `錯題庫 (${currentWrongList.length})`; 
     }
 </script>
 </body>
