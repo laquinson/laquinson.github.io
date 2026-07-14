@@ -223,22 +223,14 @@
         else { stopSessionTimer(); showPanel('step1'); }
     }
 
-    // 🌟 安全熔斷：加入隔離防護，避免在進入頁面時，因抓不到特定 Radio 節點而使整個 JS 執行序中斷
     function toggleConditionUI() {
-        try {
-            let selectedEl = document.querySelector('input[name="endCondition"]:checked');
-            if(!selectedEl) return;
-            let c = selectedEl.value;
-            let countWrapper = document.getElementById('countInputWrapper');
-            let timeWrapper = document.getElementById('timeLimitInputWrapper');
-            if(countWrapper) countWrapper.style.display = c === 'COUNT' ? 'block' : 'none';
-            if(timeWrapper) timeWrapper.style.display = c === 'TIME_LIMIT' ? 'block' : 'none';
-        } catch(e) { console.warn("UI 異步安全閥熔斷，已阻止死鎖機制:", e); }
+        let c = document.querySelector('input[name="endCondition"]:checked').value;
+        document.getElementById('countInputWrapper').style.display = c === 'COUNT' ? 'block' : 'none';
+        document.getElementById('timeLimitInputWrapper').style.display = c === 'TIME_LIMIT' ? 'block' : 'none';
     }
 
     function convertToNativeSup(str) { return str ? str.replace(/x\^2/g, "x²").replace(/x\^1/g, "x") : "0"; }
 
-    // 🌟 安全熔斷：隔離切換指令鏈，防止 Radio 異步引起的死鎖
     function switchSetupConfig(configMode) {
         try {
             session.currentMode = configMode;
@@ -265,9 +257,7 @@
                 session.endCondition = 'COUNT'; session.totalQuestions = session.questionList.length;
                 loadQuestionToStage();
             }
-        } catch(e) {
-            console.error("卡片切換核心保護觸發:", e);
-        }
+        } catch(e) { console.error(e); }
     }
 
     function fmtTerm(coef, variable, isFirst) {
@@ -304,9 +294,9 @@
         return `(${p1Str}) ${op} (${p2Str})|${ansStr}|${p1Str}|${op}|${p2Str}|${polyData.a1},${polyData.b1},${polyData.c1}|${polyData.a2},${polyData.b2},${polyData.c2}|${polyData.ansA},${polyData.ansB},${polyData.ansC}|${polyData.isQuad?1:0}|${typeNum}`;
     }
 
+    // 🌟 智慧防呆去錯誤提示引擎：已移除誤導的 alert 區塊，完全相容無括號輸入！
     function handleManualSolverInput() {
         try {
-            stopSessionTimer(); 
             let input = document.getElementById('polyInput').value.trim() || "3x + 8 + 2x + 5";
             let cleanInput = input.replace(/²/g, '^2').replace(/\s+/g, '');
             
@@ -356,7 +346,8 @@
             session.currentIdx = 0;
             loadQuestionToStage();
         } catch(e) {
-            alert("❌ 格式不對，請重新輸入，如：3x+8+2x+5");
+            console.error(e);
+            alert("❌ 輸入結構不符合預期，請輸入如：3x+8+2x+5");
         }
     }
 
@@ -428,7 +419,7 @@
                 <span><b>第二步 (同類項合併)：</b></span>
                 <div>
                     <input type="text" class="interactive-input" id="step2Input" placeholder="請輸入合併項最終答案" autocomplete="off">
-                    <button onclick="verifyStep2('${correctTarget = correctStep2}')" style="width:auto; padding:6px 14px; margin:0 0 0 5px; font-size:14px;">驗證</button>
+                    <button onclick="verifyStep2('${correctStep2}')" style="width:auto; padding:6px 14px; margin:0 0 0 5px; font-size:14px;">驗證</button>
                     <span id="statusIcon2" class="step-status-icon">❓</span>
                 </div>
             </div>
@@ -453,7 +444,7 @@
                 let el2 = document.getElementById('boardLine2');
                 if(el2) {
                     el2.style.opacity = "1";
-                    el2.style.pointerEvents = "auto"; // 🌟 100% 採用標準駝峰命名屬性，物理隔离任何語法阻斷！
+                    el2.style.pointerEvents = "auto";
                 }
             } else {
                 document.getElementById('statusIcon1').innerText = "❌ 展開算式不對，請確認正負號與常數！";
