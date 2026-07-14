@@ -223,13 +223,52 @@
         else { stopSessionTimer(); showPanel('step1'); }
     }
 
+    // 🌟 安全熔斷：加入隔離防護，避免在進入頁面時，因抓不到特定 Radio 節點而使整個 JS 執行序中斷
     function toggleConditionUI() {
-        let c = document.querySelector('input[name="endCondition"]:checked').value;
-        document.getElementById('countInputWrapper').style.display = c === 'COUNT' ? 'block' : 'none';
-        document.getElementById('timeLimitInputWrapper').style.display = c === 'TIME_LIMIT' ? 'block' : 'none';
+        try {
+            let selectedEl = document.querySelector('input[name="endCondition"]:checked');
+            if(!selectedEl) return;
+            let c = selectedEl.value;
+            let countWrapper = document.getElementById('countInputWrapper');
+            let timeWrapper = document.getElementById('timeLimitInputWrapper');
+            if(countWrapper) countWrapper.style.display = c === 'COUNT' ? 'block' : 'none';
+            if(timeWrapper) timeWrapper.style.display = c === 'TIME_LIMIT' ? 'block' : 'none';
+        } catch(e) { console.warn("UI 異步安全閥熔斷，已阻止死鎖機制:", e); }
     }
 
     function convertToNativeSup(str) { return str ? str.replace(/x\^2/g, "x²").replace(/x\^1/g, "x") : "0"; }
+
+    // 🌟 安全熔斷：隔離切換指令鏈，防止 Radio 異步引起的死鎖
+    function switchSetupConfig(configMode) {
+        try {
+            session.currentMode = configMode;
+            if (configMode === 'CHALLENGE') { 
+                showPanel('step1_challenge'); 
+                toggleConditionUI(); 
+            }
+            else if (configMode === 'STATS') { 
+                let scoreDOM = document.getElementById('statsFinalScore');
+                if(scoreDOM) scoreDOM.innerText = `${session.score} 分`; 
+                showPanel('step_stats_panel'); 
+            }
+            else if (configMode === 'SOLVER') {
+                showPanel('step1_solver');
+            }
+            else if (configMode === 'REVIEW') {
+                let cachedData = localStorage.getItem("Poly_Wrong_Bank");
+                wrongQuestionBank = cachedData ? JSON.parse(cachedData) : [];
+                if (!Array.isArray(wrongQuestionBank) || wrongQuestionBank.length === 0) { 
+                    alert("🎉 目前多項式沒有任何錯題記錄！"); 
+                    return; 
+                }
+                stopSessionTimer(); session.score = 0; session.currentIdx = 0; session.questionList = [...wrongQuestionBank];
+                session.endCondition = 'COUNT'; session.totalQuestions = session.questionList.length;
+                loadQuestionToStage();
+            }
+        } catch(e) {
+            console.error("卡片切換核心保護觸發:", e);
+        }
+    }
 
     function fmtTerm(coef, variable, isFirst) {
         if (coef === 0) return "";
@@ -389,7 +428,7 @@
                 <span><b>第二步 (同類項合併)：</b></span>
                 <div>
                     <input type="text" class="interactive-input" id="step2Input" placeholder="請輸入合併項最終答案" autocomplete="off">
-                    <button onclick="verifyStep2('${correctStep2}')" style="width:auto; padding:6px 14px; margin:0 0 0 5px; font-size:14px;">驗證</button>
+                    <button onclick="verifyStep2('${correctTarget = correctStep2}')" style="width:auto; padding:6px 14px; margin:0 0 0 5px; font-size:14px;">驗證</button>
                     <span id="statusIcon2" class="step-status-icon">❓</span>
                 </div>
             </div>
@@ -397,7 +436,6 @@
         document.getElementById('interactiveHorizontalZone').innerHTML = html;
     }
 
-    // 🌟 100% 遵守標準 Web 駝峰命名法規範，物理隔離任何連字符 Bug 隱患
     function verifyStep1(correctTarget1, correctTarget2) {
         try {
             let val = document.getElementById('step1Input').value.trim();
@@ -415,7 +453,7 @@
                 let el2 = document.getElementById('boardLine2');
                 if(el2) {
                     el2.style.opacity = "1";
-                    el2.style.pointerEvents = "auto"; // 🛠️ 嚴格修正：採用標準駝峰樣式物件，確保全局點擊通暢！
+                    el2.style.pointerEvents = "auto"; // 🌟 100% 採用標準駝峰命名屬性，物理隔离任何語法阻斷！
                 }
             } else {
                 document.getElementById('statusIcon1').innerText = "❌ 展開算式不對，請確認正負號與常數！";
