@@ -33,9 +33,10 @@
 
         .form-group { margin-bottom: 20px; width: 100%; }
         label { display: block; margin-bottom: 10px; font-weight: bold; font-size: 16px; }
-        input[type="text"], input[type="number"], select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.9); font-size: 16px; box-sizing: border-box; color: #000; }
-        input[type="text"] { color: #000 !important; font-weight: bold; }
-
+        
+        /* 樣式定位防禦：保障輸入文字絕對加粗呈黑色 */
+        input[type="text"], input[type="number"], select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.9); font-size: 16px; box-sizing: border-box; color: #000 !important; font-weight: bold !important; }
+        
         button { width: 100%; padding: 14px; background: #3b82f6; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.2s; margin-top: 10px; }
         button:hover { transform: translateY(-2px); opacity: 0.9; }
         .btn-success { background: #10b981; } .btn-secondary { background: #64748b; } .btn-warning { background: #f59e0b; color: #111; }
@@ -154,7 +155,7 @@
         <button id="nextBtn" class="btn-success" onclick="advanceQuestion()" style="display:none; margin-top:20px;">前進下一題 ➡️</button>
     </div>
 
-    <!-- 歷程結算報告 -->
+    <!-- 歷程結算數據報告 -->
     <div id="step_stats_panel" class="step-panel">
         <h2>📊 數據報告</h2>
         <div style="background:#fff; color:#000; padding:20px; border-radius:16px; text-align:center;">
@@ -235,8 +236,6 @@
         } catch(e) { console.warn(e); }
     }
 
-    function convertToNativeSup(str) { return str ? str.replace(/x\^2/g, "x²").replace(/x\^1/g, "x") : "0"; }
-
     function switchSetupConfig(configMode) {
         try {
             session.currentMode = configMode;
@@ -300,9 +299,9 @@
         return `(${p1Str}) ${op} (${p2Str})|${ansStr}|${p1Str}|${op}|${p2Str}|${polyData.a1},${polyData.b1},${polyData.c1}|${polyData.a2},${polyData.b2},${polyData.c2}|${polyData.ansA},${polyData.ansB},${polyData.ansC}|${polyData.isQuad?1:0}|${typeNum}`;
     }
 
-    // 🎯 智慧項掃描破譯器：已完美清洗掉變數拼寫錯誤（map ➔ totalMap），100% 流暢解析
     function handleManualSolverInput() {
         try {
+            stopSessionTimer(); 
             let input = document.getElementById('polyInput').value.trim() || "3x + 8 + 2x + 5";
             let cleanInput = input.replace(/²/g, '^2').replace(/\s+/g, '').replace(/\(/g, '').replace(/\)/g, '');
             
@@ -317,7 +316,6 @@
                     totalMap.x2 += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co));
                 } else if (cleanT.includes('x') || cleanT.includes('y')) {
                     let co = cleanT.replace(/[xy]/, '');
-                    // 🛠️ 終極修正：將先前的拼寫手誤 map.x 改為標準的 totalMap.x 累加，徹底暢通執行鏈
                     totalMap.x += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co));
                 } else {
                     let parsedConst = parseInt(cleanT);
@@ -344,7 +342,7 @@
             polyData.ansA = totalMap.x2; polyData.ansB = totalMap.x; polyData.ansC = totalMap.constant;
             polyData.isQuad = (totalMap.x2 !== 0);
 
-            session.questionList = [`(${p1})+(${p2})|${ansStr}|${p1}|+|${p2}|${halfX2},${halfX},${halfC}|${polyData.a2},${polyData.b2},${polyData.c2}|${totalMap.x2},${totalMap.x},${totalMap.constant}|${totalMap.x2!==0?1:0}|4` ]; 
+            session.questionList = [`(${p1})+(${p2})|${ansStr}|${p1}|+|${p2}|${halfX2},${halfX},${halfC}|${polyData.a2},${polyData.b2},${polyData.c2}|${totalMap.x2},${totalMap.x},${totalMap.constant}|${totalMap.x2!==0?1:0}|4`]; 
             session.currentIdx = 0;
             loadQuestionToStage();
         } catch(e) {
