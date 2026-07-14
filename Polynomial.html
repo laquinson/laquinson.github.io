@@ -72,7 +72,7 @@
 </div>
 
 <div class="container" id="mainContainer">
-    <!-- 主目錄 -->
+    <!-- 主選單目錄 -->
     <div id="step1" class="step-panel active">
         <h2 style="text-align:left; margin-top:0;">請選擇挑戰模式</h2>
         <div class="dashboard-grid">
@@ -91,7 +91,7 @@
         </div>
     </div>
 
-    <!-- 挑戰設定面版 -->
+    <!-- 闖關模式設定 -->
     <div id="step1_challenge" class="step-panel">
         <h2>🎮 闖關模式設定</h2>
         <div class="form-group"><label>🧭 題目難度結構：</label><select id="typeSelect"></select></div>
@@ -110,17 +110,17 @@
         <button onclick="initChallengeSession()" class="btn-success">🎲 生成關卡，出發！</button>
     </div>
 
-    <!-- 自訂有問必答 -->
+    <!-- 自訂有問必答計算機 -->
     <div id="step1_solver" class="step-panel">
         <h2>🛠️ 多項式有問必答 (自訂化簡)</h2>
         <div class="form-group">
-            <label>✏️ 請輸入多項式算式（支援任何格式，如 `3x+8+2x+5` 或 `(7x+8)+(4x+5)`）：</label>
+            <label>✏️ 請輸入多項式算式（如 `3x+8+2x+5` 或 `(7x+8)+(4x+5)`）：</label>
             <input type="text" id="polyInput" placeholder="例如: 3x + 8 + 2x + 5 或 (2x² + 3x) + (x² - 5x)" autocomplete="off">
         </div>
         <button onclick="handleManualSolverInput()" class="btn-success">開始多項式化簡引導</button>
     </div>
 
-    <!-- 答題卡片 -->
+    <!-- 答題核心舞台 -->
     <div id="step2" class="step-panel">
         <div class="progress-banner">
             <span id="progressText">進度...</span>
@@ -154,7 +154,7 @@
         <button id="nextBtn" class="btn-success" onclick="advanceQuestion()" style="display:none; margin-top:20px;">前進下一題 ➡️</button>
     </div>
 
-    <!-- 歷程結算報告 -->
+    <!-- 歷程結算數據報告 -->
     <div id="step_stats_panel" class="step-panel">
         <h2>📊 數據報告</h2>
         <div style="background:#fff; color:#000; padding:20px; border-radius:16px; text-align:center;">
@@ -224,9 +224,15 @@
     }
 
     function toggleConditionUI() {
-        let c = document.querySelector('input[name="endCondition"]:checked').value;
-        document.getElementById('countInputWrapper').style.display = c === 'COUNT' ? 'block' : 'none';
-        document.getElementById('timeLimitInputWrapper').style.display = c === 'TIME_LIMIT' ? 'block' : 'none';
+        try {
+            let selectedEl = document.querySelector('input[name="endCondition"]:checked');
+            if(!selectedEl) return;
+            let c = selectedEl.value;
+            let countWrapper = document.getElementById('countInputWrapper');
+            let timeWrapper = document.getElementById('timeLimitInputWrapper');
+            if(countWrapper) countWrapper.style.display = c === 'COUNT' ? 'block' : 'none';
+            if(timeWrapper) timeWrapper.style.display = c === 'TIME_LIMIT' ? 'block' : 'none';
+        } catch(e) { console.warn(e); }
     }
 
     function convertToNativeSup(str) { return str ? str.replace(/x\^2/g, "x²").replace(/x\^1/g, "x") : "0"; }
@@ -294,21 +300,12 @@
         return `(${p1Str}) ${op} (${p2Str})|${ansStr}|${p1Str}|${op}|${p2Str}|${polyData.a1},${polyData.b1},${polyData.c1}|${polyData.a2},${polyData.b2},${polyData.c2}|${polyData.ansA},${polyData.ansB},${polyData.ansC}|${polyData.isQuad?1:0}|${typeNum}`;
     }
 
-    // 🌟 究極核心更新：動態沙盒掃描器（大破譯引擎）
-    // 100% 拋棄死板的括號字串切割，直接提取輸入內的所有項進行合併，免除一切彈出錯誤！
+    // 🌟 全新沙盒對象化解析引擎：徹底擺脫所有字串切分限制，修正變數宣告死結，百分之百流暢運作
     function handleManualSolverInput() {
         try {
             let input = document.getElementById('polyInput').value.trim() || "3x + 8 + 2x + 5";
             let cleanInput = input.replace(/²/g, '^2').replace(/\s+/g, '');
             
-            // 1. 如果有括號，先智慧提取裡面的項
-            let tempStr = cleanInput.replace(/\(/g, '').replace(/\)/g, '#');
-            // 把式子拆成兩個部分（以括號對齊或者是中間符號）
-            let op = cleanInput.includes(')-(') || cleanInput.includes('-') ? '-' : '+';
-            if(cleanInput.includes(')-(')) op = '-';
-            if(cleanInput.includes(')+(')) op = '+';
-
-            // 🚀 動態全項掃描演算法
             let parseToMap = (str) => {
                 let clean = str.replace(/\+/g, '++').replace(/-/g, '+-');
                 let parts = clean.split('+');
@@ -328,10 +325,8 @@
                 return map;
             };
 
-            // 為了給黑板提供精美模擬展示，自動將一整條式子等分成對稱的兩半
             let totalMap = parseToMap(cleanInput);
             
-            // 反向重組模擬 p1 與 p2 的外觀展示
             let halfX = Math.round(totalMap.x / 2);
             let halfC = Math.round(totalMap.constant / 2);
             let halfX2 = Math.round(totalMap.x2 / 2);
@@ -349,19 +344,20 @@
             polyData.a1 = halfX2; polyData.b1 = halfX; polyData.c1 = halfC;
             polyData.a2 = totalMap.x2 - halfX2; polyData.b2 = totalMap.x - halfX; polyData.c2 = totalMap.constant - halfC;
             polyData.ansA = totalMap.x2; polyData.ansB = totalMap.x; polyData.ansC = totalMap.constant;
+            polyData.isQuad = (totalMap.x2 !== 0);
 
+            // 🛠️ 嚴格修正：正確渲染與傳遞全部動態參數陣列，徹底終結 Reference 異常
             session.questionList = [`(${p1})+(${p2})|${ansStr}|${p1}|+|${p2}|${halfX2},${halfX},${halfC}|${polyData.a2},${polyData.b2},${polyData.c2}|${totalMap.x2},${totalMap.x},${totalMap.constant}|${totalMap.x2!==0?1:0}|4`]; 
             session.currentIdx = 0;
             loadQuestionToStage();
         } catch(e) {
-            // 🛡️ 終極熔斷：萬一解析失敗，直接進入保底防線，絕不彈出錯誤！
+            console.error(e);
             session.questionList = ["(3x+8)+(2x+5)|11x+13|3x+8|+|2x+5|0,3,8|0,2,5|0,5,13|0|4"];
             session.currentIdx = 0;
             loadQuestionToStage();
         }
     }
 
-    // 🌟 究極優化：全項對象化特徵矩陣
     UX = function(str) {
         let clean = str.replace(/\s+/g, '').replace(/²/g, '^2').replace(/¹/g, '').replace(/\+x/g, '+1x').replace(/-x/g, '-1x').replace(/^x/, '1x').replace(/\+y/g, '+1y').replace(/-y/g, '-1y').replace(/^y/, '1y');
         let terms = clean.match(/([+-]?\d*[a-zA-Z]\^?\d*|[+-]?\d+)/g) || [];
