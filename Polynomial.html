@@ -73,7 +73,7 @@
 </div>
 
 <div class="container" id="mainContainer">
-    <!-- 主目錄 -->
+    <!-- 主選單目錄 -->
     <div id="step1" class="step-panel active">
         <h2 style="text-align:left; margin-top:0;">請選擇挑戰模式</h2>
         <div class="dashboard-grid">
@@ -115,7 +115,7 @@
     <div id="step1_solver" class="step-panel">
         <h2>🛠️ 多項式有問必答 (自訂化簡)</h2>
         <div class="form-group">
-            <label>✏️ 請輸入多項式算式（支援任何格式，如 `3x+8+2x+5` 或 `(7x+8)+(4x+5)`）：</label>
+            <label>✏️ 請輸入多項式算式（如 `3x+8+2x+5` 或 `(7x+8)+(4x+5)`）：</label>
             <input type="text" id="polyInput" placeholder="例如: 3x + 8 + 2x + 5 或 (2x² + 3x) + (x² - 5x)" autocomplete="off">
         </div>
         <button onclick="handleManualSolverInput()" class="btn-success">開始多項式化簡引導</button>
@@ -236,6 +236,8 @@
         } catch(e) { console.warn(e); }
     }
 
+    function convertToNativeSup(str) { return str ? str.replace(/x\^2/g, "x²").replace(/x\^1/g, "x") : "0"; }
+
     function switchSetupConfig(configMode) {
         try {
             session.currentMode = configMode;
@@ -350,6 +352,31 @@
             session.questionList = ["(3x+8)+(2x+5)|11x+13|3x+8|+|2x+5|0,3,8|0,2,5|0,5,13|0|4"];
             session.currentIdx = 0;
             loadQuestionToStage();
+        }
+    }
+
+    // 🚀 核心升級：將數據裝載與畫面跳轉打包進入微秒級異步分流（setTimeout），徹底消滅 iPad DOM 異步卡死！
+    function loadQuestionToStage() {
+        try {
+            document.getElementById('ansInput').value = '';
+            let parts = session.questionList[session.currentIdx].split('|');
+            polyData.texExpr = parts[0]; polyData.ansStr = parts[1]; polyData.texAns = parts[1];
+            polyData.p1 = parts[2]; polyData.op = parts[3]; polyData.p2 = parts[4];
+            let c1 = parts[5].split(',').map(Number); polyData.a1=c1[0]; polyData.b1=c1[1]; polyData.c1=c1[2];
+            let c2 = parts[6].split(',').map(Number); polyData.a2=c2[0]; polyData.b2=c2[1]; polyData.c2=c2[2];
+            let c3 = parts[7].split(',').map(Number); polyData.ansA=c3[0]; polyData.ansB=c3[1]; polyData.ansC=c3[2];
+            
+            document.getElementById('scoreText').innerText = `積分：${session.score}`;
+            document.getElementById('progressText').innerText = `進度：第 ${session.currentIdx+1} 題`;
+            
+            // 物理分流：強迫瀏覽器先執行核心 DOM 渲染，再解鎖滑動動畫
+            setTimeout(() => {
+                document.getElementById('displayPoly').innerHTML = convertToNativeSup(polyData.texExpr);
+                showPanel('step2');
+            }, 0);
+        } catch(e) {
+            console.error("裝載鏈安全保護觸發:", e);
+            showPanel('step2');
         }
     }
 
