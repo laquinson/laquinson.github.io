@@ -109,7 +109,7 @@
         <button onclick="initChallengeSession()" class="btn-success">🎲 生成關卡，出發！</button>
     </div>
 
-    <!-- 自訂有問必答計算機 -->
+    <!-- 自訂引導計算機 -->
     <div id="step1_solver" class="step-panel">
         <h2>🛠️ 多項式有問必答 (自訂化簡)</h2>
         <div class="form-group">
@@ -119,7 +119,7 @@
         <button onclick="handleManualSolverInput()" class="btn-success">開始多項式化簡引導</button>
     </div>
 
-    <!-- 答題核心舞台 -->
+    <!-- 答題舞台 -->
     <div id="step2" class="step-panel">
         <div class="progress-banner">
             <span id="progressText">進度...</span>
@@ -153,7 +153,7 @@
         <button id="nextBtn" class="btn-success" onclick="advanceQuestion()" style="display:none; margin-top:20px;">前進下一題 ➡️</button>
     </div>
 
-    <!-- 歷程結算數據報告 -->
+    <!-- 歷程結算報告 -->
     <div id="step_stats_panel" class="step-panel">
         <h2>📊 數據報告</h2>
         <div style="background:#fff; color:#000; padding:20px; border-radius:16px; text-align:center;">
@@ -273,7 +273,6 @@
         return sign + coefStr + variable;
     }
 
-    // 🌟 核心修復：徹底解耦 generatePolynomialQuestion 的區域參數定義，阻絕 ReferenceError 鎖死
     function generatePolynomialQuestion(mode) {
         let typeNum = (mode === 'LINEAR') ? Math.floor(Math.random() * 3) + 1 : ((mode === 'QUAD') ? 4 : Math.floor(Math.random() * 4) + 1);
         let p1Str = "", p2Str = "", ansStr = "", op = "+";
@@ -482,18 +481,24 @@
         document.getElementById('interactiveHorizontalZone').innerHTML = html;
     }
 
+    // 🌟 智慧判定安全閥：阻絕包含多個項目的展開式直接判定通關，強制解鎖同類項合併！
     function verifyStep1(correctTarget1, correctTarget2) {
         try {
             let val = document.getElementById('step1Input').value.trim();
             let parsedUser = UX(val);
             
-            if(parsedUser === correctTarget2) {
+            // 🚀 關鍵性物理防禦：算一算加減號。如果包含 2 個以上的加減號（代表還沒合併），絕對不准判定直接通關！
+            let opCount = (val.replace(/\s+/g, '').match(/[+-]/g) || []).length;
+            
+            if(parsedUser === correctTarget2 && opCount <= 1) {
+                // 只有當式子已經精簡到只剩一個加減號（或沒有），才判定是心算直接命中
                 document.getElementById('statusIcon1').innerText = "🎯 厲害！心算直接命中最終答案！";
                 document.getElementById('boardLine1').style.background = "rgba(16,185,129,0.2)";
                 document.getElementById('step3GuideText').innerText = "🎉 恭喜你成功破譯本題！";
                 document.getElementById('nextBtn').style.display = 'block'; 
             } else if(parsedUser === correctTarget1) {
-                document.getElementById('statusIcon1').innerText = "🎯 正確！";
+                // 按部就班去括號正確，順利開啟第二步
+                document.getElementById('statusIcon1').innerText = "🎯 正確！請繼續執行第二步同類項合併。";
                 document.getElementById('boardLine1').style.background = "rgba(16,185,129,0.2)";
                 
                 let el2 = document.getElementById('boardLine2');
