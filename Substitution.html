@@ -70,7 +70,7 @@
         .fraction-numerator { border-bottom: 2px solid white; padding-bottom: 2px; text-align: center; width: 100%; font-size: 24px; font-family: monospace; }
         .fraction-denominator { text-align: center; width: 100%; padding-top: 2px; font-size: 24px; font-family: monospace; }
 
-        /* 羅坤山老師系統數據整合高級樣式 */
+        /* 🌟 完美同步：羅坤山老師系統數據整合高級樣式 */
         table.stats-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; background: rgba(255,255,255,0.95); color: #334155; border-radius: 12px; overflow: hidden; }
         table.stats-table th, table.stats-table td { border: 1px solid #cbd5e1; padding: 10px; text-align: center; }
         table.stats-table th { background: #e2e8f0; color: #1e293b; font-weight: bold; }
@@ -168,11 +168,11 @@
         <button class="btn-success" onclick="advanceQuestion()">前進下一題 ➡️</button>
     </div>
 
-    <!-- 羅坤山大數據高級數據報告 -->
+    <!-- 🌟 升級版：羅坤山大數據整合學習數據報告 -->
     <div id="step_stats_panel" class="step-panel">
         <h2 class="non-print">📊 歷程練習數據報告</h2>
         
-        <!-- 教師管理查閱後台 -->
+        <!-- 教師管理跨系統調閱模組 -->
         <div id="teacherQueryZone" class="non-print" style="background: rgba(243, 232, 255, 0.8); padding: 15px; border-radius: 16px; border: 2px dashed #8b5cf6; margin-bottom: 20px; display: none;">
             <p style="margin: 0 0 10px 0; font-weight: bold; color: #6b21a8; font-size: 15px;">🔍 教師跨系統權限調閱模組</p>
             <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
@@ -234,17 +234,17 @@
         } catch(e) { console.error(e); showPanel('step1'); }
     });
 
-    // 🌟 初始化羅坤山大數據分析結構
+    // 🌟 核心同步：初始化羅坤山代入法分項大數據矩陣結構
     function initGlobalStatsCache() {
         cacheStorage.EQ.stats = {
-            1: { name: "雙未知數求值公式維度 (BASIC)", total: 0, firstMatch: 0, retryMatch: 0, failed: 0 },
-            2: { name: "三個未知數結構公式求值 (ADVANCED)", total: 0, firstMatch: 0, retryMatch: 0, failed: 0 },
-            3: { name: "四個或以上多變數挑戰公式 (MASTER)", total: 0, firstMatch: 0, retryMatch: 0, failed: 0 }
+            1: { name: "1. 雙未知數，代入一個數 (BASIC)", total: 0, firstMatch: 0, retryMatch: 0, failed: 0 },
+            2: { name: "2. 三個未知數結構公式 (ADVANCED)", total: 0, firstMatch: 0, retryMatch: 0, failed: 0 },
+            3: { name: "3. 四個或以上未知數挑戰 (MASTER)", total: 0, firstMatch: 0, retryMatch: 0, failed: 0 }
         };
     }
 
     function checkActiveSession() {
-        let savedRole = localStorage.getItem("Active_User_Role") || "GUEST";
+        let savedRole = localStorage.getItem("Active_User_Role") || "STUDENT";
         let savedClass = localStorage.getItem("Active_User_Class") || "1A";
         let savedSeat = localStorage.getItem("Active_User_Seat") || "1";
         
@@ -320,7 +320,7 @@
     }
 
     function handleNavigationBack() {
-        if (currentPanelId === 'step1') resetToMainMenu();
+        if (currentPanelId === 'step1') { window.location.replace("home.html"); }
         else showPanel('step1');
     }
 
@@ -337,7 +337,6 @@
         }
     }
 
-    // 🌟 大數據儲存：本地快取機制
     function syncLocalSave() {
         if(currentRole === "GUEST") return;
         localStorage.setItem(`MultiVarCache_${userRawClass}-${userRawSeat}`, JSON.stringify({
@@ -346,7 +345,7 @@
         }));
     }
 
-    // 🌟 羅坤山老師跨系統數據分析渲染器
+    // 🌟 核心同步修復：羅坤山老師跨系統大數據分析矩陣詳細版渲染器
     function calculateAndRenderStats() {
         const tb = document.getElementById('statsTableBody');
         if(!tb) return;
@@ -389,7 +388,7 @@
         alert(`🎉 成功撈取 ${tc}班 ${ts}號 代入法歷程檔案！已同步更新報表。`);
     }
 
-    // 👨‍🏫 教師一鍵打包全班列印
+    // 👨‍🏫 教師一鍵打包全班列印整合包
     function loadWholeClassDataForPrint() {
         let tc = document.getElementById('queryClass').value;
         if(!confirm(`確定要同步排隊撈取整個 ${tc}班 (1~35號) 的代入法求值學習紀錄嗎？`)) return;
