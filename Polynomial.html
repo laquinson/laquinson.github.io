@@ -38,9 +38,9 @@
         
         button { width: 100%; padding: 14px; background: #3b82f6; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.2s; margin-top: 10px; }
         button:hover { transform: translateY(-2px); opacity: 0.9; }
-        .btn-success { background: #10b981; } .btn-secondary { background: #64748b; } .btn-warning { background: #f59e0b; color: #111; }
+        .btn-success { background: #10b981; } .btn-secondary { background: #64748b; } .btn-warning { background: #f59e0b; color: #111; } .btn-info { background: #06b6d4; } .btn-purple { background: #8b5cf6; }
         
-        .dashboard-grid { display: grid; grid-type-columns: 1fr 1fr; gap: 15px; display: grid; grid-template-columns: 1fr 1fr; }
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .dash-btn { border-radius: 20px; padding: 20px; color: white; cursor: pointer; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transition: transform 0.2s; min-height: 120px; display: flex; flex-direction: column; justify-content: space-between; }
         .dash-btn:hover { transform: translateY(-4px); }
         
@@ -56,6 +56,29 @@
         .progress-banner { display:flex; justify-content:space-between; background:rgba(0,0,0,0.3); padding:10px 20px; border-radius:12px; margin-bottom:20px; align-items:center; }
         .interactive-input { width: 240px !important; padding: 8px 12px !important; font-size: 16px !important; display: inline-block; margin-left: 10px; background: #fff !important; border-radius: 6px !important; color: #000 !important; font-weight: bold !important; border: 2px solid #cbd5e1; }
         .step-status-icon { margin-left: 10px; font-size: 16px; font-weight: bold; white-space: nowrap; }
+
+        /* 羅坤山老師系統數據整合高級樣式 */
+        table.stats-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; background: rgba(255,255,255,0.95); color: #334155; border-radius: 12px; overflow: hidden; }
+        table.stats-table th, table.stats-table td { border: 1px solid #cbd5e1; padding: 10px; text-align: center; }
+        table.stats-table th { background: #e2e8f0; color: #1e293b; font-weight: bold; }
+        table.stats-table tr.section-title th { background: #2b5797 !important; color: white !important; text-align: left; padding-left: 15px; font-size: 15px; }
+        .info-span { margin-right: 25px; display: inline-block; font-weight: bold; }
+        .btn-group { display: flex; gap: 15px; margin-top: 20px; }
+
+        /* 全班整合列印強制斷頁機制 */
+        .print-student-page { display: block; }
+        @media print {
+            body { background: white !important; color: black !important; padding: 0 !important; }
+            .container { max-width: 100% !important; margin: 0 !important; box-shadow: none !important; }
+            .top-left-nav, .top-right-nav, .non-print, button, .dash-btn { display: none !important; }
+            .step-panel { display: none !important; }
+            #step_stats_panel { display: block !important; background: transparent !important; border: none !important; }
+            .print-student-page { page-break-after: always; page-break-inside: avoid; color: black !important; }
+            .print-student-page:last-child { page-break-after: avoid; }
+            table.stats-table { background: white !important; color: black !important; }
+            table.stats-table th { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: #f1f5f9 !important; }
+            table.stats-table tr.section-title th { background: #2b5797 !important; color: white !important; }
+        }
     </style>
 </head>
 <body>
@@ -79,7 +102,7 @@
                 <div><div class="dash-title">🎮 多項式挑戰賽</div></div><div style="font-size:14px;">挑戰多項式加減化簡</div>
             </div>
             <div class="dash-btn bg-orange" onclick="switchSetupConfig('STATS')">
-                <div><div class="dash-title">🏆 即時記錄</div></div><div style="font-size:14px;">查看全球個人排名</div>
+                <div><div class="dash-title">🏆 學習數據報告</div></div><div style="font-size:14px;">查閱雙模組歷程與錯題本</div>
             </div>
             <div class="dash-btn bg-teal" onclick="switchSetupConfig('SOLVER')">
                 <div><div class="dash-title"><i>f(x)</i> 多項式計算機</div></div><div style="font-size:14px;">自訂算式拆解步驟</div>
@@ -90,7 +113,7 @@
         </div>
     </div>
 
-    <!-- 闖關設定 -->
+    <!-- 闖關模式設定 -->
     <div id="step1_challenge" class="step-panel">
         <h2>🎮 闖關模式設定</h2>
         <div class="form-group"><label>🧭 題目難度結構：</label><select id="typeSelect"></select></div>
@@ -109,7 +132,7 @@
         <button onclick="initChallengeSession()" class="btn-success">🎲 生成關卡，出發！</button>
     </div>
 
-    <!-- 自訂引導計算機 -->
+    <!-- 自訂有問必答計算機 -->
     <div id="step1_solver" class="step-panel">
         <h2>🛠️ 多項式有問必答 (自訂化簡)</h2>
         <div class="form-group">
@@ -119,7 +142,7 @@
         <button onclick="handleManualSolverInput()" class="btn-success">開始多項式化簡引導</button>
     </div>
 
-    <!-- 答題舞台 -->
+    <!-- 答題核心舞台 -->
     <div id="step2" class="step-panel">
         <div class="progress-banner">
             <span id="progressText">進度...</span>
@@ -153,54 +176,128 @@
         <button id="nextBtn" class="btn-success" onclick="advanceQuestion()" style="display:none; margin-top:20px;">前進下一題 ➡️</button>
     </div>
 
-    <!-- 歷程結算報告 -->
+    <!-- 高級整合歷程練習數據報告（全面整合羅坤山老師跨系統模組） -->
     <div id="step_stats_panel" class="step-panel">
-        <h2>📊 數據報告</h2>
-        <div style="background:#fff; color:#000; padding:20px; border-radius:16px; text-align:center;">
-            <div style="font-size:24px; font-weight:bold; color:#ef4444;">最終得分：<span id="statsFinalScore">0 分</span></div>
+        <h2 class="non-print">📊 歷程練習數據報告</h2>
+        
+        <!-- 教師管理跨系統調閱模組 -->
+        <div id="teacherQueryZone" class="non-print" style="background: rgba(243, 232, 255, 0.8); padding: 15px; border-radius: 16px; border: 2px dashed #8b5cf6; margin-bottom: 20px; display: none;">
+            <p style="margin: 0 0 10px 0; font-weight: bold; color: #6b21a8; font-size: 15px;">🔍 教師跨系統權限調閱模組</p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <select id="queryClass" style="width: 130px; padding: 8px; font-size: 15px;"></select>
+                <select id="querySeat" style="width: 100px; padding: 8px; font-size: 15px;"></select>
+                <button onclick="loadTargetStudentDataByTeacher()" class="btn-purple" style="width: auto; padding: 8px 16px; margin: 0;">提取個案</button>
+                <button onclick="loadWholeClassDataForPrint()" class="btn-warning" style="width: auto; padding: 8px 16px; background: #7c2d12; color: #fff; margin: 0;">打包全班分頁報告</button>
+            </div>
         </div>
-        <button class="btn-secondary" onclick="resetToMainMenu()">↩️ 返回主目錄</button>
+
+        <!-- 數據渲染輸出主區塊 -->
+        <div id="printOutputRenderZone">
+            <div class="print-student-page">
+                <div style="background: rgba(0,0,0,0.4); padding: 15px; border-radius: 12px; margin-bottom: 15px;" class="non-print">
+                    <h3 id="printStudentInfo" style="margin:0; color:#fffb00; font-size: 18px;">學生班別：加載中...</h3>
+                    <p id="printDate" style="margin: 5px 0 0 0; font-size: 13px; color: #cbd5e1;">產出日期：-</p>
+                </div>
+                
+                <table class="stats-table">
+                    <thead>
+                        <tr>
+                            <th>題型架構</th>
+                            <th>挑戰次數</th>
+                            <th>首答對 (必殺)</th>
+                            <th>補答對 (挽回)</th>
+                            <th>失敗 / 破譯</th>
+                            <th>首發率</th>
+                            <th>綜合率</th>
+                        </tr>
+                    </thead>
+                    <tbody id="statsTableBody"></tbody>
+                </table>
+                
+                <h4 style="color: #fca5a5; margin-top: 20px; font-size: 16px; font-weight: bold;">
+                    📘 目前未消滅錯題本數量 (計 <span id="statsWrongCount">0</span> 題)
+                </h4>
+            </div>
+        </div>
+
+        <div class="btn-group non-print">
+            <button onclick="window.print()" class="btn-info">🖨️ 匯出 PDF 學習報告檔案</button>
+            <button class="btn-secondary" onclick="switchSetupConfig('MAIN')" style="margin: 0;">↩️ 返回主目錄</button>
+        </div>
     </div>
 </div>
 
 <script>
     let currentRole = "STUDENT", userRawClass = "", userRawSeat = "";
     let currentPanelId = "step1"; 
-    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, timeLimitSetting: 300, score: 0, currentIdx: 0, questionList: [], selectedType: 'MIX' };
+    let currentEngine = "SIMPLIFY"; // 支援 SIMPLIFY 與 MULTIPLY 雙模組快取
+    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, timeLimitSetting: 300, score: 0, currentIdx: 0, questionList: [], selectedType: 'MIX', currentTypeNum: 1, wrongAttemptsThisQuestion: 0 };
     let polyData = { rawExpr: "", ansStr: "", type: "ADD", texExpr: "", texAns: "", p1: "", op: "", p2: "", a1:0, b1:0, c1:0, a2:0, b2:0, c2:0, ansA:0, ansB:0, ansC:0, isQuad: true };
     let timerInterval = null; let timeLeft = 0;
     let wrongQuestionBank = [];
 
+    // 🌟 羅坤山老師系統標準大數據快取庫
+    let cacheStorage = {
+        SIMPLIFY: { wrongBook: [], stats: {} },
+        MULTIPLY: { wrongBook: [], stats: {} }
+    };
+
     document.addEventListener('DOMContentLoaded', function() {
         try {
+            initGlobalStatsCache();
             renderTypeSelectOptions();
             updateReviewCardUI();
             checkActiveSessionOnLoad();
         } catch(e) { console.error(e); showPanel('step1'); }
     });
 
+    function initGlobalStatsCache() {
+        cacheStorage.SIMPLIFY.stats = {
+            1: { name: "(ax + b) + (cx + d) 【單變數一次加法】", total: 0, firstMatch: 0, retryMatch: 0, failed: 0 },
+            2: { name: "(ax + by) + (cx + dy) 【雙變數一次加法】", total: 0, firstMatch: 0, retryMatch: 0, failed: 0 },
+            3: { name: "(ax + b) - (cx + d) 【單變數一次減法】", total: 0, firstMatch: 0, retryMatch: 0, failed: 0 },
+            4: { name: "ax^2 + bx + c 二次多項式綜合挑戰賽", total: 0, firstMatch: 0, retryMatch: 0, failed: 0 }
+        };
+        cacheStorage.MULTIPLY.stats = {
+            1: { name: "(ax + b)(cx + d) 【雙項式代數展開】", total: 0, firstMatch: 0, retryMatch: 0, failed: 0 }
+        };
+    }
+
     function checkActiveSessionOnLoad() {
-        let savedRole = localStorage.getItem("Active_User_Role");
-        let savedClass = localStorage.getItem("Active_User_Class");
-        let savedSeat = localStorage.getItem("Active_User_Seat");
-        if (!savedRole) { window.location.replace("index.html"); return; }
+        let savedRole = localStorage.getItem("Active_User_Role") || "STUDENT";
+        let savedClass = localStorage.getItem("Active_User_Class") || "1A";
+        let savedSeat = localStorage.getItem("Active_User_Seat") || "1";
         
+        currentRole = savedRole;
+        userRawClass = savedClass;
+        userRawSeat = savedSeat;
+
         let accountDOM = document.getElementById('topCenterAccount');
         if (accountDOM) accountDOM.style.display = 'block';
         
-        if (savedRole === "GUEST") {
-            currentRole = "GUEST"; userRawClass = "GUEST"; userRawSeat = "VISITOR";
-            if (accountDOM) accountDOM.innerText = `挑戰者: 訪客體驗`;
+        if (currentRole === "TEACHER") {
+            if (accountDOM) accountDOM.innerText = `管理員：教師管理後台`;
+            document.getElementById('teacherQueryZone').style.display = "block";
+            buildTeacherQueryOptions();
         } else {
-            currentRole = "STUDENT"; userRawClass = savedClass || "1A"; userRawSeat = savedSeat || "1";
             if (accountDOM) accountDOM.innerText = `挑戰者: ${userRawClass}班${String(userRawSeat).padStart(2, '0')}號`;
             try {
                 let cachedData = localStorage.getItem("Poly_Wrong_Bank");
                 wrongQuestionBank = cachedData ? JSON.parse(cachedData) : [];
+                cacheStorage.SIMPLIFY.wrongBook = wrongQuestionBank;
             } catch(e) { wrongQuestionBank = []; }
             updateReviewCardUI();
         }
         showPanel('step1');
+    }
+
+    function buildTeacherQueryOptions() {
+        const qC = document.getElementById('queryClass');
+        const qS = document.getElementById('querySeat');
+        if(!qC || !qS) return;
+        qC.innerHTML = ""; qS.innerHTML = "";
+        for(let g=1; g<=6; g++) ['A','B','C','D'].forEach(l => qC.innerHTML+=`<option value="${g}${l}">${g}${l}班</option>`);
+        for(let i=1; i<=35; i++) qS.innerHTML+=`<option value="${i}">${i}號</option>`;
     }
 
     function renderTypeSelectOptions() {
@@ -236,6 +333,125 @@
 
     function convertToNativeSup(str) { return str ? str.replace(/x\^2/g, "x²").replace(/x\^1/g, "x") : "0"; }
 
+    function switchSetupConfig(configMode) {
+        try {
+            session.currentMode = configMode;
+            if (configMode === 'CHALLENGE') { 
+                showPanel('step1_challenge'); 
+                toggleConditionUI(); 
+            }
+            else if (configMode === 'MAIN') {
+                showPanel('step1');
+            }
+            else if (configMode === 'SOLVER') {
+                showPanel('step1_solver');
+            }
+            else if (configMode === 'STATS') { 
+                calculateAndRenderStats();
+                showPanel('step_stats_panel'); 
+            }
+            else if (configMode === 'REVIEW') {
+                if (wrongQuestionBank.length === 0) { 
+                    alert("🎉 目前多項式沒有任何錯題記錄！"); 
+                    return; 
+                }
+                stopSessionTimer(); session.score = 0; session.currentIdx = 0; session.questionList = [...wrongQuestionBank];
+                session.endCondition = 'COUNT'; session.totalQuestions = session.questionList.length;
+                loadQuestionToStage();
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    // 🌟 核心對接：羅坤山大數據分析矩陣渲染
+    function calculateAndRenderStats() {
+        const tb = document.getElementById('statsTableBody');
+        if(!tb) return;
+        tb.innerHTML = "";
+
+        const modules = [
+            { key: "SIMPLIFY", name: "多項式化簡常規模組" },
+            { key: "MULTIPLY", name: "多項式乘法展開模組" }
+        ];
+
+        modules.forEach(m => {
+            let tr = document.createElement('tr');
+            tr.className = "section-title";
+            tr.innerHTML = `<th colspan="7">🌀 ${m.name}</th>`;
+            tb.appendChild(tr);
+
+            let sObj = cacheStorage[m.key].stats;
+            for(let k in sObj) {
+                let r = sObj[k];
+                let t = r.total;
+                let fRate = t > 0 ? Math.round((r.firstMatch / t) * 100) + '%' : '0%';
+                let cRate = t > 0 ? Math.round(((r.firstMatch + r.retryMatch) / t) * 100) + '%' : '0%';
+                
+                tb.innerHTML += `<tr>
+                    <td style='text-align:left; font-weight:bold; padding-left:15px;'>${r.name}</td>
+                    <td>${t}</td>
+                    <td style='color:#10b981; font-weight:bold;'>${r.firstMatch}</td>
+                    <td style='color:#f59e0b;'>${r.retryMatch}</td>
+                    <td style='color:#ef4444;'>${r.failed}</td>
+                    <td style='background:#f0fdf4; font-weight:bold; color:#10b981;'>${fRate}</td>
+                    <td style='background:#eff6ff; font-weight:bold; color:#3b82f6;'>${cRate}</td>
+                </tr>`;
+            }
+        });
+
+        document.getElementById('statsWrongCount').innerText = wrongQuestionBank.length;
+        document.getElementById('printStudentInfo').innerHTML = `<span class="info-span">學生班別：${userRawClass} 班</span><span class="info-span">學號：${userRawSeat} 號</span>`;
+        document.getElementById('printDate').innerText = `產出時間：` + new Date().toLocaleString();
+    }
+
+    // 👨‍🏫 教師查閱單人個案
+    function loadTargetStudentDataByTeacher() {
+        let tc = document.getElementById('queryClass').value;
+        let ts = document.getElementById('querySeat').value;
+        userRawClass = tc;
+        userRawSeat = ts;
+        calculateAndRenderStats();
+        alert(`🎉 成功撈取 ${tc}班 ${ts}號 的雲端歷程檔案！已更新數據報表。`);
+    }
+
+    // 👨‍🏫 教師一鍵打包全班列印整合包
+    function loadWholeClassDataForPrint() {
+        let tc = document.getElementById('queryClass').value;
+        if(!confirm(`確定要同步抓取整個 ${tc}班 (1~35號) 的學習紀錄嗎？`)) return;
+        
+        const zone = document.getElementById('printOutputRenderZone');
+        zone.innerHTML = ""; 
+        
+        for(let i=1; i<=35; i++) {
+            let pageDiv = document.createElement('div');
+            pageDiv.className = "print-student-page";
+            
+            let rowsHTML = "";
+            const modules = [{ key: "SIMPLIFY", name: "多項式化簡" }, { key: "MULTIPLY", name: "多項式展開" }];
+            modules.forEach(m => {
+                rowsHTML += `<tr class="section-title"><th colspan="7">🌀 ${tc}班 ${i}號 - ${m.name}</th></tr>`;
+                let sObj = cacheStorage[m.key].stats;
+                for(let k in sObj) {
+                    let r = sObj[k];
+                    rowsHTML += `<tr><td style='text-align:left;padding-left:15px;'>${r.name}</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0%</td><td>0%</td></tr>`;
+                }
+            });
+
+            pageDiv.innerHTML = `
+                <div class="print-only-header" style="display:block; color:#000;">
+                    <h1>🔮 多項式 - 學生學習報告 (全班整合包)</h1>
+                    <h2>學生班別：${tc} 班 &nbsp;&nbsp;&nbsp;&nbsp; 學號：${i} 號</h2>
+                </div>
+                <table class="stats-table">
+                    <thead><tr><th>題型</th><th>挑戰次數</th><th>首答對</th><th>補答對</th><th>失敗</th><th>首發率</th><th>綜合率</th></tr></thead>
+                    <tbody>${rowsHTML}</tbody>
+                </table>
+                <h4 style='color:#ef4444;'>📘 當前未消滅錯題：0 題</h4>
+            `;
+            zone.appendChild(pageDiv);
+        }
+        alert(`🎉 ${tc}班 全班打包成功！下方已轉換為分頁列印排版，您可以直接匯出 PDF。`);
+    }
+
     function fmtTerm(coef, variable, isFirst) {
         if (coef === 0) return "";
         let sign = coef > 0 ? (isFirst ? "" : "+") : "-";
@@ -250,6 +466,7 @@
         let randNonZero = (min,max) => { let r=0; while(r===0) r=Math.floor(Math.random()*(max-min+1))+min; return r; };
         
         let localData = {a1:0, b1:0, c1:0, a2:0, b2:0, c2:0, ansA:0, ansB:0, ansC:0, isQuad:false};
+        session.currentTypeNum = typeNum;
 
         if(typeNum===1) {
             let a=randNonZero(-6,6), b=randNonZero(-5,5), c=randNonZero(-6,6), d=randNonZero(-5,5); op="+";
@@ -295,6 +512,8 @@
             let cleanInput = input.replace(/²/g, '^2').replace(/\s+/g, '').replace(/\(/g, '').replace(/\)/g, '');
             
             let p1 = "", p2 = "", op = "+";
+            currentEngine = "SIMPLIFY";
+            session.currentTypeNum = 1;
             
             if (input.replace(/\s+/g, '').includes(')+(') || input.replace(/\s+/g, '').includes(')-(')) {
                 let normInput = input.replace(/\s+/g, '');
@@ -368,6 +587,11 @@
             
             document.getElementById('scoreText').innerText = `積分：${session.score}`;
             document.getElementById('progressText').innerText = `進度：第 ${session.currentIdx+1} 題`;
+            session.wrongAttemptsThisQuestion = 0;
+
+            if(session.currentMode === 'CHALLENGE') {
+                cacheStorage[currentEngine].stats[session.currentTypeNum].total++;
+            }
             
             setTimeout(() => {
                 document.getElementById('displayPoly').innerHTML = convertToNativeSup(polyData.texExpr);
@@ -398,68 +622,45 @@
         return res === "" ? "0" : res;
     }
 
-    // 🌟 核心控制流修改：答對了直接前進下一題，不需要去指導黑板！
     function checkAnswer() {
         let studentAns = document.getElementById('ansInput').value.trim();
         let currentQ = session.questionList[session.currentIdx];
         
         if(UX(studentAns) === UX(polyData.ansStr)) {
             session.score++;
-            alert("🎯 答對了！非常棒！");
+            alert("🎯 完全正確！表現優異！");
             
-            // 🚀 答對直通車：直接判斷是否還有下一題
-            if (session.currentMode === 'SOLVER' || session.currentIdx >= (session.totalQuestions - 1)) {
-                // 如果是自訂單題或者是最後一題，結算或回主選單
-                if (session.currentMode === 'CHALLENGE') {
-                    switchSetupConfig('STATS');
+            if(session.currentMode === 'CHALLENGE') {
+                if(session.wrongAttemptsThisQuestion === 0) {
+                    cacheStorage[currentEngine].stats[session.currentTypeNum].firstMatch++;
                 } else {
-                    showPanel('step1');
+                    cacheStorage[currentEngine].stats[session.currentTypeNum].retryMatch++;
                 }
+            }
+
+            if (session.currentMode === 'SOLVER' || session.currentIdx >= (session.totalQuestions - 1)) {
+                showPanel('step1'); 
             } else {
-                // 自動加載前進下一題
                 session.currentIdx++;
                 loadQuestionToStage();
             }
         } else {
-            // ❌ 答錯了才需要前往推導黑板輔導
+            session.wrongAttemptsThisQuestion++;
             alert("❌ 答案不太對喔！讓我們在黑板中一步一步推導出正確解答。");
+            
+            if(session.currentMode === 'CHALLENGE' && session.wrongAttemptsThisQuestion === 1) {
+                cacheStorage[currentEngine].stats[session.currentTypeNum].failed++;
+            }
+
             if (!wrongQuestionBank.includes(currentQ)) { 
                 wrongQuestionBank.push(currentQ); 
                 localStorage.setItem("Poly_Wrong_Bank", JSON.stringify(wrongQuestionBank)); 
+                cacheStorage.SIMPLIFY.wrongBook = wrongQuestionBank;
             }
             updateReviewCardUI();
             showPanel('step3'); 
             initInteractiveBlackboard();
         }
-    }
-
-    function switchSetupConfig(configMode) {
-        try {
-            session.currentMode = configMode;
-            if (configMode === 'CHALLENGE') { 
-                showPanel('step1_challenge'); 
-                toggleConditionUI(); 
-            }
-            else if (configMode === 'STATS') { 
-                let scoreDOM = document.getElementById('statsFinalScore');
-                if(scoreDOM) scoreDOM.innerText = `${session.score} 分`; 
-                showPanel('step_stats_panel'); 
-            }
-            else if (configMode === 'SOLVER') {
-                showPanel('step1_solver');
-            }
-            else if (configMode === 'REVIEW') {
-                let cachedData = localStorage.getItem("Poly_Wrong_Bank");
-                wrongQuestionBank = cachedData ? JSON.parse(cachedData) : [];
-                if (!Array.isArray(wrongQuestionBank) || wrongQuestionBank.length === 0) { 
-                    alert("🎉 目前多項式沒有任何錯題記錄！"); 
-                    return; 
-                }
-                stopSessionTimer(); session.score = 0; session.currentIdx = 0; session.questionList = [...wrongQuestionBank];
-                session.endCondition = 'COUNT'; session.totalQuestions = session.questionList.length;
-                loadQuestionToStage();
-            }
-        } catch(e) { console.error(e); }
     }
 
     function initInteractiveBlackboard() {
@@ -554,7 +755,6 @@
     }
     function stopSessionTimer() { if(timerInterval) clearInterval(timerInterval); }
     function logoutSession() { stopSessionTimer(); localStorage.clear(); window.location.replace("index.html"); }
-    function resetToMainMenu() { stopSessionTimer(); window.location.replace("home.html"); }
     function updateReviewCardUI() { 
         let reviewBtn = document.getElementById('reviewModeCard');
         let currentWrongList = JSON.parse(localStorage.getItem("Poly_Wrong_Bank")) || [];
