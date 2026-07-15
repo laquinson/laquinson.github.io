@@ -90,7 +90,7 @@
         </div>
     </div>
 
-    <!-- 闖關設定 -->
+    <!-- 闖關設定面版 -->
     <div id="step1_challenge" class="step-panel">
         <h2>🎮 闖關模式設定</h2>
         <div class="form-group"><label>🧭 題目難度結構：</label><select id="typeSelect"></select></div>
@@ -119,7 +119,7 @@
         <button onclick="handleManualSolverInput()" class="btn-success">開始多項式化簡引導</button>
     </div>
 
-    <!-- 答題卡片舞台 -->
+    <!-- 答題核心舞台 -->
     <div id="step2" class="step-panel">
         <div class="progress-banner">
             <span id="progressText">進度...</span>
@@ -278,58 +278,69 @@
         let p1Str = "", p2Str = "", ansStr = "", op = "+";
         let randNonZero = (min,max) => { let r=0; while(r===0) r=Math.floor(Math.random()*(max-min+1))+min; return r; };
         
+        let localData = {a1:0, b1:0, c1:0, a2:0, b2:0, c2:0, ansA:0, ansB:0, ansC:0, isQuad:false};
+
         if(typeNum===1) {
             let a=randNonZero(-6,6), b=randNonZero(-5,5), c=randNonZero(-6,6), d=randNonZero(-5,5); op="+";
             p1Str = fmtTerm(a,"",true) + fmtTerm(b,"x",false); p2Str = fmtTerm(c,"",true) + fmtTerm(d,"x",false);
             let ansX=b+d, ansC=a+c; ansStr = fmtTerm(ansX,"x",true) + fmtTerm(ansC,"",ansX===0);
-            polyData = {a1:0,b1:b,c1:a, a2:0,b2:d,c2:c, ansA:0,ansB:ansX,ansC:ansC, isQuad:false};
+            localData = {a1:0,b1:b,c1:a, a2:0,b2:d,c2:c, ansA:0,ansB:ansX,ansC:ansC, isQuad:false};
         } else if(typeNum===2 || typeNum===3) {
             let a=randNonZero(-5,5), b=randNonZero(-5,5), c=randNonZero(-5,5), d=randNonZero(-5,5); op=(typeNum===2)?"+":"-";
             p1Str = fmtTerm(a,"x",true) + fmtTerm(b,"y",false); p2Str = fmtTerm(c,"x",true) + fmtTerm(d,"y",false);
             let ansX=(op==="+")?(a+c):(a-c), ansY=(op==="+")?(b+d):(b-d); ansStr = fmtTerm(ansX,"x",true) + fmtTerm(ansY,"y",ansX === 0);
-            polyData = {a1:0,b1:a,c1:b, a2:0,b2:c,c2:d, ansA:0,ansB:ansX,ansC:ansY, isQuad:false};
+            localData = {a1:0,b1:a,c1:b, a2:0,b2:c,c2:d, ansA:0,ansB:ansX,ansC:ansY, isQuad:false};
         } else {
             let a=randNonZero(-4,4), b=Math.floor(Math.random()*11)-5, c=Math.floor(Math.random()*13)-6, d=randNonZero(-4,4), e=Math.floor(Math.random()*11)-5, f=Math.floor(Math.random()*13)-6;
             while(a+d===0) d=randNonZero(-4,4); op="+";
             p1Str = fmtTerm(a,"x^2",true) + fmtTerm(b,"x",false) + fmtTerm(c,"",false);
             p2Str = fmtTerm(d,"x^2",true) + fmtTerm(e,"x",false) + fmtTerm(f,"",false);
             let ansA=a+d, ansB=b+e, ansC=c+f; ansStr = fmtTerm(ansA,"x^2",true) + fmtTerm(ansB,"x",ansA === 0) + fmtTerm(ansC,"",ansA === 0 && ansB === 0);
-            polyData = {a1:a,b1:b,c1:c, a2:d,b2:e,c2:f, ansA:ansA,ansB:ansB,ansC:ansC, isQuad:true};
+            localData = {a1:a,b1:b,c1:c, a2:d,b2:e,c2:f, ansA:ansA,ansB:ansB,ansC:ansC, isQuad:true};
         }
-        return `(${p1Str}) ${op} (${p2Str})|${ansStr}|${p1Str}|${op}|${p2Str}|${polyData.a1},${polyData.b1},${polyData.c1}|${polyData.a2},${polyData.b2},${polyData.c2}|${polyData.ansA},${polyData.ansB},${polyData.ansC}|${polyData.isQuad?1:0}|${typeNum}`;
+        // 🛠️ 終極修復點：將原本殘留的 c1=0 徹底清洗為精準對接的 localData 物件，終結 Reference 崩潰
+        return `(${p1Str}) ${op} (${p2Str})|${ansStr}|${p1Str}|${op}|${p2Str}|${localData.a1},${localData.b1},${localData.c1}|${localData.a2},${localData.b2},${localData.c2}|${localData.ansA},${localData.ansB},${localData.ansC}|${localData.isQuad?1:0}|${typeNum}`;
     }
 
-    // 🌟 核心重構：智慧括號切分引擎。100% 精準還原學生輸入的題目結構，永不發生篡改！
+    function initChallengeSession() {
+        try {
+            session.score = 0; session.currentIdx = 0; session.questionList = [];
+            session.endCondition = document.querySelector('input[name="endCondition"]:checked').value;
+            session.selectedType = document.getElementById('typeSelect').value;
+            if(session.endCondition === 'COUNT') {
+                stopSessionTimer(); session.totalQuestions = parseInt(document.getElementById('totalQuestionsInput').value) || 5;
+                for(let i=0; i<session.totalQuestions; i++) session.questionList.push(generatePolynomialQuestion(session.selectedType));
+            } else {
+                let sec = parseInt(document.getElementById('timeLimitSelect').value) || 180; session.timeLimitSetting = sec;
+                session.questionList.push(generatePolynomialQuestion(session.selectedType)); startSessionTimer(sec);
+            }
+            loadQuestionToStage();
+        } catch(e) { console.error(e); }
+    }
+
     function handleManualSolverInput() {
         try {
             stopSessionTimer(); 
             let input = document.getElementById('polyInput').value.trim() || "3x + 8 + 2x + 5";
-            let cleanInput = input.replace(/²/g, '^2').replace(/\s+/g, '');
+            let cleanInput = input.replace(/²/g, '^2').replace(/\s+/g, '').replace(/\(/g, '').replace(/\)/g, '');
             
             let p1 = "", p2 = "", op = "+";
             
-            // 優先判定是否有顯式括號分割 (如 (3x+8)+(2x+5) )
-            if (cleanInput.includes(')+(') || cleanInput.includes(')-(')) {
-                op = cleanInput.includes(')-(') ? '-' : '+';
-                let parts = cleanInput.split(op === '+' ? ')+(' : ')-(');
-                p1 = parts[0].replace('(', '');
-                p2 = parts[1] ? parts[1].replace(')', '') : "0";
+            if (input.replace(/\s+/g, '').includes(')+(') || input.replace(/\s+/g, '').includes(')-(')) {
+                let normInput = input.replace(/\s+/g, '');
+                op = normInput.includes(')-(') ? '-' : '+';
+                let parts = normInput.split(op === '+' ? ')+(' : ')-(');
+                p1 = parts[0].replace('(', ''); p2 = parts[1] ? parts[1].replace(')', '') : "0";
             } else {
-                // 🚀 關鍵修復：針對無括號的 3x+8+2x+5，精準找出中間那組主運算子
                 let match = cleanInput.match(/^([+-]?\d*[a-zA-Z]\^?\d*[+-]\d+)([+-])([+-]?\d*[a-zA-Z].*)$/);
-                if (match) {
-                    p1 = match[1];
-                    op = match[2];
-                    p2 = match[3];
-                } else {
-                    // 保底二分掃描
+                if (match) { p1 = match[1]; op = match[2]; p2 = match[3]; } 
+                else {
                     let midMatch = cleanInput.match(/(.+?)([+-])([+-]?\d*[a-zA-Z].*)/);
                     if (midMatch) { p1 = midMatch[1]; op = midMatch[2]; p2 = midMatch[3]; } 
                     else { p1 = cleanInput; op = "+"; p2 = "0"; }
                 }
             }
             
-            // 獨立提取兩組子多項式的係數
             let parseCoefs = (str) => {
                 let a = 0, b = 0, c = 0;
                 let clean = str.replace(/\+/g, '++').replace(/-/g, '+-');
@@ -343,16 +354,13 @@
                         let co = t.replace(/[xy]/, '');
                         b += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co));
                     } else {
-                        let parsed = parseInt(t);
-                        if(!isNaN(parsed)) c += parsed;
+                        let parsed = parseInt(t); if(!isNaN(parsed)) c += parsed;
                     }
                 });
                 return [a, b, c];
             };
 
-            let c1 = parseCoefs(p1);
-            let c2 = parseCoefs(p2);
-            
+            let c1 = parseCoefs(p1); let c2 = parseCoefs(p2);
             let ansA = (op === '+') ? (c1[0] + c2[0]) : (c1[0] - c2[0]);
             let ansB = (op === '+') ? (c1[1] + c2[1]) : (c1[1] - c2[1]);
             let ansC = (op === '+') ? (c1[2] + c2[2]) : (c1[2] - c2[2]);
@@ -395,10 +403,7 @@
                 document.getElementById('displayPoly').innerHTML = convertToNativeSup(polyData.texExpr);
                 showPanel('step2');
             }, 0);
-        } catch(e) {
-            console.error(e);
-            showPanel('step2');
-        }
+        } catch(e) { console.error(e); showPanel('step2'); }
     }
 
     UX = function(str) {
@@ -493,8 +498,7 @@
                 
                 let el2 = document.getElementById('boardLine2');
                 if(el2) {
-                    el2.style.opacity = "1";
-                    el2.style.pointerEvents = "auto";
+                    el2.style.opacity = "1"; el2.style.pointerEvents = "auto";
                 }
             } else {
                 document.getElementById('statusIcon1').innerText = "❌ 展開算式不對，請確認正負號與常數！";
