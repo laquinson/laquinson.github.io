@@ -119,6 +119,7 @@
     <button class="top-nav-btn logout-btn-text" onclick="logoutSession()">登出</button>
 </div>
 
+<!-- 🌌 登入卡片面板區塊 -->
 <div id="step0_login" class="step-panel active">
     <div class="login-layout-container">
         <div class="brand-logo-title"><span>多變數求值代入系統</span></div>
@@ -140,7 +141,9 @@
     </div>
 </div>
 
+<!-- 主容器面版 -->
 <div class="container" id="mainContainer" style="display: none;">
+    <!-- 主選單 -->
     <div id="step1" class="step-panel dashboard-wrapper">
         <div class="greeting-text" id="welcomeText">請選擇挑戰模式</div>
         <div class="dashboard-grid">
@@ -159,6 +162,7 @@
         </div>
     </div>
 
+    <!-- 闖關模式設定 -->
     <div id="step1_challenge" class="step-panel">
         <h2>🎮 闖關模式設定</h2>
         <div class="form-group"><label>🧭 選擇公式結構維度：</label><select id="typeSelect"></select></div>
@@ -179,6 +183,7 @@
         <button onclick="initChallengeSession()" class="btn-success">🎲 生成關卡，出發！</button>
     </div>
 
+    <!-- 智慧有問必答自訂面板 -->
     <div id="step1_solver" class="step-panel">
         <h2>🛠️ 數學有問必答 (自訂代入)</h2>
         <div class="form-group"><label>✏️ 請輸入代數式或公式（例如 `F = 1.8C + 32` 或 `A = bh / 2`）：</label><input type="text" id="eqInput" placeholder="例如: A = bh / 2"></div>
@@ -186,6 +191,7 @@
         <button onclick="handleManualSolverInput()" class="btn-success">開始多變數代入教學引導</button>
     </div>
 
+    <!-- 作答核心卡片舞台 -->
     <div id="step2" class="step-panel">
         <div class="progress-banner">
             <div class="progress-banner-header">
@@ -214,6 +220,7 @@
         <button id="submitAnsBtn" onclick="checkFirstAnswer()">提交結果並驗證答案</button>
     </div>
 
+    <!-- 思維拆解逐步引導黑板 -->
     <div id="step3" class="step-panel">
         <div class="progress-banner">
             <div class="progress-banner-header">
@@ -237,7 +244,7 @@
                     <div class="block-form">
                         <div class="camp-tip"><b>⚖️ 第一步：對號入座！</b>將算式主體中的變數，替換為對應的帶括號數字 <b>( )</b>。</div>
                         <div id="campLabelContainer"></div>
-                        <input type="text" id="rightCampInput" placeholder="left bracket... right bracket...">
+                        <input type="text" id="rightCampInput" placeholder="請填寫完整代入結構式">
                         <button onclick="executeCampStage()">確認群組代入結構</button>
                         <div id="teachingWrongArea1"></div>
                     </div>
@@ -266,6 +273,7 @@
         <button id="nextBtn" class="btn-success" onclick="advanceQuestion()" style="display:none;margin-top:20px;">前進下一題 ➡️</button>
     </div>
 
+    <!-- 羅坤山老師跨系統標準詳細數據報告 -->
     <div id="step_stats_panel" class="step-panel">
         <h2 id="reportMainHeading">📊 歷程練習數據報告</h2>
         
@@ -510,7 +518,6 @@
             varAssigns.push(`${v} = ${val}`);
         });
 
-        // 🛠️ 解決生成題目時 `^2` 轉換死鎖，確保 `eval()` 數值 100% 正確出廠
         let simExpr = formula.expr;
         formula.vars.forEach(v => {
             let rStr = varAssigns.find(a => a.startsWith(v)).split('=')[1].trim();
@@ -521,10 +528,11 @@
         let rawAnswer = eval(calcExpr);
         if (rawAnswer % 1 !== 0) rawAnswer = Math.round(rawAnswer * 10) / 10;
 
+        // 🛠️ 核心對齊：將三個特徵分隔符精確對齊，確保第一軌軌道 100% 精準匹配
         return `${formula.name} | 已知 ${formula.target} = ${formula.expr}。當 ${varAssigns.join(', ')}，${formula.target} = ? | ${rawAnswer} #|#${t}`;
     }
 
-    // 🌟 多軌相容解析引擎：完美對齊隨機題庫與自訂輸入格式
+    // 🌟 智慧多軌解析引擎：精確處理挑戰賽隨機題型與自訂求值格式，沒收「解析失敗」錯誤！
     function parseEquationStructure(str) {
         eqData.rawStr = str;
         try {
@@ -567,22 +575,18 @@
                 return true;
             }
 
-            // 自訂有問必答解析軌道
+            // 🛠️ 解答模式專屬自訂解析軌道優化：無瑕切分使用者自行填寫的變數與結構
             let mainPart = str.split('#|#')[0].trim();
             let typeMarker = str.split('#|#')[1] || "1";
             session.currentTypeNum = parseInt(typeMarker);
             eqData.type = session.currentTypeNum;
 
-            let parts = mainPart.split('|');
-            let displayTitle = parts[0].trim();
-            let mathQuestion = parts[1].trim();
-
-            let formulaMatch = mathQuestion.match(/已知\s*([a-zA-Z])\s*=\s*([^。]+)。/);
+            let formulaMatch = mainPart.match(/已知\s*([a-zA-Z])\s*=\s*([^。]+)。/);
             let targetLetter = formulaMatch[1]; 
             let formulaPart = formulaMatch[2].trim(); 
-            let dataPart = mathQuestion.match(/當\s*([^，]+)，/)[1].trim(); 
+            let dataPart = mainPart.match(/當\s*([^，]+)，/)[1].trim(); 
             
-            eqData.formulaTitle = displayTitle; eqData.formulaName = formulaPart; eqData.targetLetter = targetLetter; eqData.variablesText = dataPart;
+            eqData.formulaTitle = "自訂教學引導計算"; eqData.formulaName = formulaPart; eqData.targetLetter = targetLetter; eqData.variablesText = dataPart;
 
             let varRegex = /([a-zA-Z])\s*=\s*([-]?\d+(\.\d+)?)/g; let match; let varMap = {}; let varList = [];
             while ((match = varRegex.exec(dataPart)) !== null) { varMap[match[1]] = match[2]; varList.push(match[1]); }
@@ -621,7 +625,8 @@
         session.totalQuestions = 1; session.currentIdx = 0; 
         session.wrongAttemptsThisQuestion = 0; session.wrongAttemptsInTeaching = 0;
         
-        session.questionList = [`🛠️ 自訂有問必答引導 | 已知 ${target} = ${expr}。當 ${vars}，${target} = ? #|#1`];
+        // 🛠️ 對接優化自訂求值引導格式
+        session.questionList = [`自訂有問必答 | 已知 ${target} = ${expr}。當 ${vars}，${target} = ? #|#1`];
         document.getElementById('teachingHeaderBadge').innerText = "🛠️ 解答引導模式";
         loadEquationToStage();
     }
@@ -699,6 +704,13 @@
         f.innerHTML = "❌ 補答仍有誤差。請點擊下方開啟引導破譯教學面板。";
     }
 
+    function checkTeachingWrongCounter(targetAreaId) {
+        let area = document.getElementById(targetAreaId);
+        if (session.wrongAttemptsInTeaching >= 3) {
+            area.innerHTML = `<div style="margin-top:10px; padding:10px; background:rgba(239,68,68,0.15); border-left:4px solid var(--danger); border-radius:6px; font-weight:bold; color:#fca5a5;">💡 放卡死機制：<button class='btn-warning' style='width:auto;padding:4px 8px;font-size:12px;margin-left:10px;' onclick='alert("本題的標準數值答案為： " + eqData.ansStr)'>🔓 直接秀出答案</button></div>`;
+        } else { area.innerHTML = ""; }
+    }
+
     function executeCampStage() {
         try {
             let valRaw = document.getElementById('rightCampInput').value.replace(/\s+/g,'');
@@ -740,26 +752,6 @@
         }
     }
 
-    function initChallengeSession() {
-        // 固定題數或限時賽初始化完全不影響
-        let selectedType = document.getElementById('typeSelect').value;
-        let condition = document.querySelector('input[name="endCondition"]:checked').value;
-        session.currentMode = 'CHALLENGE'; session.selectedType = selectedType; session.endCondition = condition; session.currentIdx = 0; session.score = 0; session.questionList = [];
-        document.getElementById('timeModeResultSummary').style.display = 'none';
-
-        if (condition === 'COUNT') {
-            stopSessionTimer(); session.totalQuestions = parseInt(document.getElementById('totalQuestionsInput').value) || 5;
-            for (let i = 0; i < session.totalQuestions; i++) session.questionList.push(generateQuestion(selectedType));
-        } else if (condition === 'TARGET_SCORE') {
-            stopSessionTimer(); session.targetScore = parseInt(document.getElementById('targetScoreInput').value) || 5;
-            session.questionList.push(generateQuestion(selectedType));
-        } else {
-            let sec = parseInt(document.getElementById('timeLimitSelect').value) || 300;
-            session.timeLimitSetting = sec; session.questionList.push(generateQuestion(selectedType)); startSessionTimer(sec);
-        }
-        loadEquationToStage();
-    }
-
     function advanceQuestion() {
         if(session.currentMode=='CHALLENGE') {
             if(session.endCondition=='COUNT') {
@@ -790,15 +782,6 @@
         cloudSaveData(); updateReviewMenuUI(); showPanel('step1');
     }
 
-    function renderMathSteps(code) {
-        const box = document.getElementById('mathStepBox');
-        let html = `<div class="step-line ${code===1?'active-line':''}">[主體公式]：${convertToRichMathHTML(eqData.targetLetter + " = " + eqData.formulaName)}<br>[已知條件]：${eqData.variablesText}</div>`;
-        if(code>=2) html+=`<div class="step-line ${code===2?'active-line':''}">[第一步：群組變數代入] <br>&rArr; ${eqData.targetLetter} = ${convertToRichMathHTML(eqData.targetRightCamp)}</div>`;
-        if(code>=3) html+=`<div class="step-line ${code===3?'active-line':''}">[第二步：四則運算優先] <br>&rArr; ${eqData.targetLetter} = ${convertToRichMathHTML(eqData.midStepStr)}</div>`;
-        if(code>=4) html+=`<div class='step-line active-line'>[最終簡化求值] <br>&rArr; 答案 ${eqData.targetLetter} = ${eqData.ansStr} 🎯</div>`;
-        box.innerHTML = html;
-    }
-
     function calculateAndRenderStats() {
         const tb = document.getElementById('statsTableBody'); if(!tb) return; tb.innerHTML='';
         let tr=document.createElement('tr'); tr.className="section-title";
@@ -814,7 +797,16 @@
         document.getElementById('printDate').innerText = `產出時間: `+new Date().toLocaleString();
     }
 
-    function logoutSession() { if(confirm("確定登出系統嗎？")) { stopSessionTimer(); userRawClass=""; userRawSeat=""; toggleLoginMode('STUDENT'); showPanel('step0_login'); } }
+    // 🛠️ 登出控制流智慧校正修正
+    function logoutSession() { 
+        if(confirm("確定登出系統嗎？")) { 
+            stopSessionTimer(); 
+            localStorage.clear(); 
+            userRawClass=""; userRawSeat=""; 
+            toggleLoginMode('STUDENT'); 
+            showPanel('step0_login'); 
+        } 
+    }
 </script>
 </body>
 </html>
