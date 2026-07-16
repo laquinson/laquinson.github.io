@@ -398,6 +398,11 @@
         else if(mode==='STATS') { calculateAndRenderStats(); showPanel('step_stats_panel'); }
     }
 
+    function generateEquation(typeCode) {
+        let t = typeCode === 'MIX' ? ['1', '2', '3', '4'][Math.floor(Math.random() * 4)] : typeCode;
+        return EQUATION_BANK[t].generate();
+    }
+
     function initChallengeSession() {
         const typeSelect = document.getElementById('typeSelect');
         const condition = document.querySelector('input[name="endCondition"]:checked').value;
@@ -606,7 +611,6 @@
         document.getElementById('progressBarFill').style.width = `${pct}%`; document.getElementById('progressBarFillStage3').style.width = `${pct}%`;
     }
 
-    // 完美對接計時與生命週期閉環
     function startSessionTimer(seconds) { stopSessionTimer(); timeLeft = seconds; updateTimerDisplay(); document.getElementById('globalTimerBox').style.display = 'inline-block'; document.getElementById('globalTimerBoxStage3').style.display = 'inline-block'; timerInterval = setInterval(() => { timeLeft--; updateTimerDisplay(); if(session.endCondition==='TIME_LIMIT') updateProgressBarUI(); if (timeLeft <= 0) { stopSessionTimer(); alert("⏱️ 時間到！進行數據結算！"); finishTimeLimitSession(); } }, 1000); }
     function stopSessionTimer() { if(timerInterval) { clearInterval(timerInterval); timerInterval = null; } document.getElementById('globalTimerBox').style.display = 'none'; document.getElementById('globalTimerBoxStage3').style.display = 'none'; }
     function updateTimerDisplay() { let m = Math.floor(timeLeft / 60); let s = timeLeft % 60; let str = `⏱️ ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`; document.getElementById('globalTimerBox').innerText = str; document.getElementById('globalTimerBoxStage3').innerText = str; }
@@ -625,6 +629,21 @@
     function cloudSaveData() { if (["GUEST"].includes(currentRole) || !userRawClass || !userRawSeat) return; try { localStorage.setItem(`EquationsCache_${userRawClass}-${userRawSeat}`, JSON.stringify(cacheStorage.EQ)); } catch(e){} }
     function initLocalFallback(tC, tS) { try { let local = localStorage.getItem(`EquationsCache_${tC}-${tS}`); if(local) { let p = JSON.parse(local); if(p.stats?.[1]) { cacheStorage.EQ = p; return; } } } catch(e){} cacheStorage.EQ = { wrongBook: [], stats: getInitialStatsObject() }; }
     function logoutSession() { if(confirm("確定登出系統嗎？")) { stopSessionTimer(); localStorage.clear(); window.location.replace("index.html"); } }
+
+    function handleManualSolverInput() {
+        let rawInput = document.getElementById('eqInput').value.trim();
+        if(!rawInput.includes("=")) { alert("請輸入包含 '=' 號的有效方程式！"); return; }
+        let clean = rawInput.replace(/\s+/g,''), sides = clean.split('='), left = sides[0], right = sides[1];
+        let aMatch = left.match(/(-?\d*)x/);
+        let a = (aMatch && aMatch[1]) ? (aMatch[1]==='-'?-1:(aMatch[1]===''?1:parseInt(aMatch[1]))) : 1;
+        let bMatch = left.replace(/(-?\d*)x/, '').match(/([+-]\d+)/), b = bMatch ? parseInt(bMatch[1]) : 0, c = parseInt(right);
+        let x = (c - b) / a;
+        if(x % 1 !== 0) { alert("為保證教學形象化，請輸入整數解方程！"); return; }
+
+        session.currentMode = 'SOLVER'; session.totalQuestions = 1; session.currentIdx = 0;
+        session.questionList = [`自訂天秤引導 | ${a}x ${b>=0?'+':''} ${b} = ${c} | ${x} | ${b>=0?'-':'+'}${Math.abs(b)} | /${a} #|#1`].map(s => s.replace(/\s+\+/g, ' +').replace(/\s+-/g, ' -'));
+        loadEquationToStage();
+    }
 
     function calculateAndRenderStats() {
         const tb = document.getElementById('statsTableBody'); if(!tb) return; tb.innerHTML='';
