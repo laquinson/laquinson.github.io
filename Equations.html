@@ -276,7 +276,7 @@
                     <div class="block-form">
                         <div class="camp-tip"><b>天秤原則二：</b>目前常數已歸零。為了讓左邊只剩一個 x，天秤兩邊要<b>同時乘以或除以</b>什麼數？</div>
                         <label for="rightCombineInput"><strong>請輸入操作（例如：兩邊同時 /3 或兩邊同時 *2）：</strong></label>
-                        <input type="text" id="rightCombineInput" placeholder="例如: /3 或 *2" title="兩邊同時乘除操作">
+                        <input type="text" id="rightCombineInput" placeholder="邀請填寫乘除操作" title="兩邊同時乘除操作">
                         <button onclick="executeCombineStage()">執行天秤同步乘除</button>
                         <div id="teachingWrongArea2"></div>
                     </div>
@@ -606,6 +606,7 @@
         document.getElementById('progressBarFill').style.width = `${pct}%`; document.getElementById('progressBarFillStage3').style.width = `${pct}%`;
     }
 
+    // 完美對接計時與生命週期閉環
     function startSessionTimer(seconds) { stopSessionTimer(); timeLeft = seconds; updateTimerDisplay(); document.getElementById('globalTimerBox').style.display = 'inline-block'; document.getElementById('globalTimerBoxStage3').style.display = 'inline-block'; timerInterval = setInterval(() => { timeLeft--; updateTimerDisplay(); if(session.endCondition==='TIME_LIMIT') updateProgressBarUI(); if (timeLeft <= 0) { stopSessionTimer(); alert("⏱️ 時間到！進行數據結算！"); finishTimeLimitSession(); } }, 1000); }
     function stopSessionTimer() { if(timerInterval) { clearInterval(timerInterval); timerInterval = null; } document.getElementById('globalTimerBox').style.display = 'none'; document.getElementById('globalTimerBoxStage3').style.display = 'none'; }
     function updateTimerDisplay() { let m = Math.floor(timeLeft / 60); let s = timeLeft % 60; let str = `⏱️ ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`; document.getElementById('globalTimerBox').innerText = str; document.getElementById('globalTimerBoxStage3').innerText = str; }
