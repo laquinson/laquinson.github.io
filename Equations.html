@@ -389,14 +389,20 @@
         document.getElementById('timeModeResultSummary').style.display = 'none';
 
         if (condition === 'COUNT') {
-            stopSessionTimer(); session.totalQuestions = parseInt(document.getElementById('totalQuestionsInput').value) || 5;
+            stopSessionTimer(); 
+            session.totalQuestions = parseInt(document.getElementById('totalQuestionsInput').value) || 5;
             for (let i = 0; i < session.totalQuestions; i++) session.questionList.push(generateEquation(selectedType));
         } else if (condition === 'TARGET_SCORE') {
-            stopSessionTimer(); session.targetScore = parseInt(document.getElementById('targetScoreInput').value) || 5;
+            stopSessionTimer(); 
+            session.targetScore = parseInt(document.getElementById('targetScoreInput').value) || 5;
+            session.totalQuestions = 1; // 🎯 修正核心：防止分母為0崩潰
             session.questionList.push(generateEquation(selectedType));
         } else {
             let sec = parseInt(document.getElementById('timeLimitSelect').value) || 300;
-            session.timeLimitSetting = sec; session.questionList.push(generateEquation(selectedType)); startSessionTimer(sec);
+            session.timeLimitSetting = sec; 
+            session.totalQuestions = 1; // 🎯 修正核心：防止分母為0崩潰
+            session.questionList.push(generateEquation(selectedType)); 
+            startSessionTimer(sec);
         }
         loadEquationToStage();
     }
