@@ -98,7 +98,6 @@
         .progress-bar-fill { background: var(--success); width: 0%; height: 100%; transition: width 0.4s ease; }
         
         .stage-box { background: var(--stage-bg); border-radius: 16px; padding: 25px; margin: 20px 0; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 140px; text-align: center; font-size: 28px; font-weight: bold; letter-spacing: 1px; line-height: 1.6; border: 1px solid rgba(255,255,255,0.15); }
-        .balance-graphic { font-size: 22px; color: #38bdf8; background: rgba(255,255,255,0.05); padding: 10px 20px; border-radius: 10px; margin-top: 10px; border: 1px dashed rgba(255,255,255,0.2); width: 80%; }
 
         .feedback { padding: 15px; border-radius: 8px; margin: 20px 0; font-weight: bold; border-left: 6px solid #cbd5e1; }
         .feedback.error { background: #fce8e6; color: var(--danger); border-left-color: var(--danger); }
@@ -205,7 +204,7 @@
         <h2>🛠️ 方程有問必答 (自訂輸入自動生成天秤)</h2>
         <div class="form-group">
             <label for="eqInput">✏️ 請輸入一元一次方程（例如：`x + 5 = 12` 或 `3x - 4 = 14`）：</label>
-            <input type="text" id="eqInput" placeholder="例如: 3x - 4 = 14" title="請輸入一元一次方程">
+            <input type="text" id="eqInput" placeholder="example: 3x - 4 = 14" title="請輸入一元一次方程">
         </div>
         <button onclick="handleManualSolverInput()" class="btn-success">開始天秤等量公理教學引導</button>
     </div>
@@ -222,7 +221,7 @@
             </div>
             <div class="progress-bar-container"><div id="progressBarFill" class="progress-bar-fill"></div></div>
         </div>
-        <h2 id="step2Title">請解出未知數的值使天秤維持平衡</h2>
+        <h2>請解出未知數的值使天秤維持平衡</h2>
         <div class="stage-box" id="displayEq">方程式載入中...</div>
         
         <div id="studentAnswerFormContainer">
@@ -315,7 +314,6 @@
 </div>
 
 <script>
-    // 🌌 完美對接 HTTP Header 安全防禦策略
     try { Object.defineProperty(window, 'X-Content-Type-Options', { value: 'nosniff', writable: false }); } catch(e){}
 
     const GAS_API_URL = "";
@@ -452,7 +450,6 @@
         document.getElementById('displayEq').innerHTML = `
             <div style="font-size: 20px; color:#cbd5e1; margin-bottom:10px;">📊 題型：${eqData.formulaTitle}</div>
             <div style="font-size: 32px; color:#fff; letter-spacing:1px;">${eqData.leftExpr} = ${eqData.rightExpr}</div>
-            <div class="balance-graphic">⚖️ [左盤木盒] 放置了 <b>${eqData.leftExpr}</b> ｜ [右盤砝碼] 放置了 <b>${eqData.rightExpr}</b></div>
         `;
         showPanel('step2');
         updateProgressBarUI();
@@ -475,11 +472,6 @@
             eqData.midLeft = coeff === 1 ? "x" : `${coeff}x`; eqData.midRight = String(coeff * parseInt(eqData.ansStr));
             return true;
         } catch(e) { console.error(e); return false; }
-    }
-
-    function generateEquation(typeCode) {
-        let t = typeCode === 'MIX' ? ['1', '2', '3', '4'][Math.floor(Math.random() * 4)] : typeCode;
-        return EQUATION_BANK[t].generate();
     }
 
     function checkFirstAnswer() {
@@ -578,21 +570,6 @@
         } else { area.innerHTML = ""; }
     }
 
-    function handleManualSolverInput() {
-        let rawInput = document.getElementById('eqInput').value.trim();
-        if(!rawInput.includes("=")) { alert("請輸入包含 '=' 號的有效方程式！"); return; }
-        let clean = rawInput.replace(/\s+/g,''), sides = clean.split('='), left = sides[0], right = sides[1];
-        let aMatch = left.match(/(-?\d*)x/);
-        let a = (aMatch && aMatch[1]) ? (aMatch[1]==='-'?-1:(aMatch[1]===''?1:parseInt(aMatch[1]))) : 1;
-        let bMatch = left.replace(/(-?\d*)x/, '').match(/([+-]\d+)/), b = bMatch ? parseInt(bMatch[1]) : 0, c = parseInt(right);
-        let x = (c - b) / a;
-        if(x % 1 !== 0) { alert("為保證教學形象化，請輸入整數解方程！"); return; }
-
-        session.currentMode = 'SOLVER'; session.totalQuestions = 1; session.currentIdx = 0;
-        session.questionList = [`自訂天秤引導 | ${a}x ${b>=0?'+':''} ${b} = ${c} | ${x} | ${b>=0?'-':'+'}${Math.abs(b)} | /${a} #|#1`].map(s => s.replace(/\s+\+/g, ' +').replace(/\s+-/g, ' -'));
-        loadEquationToStage();
-    }
-
     function setupNextButtonLabel() {
         let n = document.getElementById('nextBtn');
         if(session.currentMode==='CHALLENGE') { n.innerText = (session.endCondition==='TIME_LIMIT') ? "下一道瘋狂平衡題 ➡️" : ((session.currentIdx < session.questionList.length-1)?"前進下一題 ➡️":"🏁 挑戰結束，查看數據"); }
@@ -628,7 +605,7 @@
 
     function resetToMainMenu(nc) {
         if(nc && (document.getElementById('step2').classList.contains('active')||document.getElementById('step3').classList.contains('active'))) {
-            if(!confirm("確定要中途退出挑戰嗎？")) return;
+            if(!confirm("確定要中途退出挑戰嗎？")); return;
         }
         stopSessionTimer(); document.getElementById('nextBtn').style.display="none"; document.getElementById('teachingZone').style.display="none";
         cloudSaveData(); updateReviewMenuUI(); showPanel('step1');
