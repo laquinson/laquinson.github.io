@@ -34,6 +34,7 @@
         .top-left-nav, .top-right-nav { position: absolute; top: 25px; z-index: 999 !important; display: none; }
         .top-left-nav { left: 20px; } .top-right-nav { right: 20px; }
         
+        /* 頂部導航鈕維持實色底防干擾 */
         .top-nav-btn { background: #ffffff !important; border: 2px solid #cbd5e1; padding: 8px 16px; border-radius: 12px; font-size: 15px; font-weight: bold; color: #475569; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .top-nav-btn:hover { transform: scale(1.03); border-color: var(--primary); color: var(--primary); }
         .logout-btn-text { color: var(--danger); border-color: #fecdd3; }
@@ -53,6 +54,7 @@
         label { display: block; margin-bottom: 12px; font-size: 16px; font-weight: 700; color: #ffffff; text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.9); }
         input[type="text"], input[type="password"], input[type="number"], select { width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; font-size: 16px; box-sizing: border-box; background: rgba(255, 255, 255, 0.9); color: #0f172a !important; font-weight: bold !important; }
         
+        /* 🎨 高飽和實色漸層卡片樣式防禦 */
         .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; }
         .dash-btn { border-radius: 20px; padding: 22px; color: #ffffff !important; cursor: pointer; text-align: left; box-shadow: 0 10px 20px rgba(0,0,0,0.2); transition: transform 0.2s, box-shadow 0.2s; min-height: 130px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid rgba(255,255,255,0.2); }
         .dash-btn:hover { transform: translateY(-4px); box-shadow: 0 15px 25px rgba(0,0,0,0.3); }
@@ -313,7 +315,7 @@
         </div>
         <div class="btn-group non-print">
             <button onclick="window.print()" class="btn-info">🖨️ 匯出 PDF 學習報告檔案</button>
-            <button class="btn-secondary" onclick="resetToMainMenu(false)" style="margin: 0;">↩️ 返回主選單</button>
+            <button class="btn-secondary" onclick="resetToMainMenu(false)" style="margin: 0;">↩️ 返回主目錄</button>
         </div>
     </div>
 </div>
@@ -554,18 +556,6 @@
         document.getElementById('progressBarFillStage3').style.width = `${pct}%`;
     }
 
-    function cloudSaveData() {
-        if (["TEACHER","GUEST"].includes(currentRole) || !userRawClass || !userRawSeat) return;
-        try { localStorage.setItem(`MultiVarCache_${userRawClass}-${userRawSeat}`, JSON.stringify(cacheStorage.EQ)); } catch(e){}
-    }
-
-    function updateReviewMenuUI() {
-        let c = (cacheStorage.EQ.wrongBook || []).length;
-        let card = document.getElementById('reviewModeCard');
-        if(card) card.classList.toggle('disabled', c===0);
-        document.getElementById('reviewTitle').innerText = `錯題庫 (還剩 ${c} 題)`;
-    }
-
     function startSessionTimer(seconds) {
         stopSessionTimer(); timeLeft = seconds; updateTimerDisplay();
         document.getElementById('globalTimerBox').style.display = 'inline-block';
@@ -579,11 +569,16 @@
         }, 1000);
     }
 
-    // 🛠️ Bug 2 徹底修復：強制清除背景執行緒，阻絕殭屍計時器在背景異步碰撞
     function stopSessionTimer() {
         if(timerInterval) { clearInterval(timerInterval); timerInterval = null; }
         document.getElementById('globalTimerBox').style.display = 'none'; document.getElementById('globalTimerBoxStage3').style.display = 'none';
     }
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            if (currentPanelId === 'step2') checkFirstAnswer();
+        }
+    });
 
     function updateTimerDisplay() {
         let m = Math.floor(timeLeft / 60); let s = timeLeft % 60;
@@ -633,12 +628,64 @@
             if (v === 'D' && val === 0) val = 2;
             varAssigns.push(`${v} = ${val}`);
         });
-        return `${formula.name} | 已知 ${formula.target} = ${formula.expr}。當 ${varAssigns.join(', ')}，${formula.target} = ? #|#${t}`;
+
+        let simExpr = formula.expr;
+        formula.vars.forEach(v => {
+            let rStr = varAssigns.find(a => a.startsWith(v)).split('=')[1].trim();
+            simExpr = simExpr.replace(new RegExp(v, 'g'), `(${rStr})`);
+        });
+        let rawAnswer = eval(convertToStandardMath(simExpr));
+        if (rawAnswer % 1 !== 0) rawAnswer = Math.round(rawAnswer * 10) / 10;
+
+        return `${formula.name} | 已知 ${formula.target} = ${formula.expr}。當 ${varAssigns.join(', ')}，${formula.target} = ? | ${rawAnswer} #|#${t}`;
     }
 
+    // 🌟 智慧多軌解析器修復：精確阻斷「解析失敗，自動返回」的錯誤
     function parseEquationStructure(str) {
         eqData.rawStr = str;
         try {
+            // 🚀 雙軌分流第一軌：判定是否包含闖關模式隨機生成的題目特徵符號 "|"
+            if (str.includes(' | 已知 ')) {
+                let parts = str.split('|');
+                let displayTitle = parts[0].trim();
+                let mathQuestion = parts[1].trim();
+                let answerPart = parts[2].split('#|#')[0].trim();
+                let typeMarker = str.split('#|#')[1] || "1";
+
+                session.currentTypeNum = parseInt(typeMarker);
+                eqData.type = session.currentTypeNum;
+                
+                let formulaMatch = mathQuestion.match(/已知\s*([a-zA-Z])\s*=\s*([^。]+)。/);
+                let targetLetter = formulaMatch[1]; 
+                let formulaPart = formulaMatch[2].trim(); 
+                let dataPart = mathQuestion.match(/當\s*([^，]+)，/)[1].trim(); 
+
+                eqData.formulaTitle = displayTitle;
+                eqData.formulaName = formulaPart;
+                eqData.targetLetter = targetLetter;
+                eqData.variablesText = dataPart;
+                eqData.ansStr = answerPart;
+
+                // 代入括號串聯式組裝
+                let varRegex = /([a-zA-Z])\s*=\s*([-]?\d+(\.\d+)?)/g; let match; let varMap = {}; let varList = [];
+                while ((match = varRegex.exec(dataPart)) !== null) { varMap[match[1]] = match[2]; varList.push(match[1]); }
+                varList.sort((a,b) => b.length - a.length);
+
+                let substitutedExpr = formulaPart;
+                for (let v of varList) { substitutedExpr = substitutedExpr.replace(new RegExp(v, 'g'), `(${varMap[v]})`); }
+                eqData.targetRightCamp = substitutedExpr;
+
+                let calcExpr = convertToStandardMath(substitutedExpr);
+                let mid = calcExpr.replace(/\((-?\d+(\.\d+)?)\)\*\*2/g, function(m, p1) { return Math.pow(parseFloat(p1), 2); });
+                let multRegex = /(?:-?\d+(\.\d+)?|\(-?\d+(\.\d+)?\))(?:\*(?:-?\d+(\.\d+)?|\(-?\d+(\.\d+)?\)))+/g;
+                mid = mid.replace(multRegex, function(m) {
+                    try { let res = eval(m); return res % 1 !== 0 ? Math.round(res * 10) / 10 : res; } catch(e) { return m; }
+                });
+                eqData.midStepStr = mid.replace(/\+ -/g, '- ');
+                return true;
+            }
+
+            // 🚀 雙軌分流第二軌：原有的手動有問必答自訂解析路徑
             let typeMarker = str.split('#|#')[1] || "1"; session.currentTypeNum = parseInt(typeMarker); eqData.type = session.currentTypeNum;
             let corePart = str.split('#|#')[0].trim(); let infoSegments = corePart.split('|');
             let displayTitle = infoSegments[0].trim(); let mathQuestion = infoSegments[1].trim(); 
@@ -668,22 +715,10 @@
             });
             eqData.midStepStr = mid.replace(/\+ -/g, '- ');
             return true;
-        } catch(e) { console.error(e); return false; }
-    }
-
-    function handleManualSolverInput() {
-        stopSessionTimer();
-        let rawInput = document.getElementById('eqInput').value.trim(); let vars = document.getElementById('xValueInput').value.trim();
-        if(!rawInput) { alert("請輸入有效的公式！"); return; }
-        let target = "求值項", expr = rawInput;
-        if(rawInput.includes("=")) { let parts = rawInput.split("="); target = parts[0].trim(); expr = parts[1].trim(); }
-        
-        session.totalQuestions = 1; session.currentIdx = 0; 
-        session.wrongAttemptsThisQuestion = 0; session.wrongAttemptsInTeaching = 0;
-        
-        session.questionList = [`自訂結構解鎖 | 已知 ${target} = ${expr}。當 ${vars}，${target} = ? #|#1`];
-        document.getElementById('teachingHeaderBadge').innerText = "🛠️ 解答引導模式";
-        loadEquationToStage();
+        } catch(e) {
+            console.error("引擎捕獲結構異常:", e);
+            return false;
+        }
     }
 
     function loadEquationToStage() {
@@ -693,11 +728,11 @@
         document.getElementById('teachingWrongArea1').innerHTML = ''; document.getElementById('teachingWrongArea2').innerHTML = ''; document.getElementById('teachingWrongArea3').innerHTML = '';
 
         let expr = session.questionList[session.currentIdx];
-        if(!parseEquationStructure(expr)) { alert("題目解析失敗，自動返回。"); resetToMainMenu(false); return; }
-        if(session.currentMode==='CHALLENGE') { cacheStorage.EQ.stats[session.currentTypeNum].total++; cloudSaveData(); }
+        if(!parseEquationStructure(expr)) { alert("題目代數特徵解析失敗，安全鎖介入返回。"); resetToMainMenu(false); return; }
         
         document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`;
         document.getElementById('displayEq').innerHTML = `
+            <div style="font-size: 24px; color:#a855f7; font-weight:bold; margin-bottom:12px;">📊 ${eqData.formulaTitle}</div>
             <div style="font-size: 28px; margin-top: 10px;">已知 ${convertToRichMathHTML(eqData.targetLetter + " = " + eqData.formulaName)}</div>
             <div style="font-size: 22px; color: #cbd5e1; margin-top: 20px; font-weight: normal;">當 ${eqData.variablesText}，求 ${eqData.targetLetter} = ?</div>
         `;
@@ -713,7 +748,6 @@
             showPanel('step3'); executeDirectSuccess();
         } else {
             session.wrongAttemptsThisQuestion++;
-            // 🛠️ Bug 1 核心安全屏障：只有在常規闖關模式下才允許累加失敗矩陣，杜絕溫習與自訂模式的交叉干擾污染
             if(session.currentMode==='CHALLENGE' && !session.hasAddedToWrongBookThisQuestion) {
                 if(!cacheStorage.EQ.wrongBook.includes(session.questionList[session.currentIdx])) cacheStorage.EQ.wrongBook.push(session.questionList[session.currentIdx]);
                 cacheStorage.EQ.stats[session.currentTypeNum].failed++; session.hasAddedToWrongBookThisQuestion=true;
@@ -791,7 +825,7 @@
                 document.getElementById('stageCombineArea').style.display="none"; document.getElementById('stageFinalArea').style.display="block";
                 renderMathSteps(3);
             } else {
-                session.wrongAttemptsInTeaching++; alert("❌ 計算有誤，請先仔謝算一下乘除或平方部分。"); checkTeachingWrongCounter('teachingWrongArea2');
+                session.wrongAttemptsInTeaching++; alert("❌ 計算有誤，請先仔細算一下乘除或平方部分。"); checkTeachingWrongCounter('teachingWrongArea2');
             }
         } catch(e) { session.wrongAttemptsInTeaching++; alert("算式轉換異常，請重新計算！"); }
     }
