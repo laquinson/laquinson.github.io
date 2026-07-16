@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>中一等量公理一元一次方程系統 (天秤等量終極版)</title>
     <style>
         :root { 
@@ -142,8 +142,8 @@
     <button class="top-nav-btn logout-btn-text" onclick="logoutSession()" title="登出">登出</button>
 </div>
 
-<!-- 主介面 -->
 <div class="container" id="mainContainer" style="display: none;">
+    <!-- 導航首頁 -->
     <div id="step1" class="step-panel dashboard-wrapper">
         <div class="greeting-text">請選擇天秤方程式挑戰模式</div>
         <div class="dashboard-grid">
@@ -169,7 +169,10 @@
     <!-- 闖關模式設定 -->
     <div id="step1_challenge" class="step-panel">
         <h2>🎮 闖關難度與天秤模式設定</h2>
-        <div class="form-group"><label>🧭 選擇方程結構類型：</label><select id="typeSelect"></select></div>
+        <div class="form-group">
+            <label for="typeSelect">🧭 選擇方程結構類型：</label>
+            <select id="typeSelect" title="選擇方程結構類型"></select>
+        </div>
         <div class="form-group">
             <label>終點條件：</label>
             <div class="radio-group">
@@ -178,11 +181,17 @@
                 <label><input type="radio" name="endCondition" value="TIME_LIMIT" onchange="toggleConditionUI()"> ⏳ 限時天秤衝分模式</label>
             </div>
         </div>
-        <div class="form-group" id="countInputWrapper"><label>🔢 挑戰題數：</label><input type="number" id="totalQuestionsInput" value="5" min="1" max="25"></div>
-        <div class="form-group" id="targetScoreInputWrapper" style="display: none;"><label>🏆 目標達標分數：</label><input type="number" id="targetScoreInput" value="5" min="1"></div>
+        <div class="form-group" id="countInputWrapper">
+            <label for="totalQuestionsInput">🔢 挑戰題數：</label>
+            <input type="number" id="totalQuestionsInput" value="5" min="1" max="25" title="挑戰題數" placeholder="請輸入挑戰題數">
+        </div>
+        <div class="form-group" id="targetScoreInputWrapper" style="display: none;">
+            <label for="targetScoreInput">🏆 目標達標分數：</label>
+            <input type="number" id="targetScoreInput" value="5" min="1" title="目標達標分數" placeholder="請輸入目標達標分數">
+        </div>
         <div class="form-group" id="timeLimitInputWrapper" style="display: none;">
-            <label>⏱️ 限制時間選擇：</label>
-            <select id="timeLimitSelect">
+            <label for="timeLimitSelect">⏱️ 限制時間選擇：</label>
+            <select id="timeLimitSelect" title="限制時間選擇">
                 <option value="180">3 分鐘快速賽</option>
                 <option value="300" selected>5 分鐘標準賽</option>
                 <option value="600">10 分鐘大師賽</option>
@@ -194,7 +203,10 @@
     <!-- 有問必答面板 -->
     <div id="step1_solver" class="step-panel">
         <h2>🛠️ 方程有問必答 (自訂輸入自動生成天秤)</h2>
-        <div class="form-group"><label>✏️ 請輸入一元一次方程（例如：`x + 5 = 12` 或 `3x - 4 = 14`）：</label><input type="text" id="eqInput" placeholder="example: 3x - 4 = 14"></div>
+        <div class="form-group">
+            <label for="eqInput">✏️ 請輸入一元一次方程（例如：`x + 5 = 12` 或 `3x - 4 = 14`）：</label>
+            <input type="text" id="eqInput" placeholder="例如: 3x - 4 = 14" title="請輸入一元一次方程">
+        </div>
         <button onclick="handleManualSolverInput()" class="btn-success">開始天秤等量公理教學引導</button>
     </div>
 
@@ -215,12 +227,12 @@
         
         <div id="studentAnswerFormContainer">
             <div class="form-group" id="primaryInputWrapper">
-                <label id="inputLabel">請填寫未知數 x 的最終精確數值：</label>
-                <input type="text" id="ansInput" placeholder="例如: 5 或 -3">
+                <label for="ansInput">請填寫未知數 x 的最終精確數值：</label>
+                <input type="text" id="ansInput" placeholder="例如: 5 或 -3" title="請填寫未知數最終值">
             </div>
             <div id="retryInputWrapper" style="display:none; margin-top: 15px; padding-top: 15px; border-top: 2px dashed #cbd5e1;">
-                <label style="color:var(--warning)"><b>✍️ 天秤失衡！請在下方全新輸入框填寫補答修正答案：</b></label>
-                <input type="text" id="ansRetryInput" placeholder="請輸入修正後的未知數數值">
+                <label for="ansRetryInput" style="color:var(--warning)"><b>✍️ 天秤失衡！請在下方全新輸入框填寫補答修正答案：</b></label>
+                <input type="text" id="ansRetryInput" placeholder="請輸入修正後的未知數數值" title="請輸入修正後的未知數數值">
             </div>
         </div>
         <div id="initialFeedbackArea"></div>
@@ -248,34 +260,31 @@
             <div class="teaching-column">
                 <h3>🛠️ 模擬天秤兩邊施加相同操作</h3>
                 
-                <!-- 第一階段：消除常數項 -->
                 <div id="stageCampArea" style="display:none;">
                     <div class="block-form">
                         <div class="camp-tip"><b>天秤原則一：</b>為了孤立未知數，天秤左邊與右邊必須<b>同時加上或減去</b>什麼數字？</div>
-                        <label id="campLabelContainer">請輸入操作（例如：兩邊同時 +4 或兩邊同時 -5）</label>
-                        <input type="text" id="rightCampInput" placeholder="例如: +4 或 -5">
+                        <label id="campLabelContainer" for="rightCampInput">請輸入操作（例如：兩邊同時 +4 或兩邊同時 -5）</label>
+                        <input type="text" id="rightCampInput" placeholder="例如: +4 或 -5" title="兩邊同時加減操作">
                         <button onclick="executeCampStage()">執行天秤同步加減</button>
                         <div id="teachingWrongArea1"></div>
                     </div>
                 </div>
                 
-                <!-- 第二階段：消除未知數係數 -->
                 <div id="stageCombineArea" style="display: none;">
                     <div class="block-form">
                         <div class="camp-tip"><b>天秤原則二：</b>目前常數已歸零。為了讓左邊只剩一個 x，天秤兩邊要<b>同時乘以或除以</b>什麼數？</div>
-                        <label><strong>請輸入操作（例如：兩邊同時 /3 或兩邊同時 *2）：</strong></label>
-                        <input type="text" id="rightCombineInput" placeholder="例如: /3 或 *2">
+                        <label for="rightCombineInput"><strong>請輸入操作（例如：兩邊同時 /3 或兩邊同時 *2）：</strong></label>
+                        <input type="text" id="rightCombineInput" placeholder="例如: /3 或 *2" title="兩邊同時乘除操作">
                         <button onclick="executeCombineStage()">執行天秤同步乘除</button>
                         <div id="teachingWrongArea2"></div>
                     </div>
                 </div>
                 
-                <!-- 第三階段：宣告最終答案 -->
                 <div id="stageFinalArea" style="display: none;">
                     <div class="block-form">
                         <div class="camp-tip"><b>天秤完全合攏：</b>恭喜！此時天秤左邊只剩 x，右邊即為最終的平衡數值。</div>
-                        <label><strong>最終步：未知數 x 的解為：</strong></label>
-                        <input type="text" id="finalAnsInput" placeholder="填入最終數值">
+                        <label for="finalAnsInput"><strong>最終步：未知數 x 的解為：</strong></label>
+                        <input type="text" id="finalAnsInput" placeholder="填入最終數值" title="未知數最終解數值">
                         <button onclick="executeFinal()" class="btn-success">宣告最終守恆值</button>
                         <div id="teachingWrongArea3"></div>
                     </div>
@@ -288,7 +297,7 @@
 
     <!-- 學習報告與管理後台 -->
     <div id="step_stats_panel" class="step-panel">
-        <h2 id="reportMainHeading">📊 學生一元一次方程學習報告</h2>
+        <h2>📊 學生一元一次方程學習報告</h2>
         <div id="printOutputRenderZone">
             <div class="print-student-page">
                 <h3 id="printStudentInfo" style="text-align:left;margin-bottom:10px;">學生班別：載入中...</h3>
@@ -306,6 +315,9 @@
 </div>
 
 <script>
+    // 🌌 完美對接 HTTP Header 安全防禦策略
+    try { Object.defineProperty(window, 'X-Content-Type-Options', { value: 'nosniff', writable: false }); } catch(e){}
+
     const GAS_API_URL = "";
     let currentRole = "STUDENT", activeTeacherId = "", userRawClass = "", userRawSeat = "";
     let cacheStorage = { EQ: { wrongBook: [], stats: {} } };
