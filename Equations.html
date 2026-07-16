@@ -561,12 +561,18 @@
 
     function executeFinal() {
         if(document.getElementById('finalAnsInput').value.replace(/\s+/g,'') === eqData.ansStr) {
-            document.getElementById('interactiveStageBox').innerHTML = `⚖️ 破譯守恆成功：x = <span style='color:#00ff00;'>${eqData.ansStr}</span>`;
-            document.getElementById('stageFinalArea').style.display="none"; document.getElementById('nextBtn').style.display="block";
-            setupNextButtonLabel(); renderMathSteps(4);
-        } else { session.wrongAttemptsInTeaching++; alert("最終數值不對！"); checkTeachingWrongCounter('teachingWrongArea3'); }
+            // 🎯 核心優化：加上 white-space: nowrap 確保未知數與數值絕對維持在同一行
+            document.getElementById('interactiveStageBox').innerHTML = `<span style="white-space: nowrap;">⚖️ 破譯守恆成功：x = <span style="color:#00ff00; font-weight:900;">${eqData.ansStr}</span></span>`;
+            document.getElementById('stageFinalArea').style.display="none"; 
+            document.getElementById('nextBtn').style.display="block";
+            setupNextButtonLabel(); 
+            renderMathSteps(4);
+        } else { 
+            session.wrongAttemptsInTeaching++; 
+            alert("最終數值不對！"); 
+            checkTeachingWrongCounter('teachingWrongArea3'); 
+        }
     }
-
     function renderMathSteps(code) {
         const box = document.getElementById('mathStepBox');
         let html = `<div class="step-line ${code===1?'active-line':''}">[初始天秤狀態]：${eqData.leftExpr} = ${eqData.rightExpr}</div>`;
