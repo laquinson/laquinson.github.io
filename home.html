@@ -28,12 +28,13 @@
         .game-card {
             background: rgba(0,0,0,0.4); padding: 30px 20px; border-radius: 16px; text-align: center; cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s; border: 1px solid rgba(255,255,255,0.15);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        .game-card:hover { transform: translateY(-5px); background: rgba(0,0,0,0.6); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .game-card:hover { transform: translateY(-5px); background: rgba(0,0,0,0.6); box-shadow: 0 10px 20px rgba(0,0,0,0.3); border-color: #3b82f6; }
         .game-icon { font-size: 48px; margin-bottom: 15px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-        .game-title { font-size: 22px; margin: 0 0 10px 0; font-weight: bold; }
-        .game-desc { font-size: 14px; opacity: 0.9; margin: 0; line-height: 1.5; }
-        @media (max-width: 600px) { .menu-grid { grid-template-columns: 1fr; } }
+        .game-title { font-size: 22px; margin: 0 0 10px 0; font-weight: bold; text-align: center; }
+        .game-desc { font-size: 14px; opacity: 0.9; margin: 0; line-height: 1.5; text-align: center; color: #cbd5e1; }
+        @media (max-width: 768px) { .menu-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -49,14 +50,22 @@
     <div id="welcomeText" class="welcome-msg">歡迎回來</div>
     
     <div class="menu-grid">
-        <!-- 嚴格封殺 <a> 標籤，統一改用點擊事件覆蓋跳轉 -->
+        <!-- 模組一：多變數求值 -->
         <div class="game-card" onclick="goToModule('Substitution.html')">
             <div class="game-icon">📐</div>
             <h2 class="game-title">多變數代數式求值</h2>
             <p class="game-desc">探索跨學科公式代入，啟動隱形括號破譯思維逐步解題！</p>
         </div>
         
-        <div class="game-card" onclick="goToModule('Polynomial.html')">
+        <!-- 模組二：天秤一元一次方程 (新對接) -->
+        <div class="game-card" onclick="goToModule('Equations.html')">
+            <div class="game-icon">⚖️</div>
+            <h2 class="game-title">天秤等量公理求值</h2>
+            <p class="game-desc">建立一元一次方程守恆思維，在天秤兩盤施加同等操作逐步孤立求未知數！</p>
+        </div>
+        
+        <!-- 模組三：多項式化簡 -->
+        <div class="game-card" onclick="goToModule('Polynomial.html')" style="grid-column: span 1;">
             <div class="game-icon">🔮</div>
             <h2 class="game-title">多項式化簡與展開</h2>
             <p class="game-desc">啟動田字格魔法陣，輕鬆攻破去括號與同類項合併！</p>
@@ -65,7 +74,6 @@
 </div>
 
 <script>
-    // 腳本頂端：大廳載入時第一時間檢查快取，無快取立刻強制退回 index.html
     let role = localStorage.getItem("Active_User_Role");
     if (!role) { window.location.replace("index.html"); }
 
@@ -76,7 +84,6 @@
         let badge = document.getElementById('topCenterAccount');
         let welcome = document.getElementById('welcomeText');
         
-        // 統一身分識別渲染
         if(role === 'STUDENT' || (role !== 'GUEST' && role !== 'TEACHER' && cls && seat)) {
             let info = `${cls}班${String(seat).padStart(2, '0')}號`;
             if(badge) badge.innerText = `挑戰者: ${info}`;
@@ -91,7 +98,6 @@
         }
     });
 
-    // 跨網頁跳轉引擎：使用 location.replace 確保 localStorage 快取安全共用
     function goToModule(moduleName) {
         window.location.replace(moduleName);
     }
