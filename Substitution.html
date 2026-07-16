@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>中一多變數代數式求值系統 (完美星空終極矩陣版)</title>
+    <title>中一多變數代數式求值系統 (完美星空終極版)</title>
     <style>
         :root { 
             --primary: #3b82f6; --primary-hover: #1d4ed8; 
@@ -30,19 +30,50 @@
             min-height: 100vh; box-sizing: border-box; 
         }
 
-        .top-center-account { position: absolute; top: 28px; left: 50%; transform: translateX(-50%); font-size: 20px; font-weight: 900; color: #ffffff; text-shadow: 1px 1px 4px rgba(0,0,0,0.6); z-index: 999 !important; font-family: 'Comic Sans MS', sans-serif; white-space: nowrap; display: none; }
-        .top-left-nav, .top-right-nav { position: absolute; top: 25px; z-index: 999 !important; display: none; }
-        .top-left-nav { left: 20px; } .top-right-nav { right: 20px; }
-        
-        .top-nav-btn { background: #ffffff !important; border: 2px solid #cbd5e1; padding: 8px 16px; border-radius: 12px; font-size: 15px; font-weight: bold; color: #475569; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .top-center-account {
+            position: absolute; top: 28px; left: 50%; transform: translateX(-50%);
+            font-size: 20px; font-weight: 900; color: #ffffff;
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.6); z-index: 100; display: none;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif; white-space: nowrap; 
+        }
+
+        .top-nav-btn { 
+            background: #fff; border: 2px solid #cbd5e1; 
+            padding: 8px 16px; border-radius: 12px; 
+            font-size: 15px; font-weight: bold; color: #475569;
+            cursor: pointer; display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.2s;
+        }
         .top-nav-btn:hover { transform: scale(1.03); border-color: var(--primary); color: var(--primary); }
         .logout-btn-text { color: var(--danger); border-color: #fecdd3; }
-        .logout-btn-text:hover { background: #fff1f2; }
+        .logout-btn-text:hover { background: #fff1f2; border-color: var(--danger); color: var(--danger); }
 
-        .container { max-width: 900px; width: 100%; background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: var(--glass-border); padding: 30px; border-radius: 24px; box-shadow: var(--card-shadow); box-sizing: border-box; margin-top: 60px; }
-        .login-layout-container { width: 100%; max-width: 640px; display: flex; flex-direction: column; align-items: center; padding: 0 20px; box-sizing: border-box; }
-        .brand-logo-title { font-size: 42px; font-weight: 800; color: #ffffff; letter-spacing: 4px; margin-bottom: 35px; text-align: center; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7); }
-        .screenshot-login-card { width: 100%; background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: var(--glass-border); border-radius: 16px; padding: 45px 50px; box-shadow: var(--card-shadow); box-sizing: border-box; }
+        .topLeftNav, .top-left-nav { position: absolute; top: 25px; left: 20px; display: none; z-index: 100; }
+        .top-right-nav { position: absolute; top: 25px; right: 20px; display: none; z-index: 100; }
+
+        .container { 
+            max-width: 900px; width: 100%; 
+            background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+            border: var(--glass-border); padding: 30px; border-radius: 24px; box-shadow: var(--card-shadow); 
+            box-sizing: border-box; transition: all 0.3s ease;
+        }
+
+        .login-layout-container {
+            width: 100%; max-width: 640px; display: flex; flex-direction: column; align-items: center;
+            padding: 0 20px; box-sizing: border-box;
+        }
+
+        .brand-logo-title {
+            font-size: 42px; font-weight: 800; color: #ffffff; 
+            letter-spacing: 4px; margin-bottom: 35px; text-align: center;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7); 
+        }
+
+        .screenshot-login-card {
+            width: 100%; background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); 
+            border: var(--glass-border); border-radius: 16px; padding: 45px 50px; box-shadow: var(--card-shadow);
+            box-sizing: border-box;
+        }
         
         h1, h2, h3, h4 { text-align: center; color: #ffffff; margin-top: 0; font-weight: 800; text-shadow: 1px 1px 4px rgba(0,0,0,0.6); }
         .step-panel { display: none; }
@@ -50,35 +81,60 @@
         #step0_login.active { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
         
         .form-group { margin-bottom: 24px; width: 100%; box-sizing: border-box; }
-        label { display: block; margin-bottom: 12px; font-size: 16px; font-weight: 700; color: #ffffff; text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.9); }
-        input[type="text"], input[type="password"], input[type="number"], select { width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; font-size: 16px; box-sizing: border-box; background: rgba(255, 255, 255, 0.9); color: #0f172a !important; font-weight: bold !important; }
+        .form-group:last-of-type { margin-bottom: 32px; }
         
-        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; }
-        .dash-btn { border-radius: 20px; padding: 22px; color: #ffffff !important; cursor: pointer; text-align: left; box-shadow: 0 10px 20px rgba(0,0,0,0.2); transition: transform 0.2s, box-shadow 0.2s; min-height: 130px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid rgba(255,255,255,0.2); }
-        .dash-btn:hover { transform: translateY(-4px); box-shadow: 0 15px 25px rgba(0,0,0,0.3); }
-        .dash-btn h2 { color: #ffffff !important; text-align: left !important; margin: 0 0 4px 0 !important; font-size: 22px !important; text-shadow: 1px 1px 3px rgba(0,0,0,0.4) !important; }
-        .dash-btn.disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(80%); }
-
-        .bg-purple { background: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important; } 
-        .bg-orange { background: linear-gradient(135deg, #d97706 0%, #fbbf24 100%) !important; } 
-        .bg-teal   { background: linear-gradient(135deg, #0f766e 0%, #2dd4bf 100%) !important; } 
-        .bg-blue   { background: linear-gradient(135deg, #1d4ed8 0%, #60a5fa 100%) !important; } 
-
-        .screenshot-btn { width: 100%; padding: 14px; background: #0088ff; color: white; border: none; border-radius: 8px; font-size: 17px; cursor: pointer; font-weight: 700; letter-spacing: 8px; box-sizing: border-box; box-shadow: 0 4px 14px rgba(0, 136, 255, 0.5); }
+        label { display: block; margin-bottom: 12px; font-size: 16px; font-weight: 700; color: #ffffff; text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.9); }
+        input[type="text"], input[type="password"], input[type="number"], select { 
+            width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; 
+            font-size: 16px; box-sizing: border-box; background: rgba(255, 255, 255, 0.9); color: #0f172a; font-weight: bold; transition: all 0.15s ease; 
+        }
+        input:focus, select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4); }
+        
+        .screenshot-btn { 
+            width: 100%; padding: 14px; background: #0088ff; color: white; border: none; 
+            border-radius: 12px; font-size: 17px; cursor: pointer; font-weight: 700; 
+            letter-spacing: 8px; box-sizing: border-box; box-shadow: 0 4px 14px rgba(0, 136, 255, 0.5); 
+            transition: all 0.2s ease;
+        }
+        .screenshot-btn:hover { background: #0077ee; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0, 136, 255, 0.6); }
+        
+        .radio-group { display: flex; flex-direction: column; gap: 10px; background: rgba(255, 255, 255, 0.15); padding: 15px; border-radius: 12px; }
+        .radio-group label { color: #ffffff; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); margin-bottom: 0; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+        
         button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 16px; cursor: pointer; font-weight: bold; transition: all 0.2s; box-sizing: border-box; }
-        button:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
-        button.btn-success { background: var(--success) !important; }
-        button.btn-warning { background: var(--warning) !important; color: #111 !important; }
-        button.btn-purple { background: var(--teacher-color) !important; }
-        button.btn-secondary { background: #64748b !important; margin-top: 15px; }
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        button.btn-success { background: var(--success); }
+        button.btn-warning { background: var(--warning); color: #111; }
+        button.btn-purple { background: var(--teacher-color); }
+        button.btn-secondary { background: #64748b; margin-top: 15px; }
 
-        .greeting-text { color: #ffffff; text-shadow: 1px 1px 4px rgba(0,0,0,0.6); font-size: 22px; font-weight: 800; text-align: left; margin-bottom: 25px; border-left: 5px solid #3b82f6; padding-left: 10px; }
+        .dashboard-wrapper { padding-top: 20px; }
+        .greeting-text { color: #ffffff; text-shadow: 1px 1px 4px rgba(0,0,0,0.6); font-size: 20px; line-height: 1.5; font-weight: 800; text-align: left; margin-left: 5px; margin-bottom: 25px; }
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; }
+        
+        .dash-btn {
+            border-radius: 20px; padding: 22px; color: white; cursor: pointer;
+            text-align: left; position: relative; overflow: hidden;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2); transition: transform 0.2s, box-shadow 0.2s;
+            min-height: 130px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid rgba(255,255,255,0.2);
+        }
+        .dash-btn:hover { transform: translateY(-4px); box-shadow: 0 15px 20px -5px rgba(0,0,0,0.3); }
+        .dash-btn.disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(80%); }
+        .dash-icon { font-size: 32px; font-weight: bold; margin-bottom: 5px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+        .dash-title { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+        .dash-desc { font-size: 12px; opacity: 0.9; font-weight: bold; }
+
+        .bg-purple { background: linear-gradient(135deg, #7c3aed, #a855f7); } 
+        .bg-orange { background: linear-gradient(135deg, #f59e0b, #fcd34d); } 
+        .bg-teal   { background: linear-gradient(135deg, #0d9488, #2dd4bf); } 
+        .bg-blue   { background: linear-gradient(135deg, #0284c7, #38bdf8); } 
+
         .progress-banner { background: rgba(255,255,255,0.2); padding: 15px 20px; border-radius: 12px; font-weight: bold; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; box-sizing: border-box; }
         .progress-banner-header { display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box; color: white; }
         .progress-bar-container { background: rgba(255,255,255,0.3); width: 100%; height: 10px; border-radius: 10px; overflow: hidden; box-sizing: border-box; }
         .progress-bar-fill { background: var(--success); width: 0%; height: 100%; transition: width 0.4s ease; }
-
-        .stage-box { background: var(--stage-bg); border-radius: 16px; padding: 25px; margin: 20px 0; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 120px; text-align: center; font-size: 26px; font-weight: bold; letter-spacing: 1px; line-height: 1.6; border: 1px solid rgba(255,255,255,0.15); box-shadow: inset 0 4px 10px rgba(0,0,0,0.5); }
+        
+        .stage-box { background: var(--stage-bg); border-radius: 16px; padding: 25px; margin: 20px 0; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 120px; text-align: center; font-size: 26px; font-weight: bold; letter-spacing: 1px; line-height: 1.6; border: 1px solid rgba(255,255,255,0.15); }
         .math-expr-wrapper { display: inline-flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px; vertical-align: middle; }
         .math-fraction { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; vertical-align: middle; padding: 0 4px; font-size: 24px; }
         .fraction-numerator { text-align: center; padding-bottom: 2px; }
@@ -88,53 +144,119 @@
         .feedback.error { background: #fce8e6; color: var(--danger); border-left-color: var(--danger); }
         .feedback.warning { background: #fffbeb; color: #b45309; border-left-color: var(--warning); }
         .feedback.success { background: #e6f4ea; color: var(--success); border-left-color: var(--success); }
-
+        
         .teaching-row { display: flex; gap: 20px; margin-top: 25px; flex-direction: column; width: 100%; box-sizing: border-box; }
         @media(min-width: 768px) { .teaching-row { flex-direction: row; } }
+        
         .teaching-column { flex: 1; background: var(--glass-bg); border: var(--glass-border); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); padding: 20px; border-radius: 14px; box-sizing: border-box; color: white; }
-        .teaching-column h3 { text-align: left; margin-bottom: 15px; }
+        .teaching-column h3 { text-align: left; }
 
         .math-step-box { font-family: monospace; background: #222; color: #00ff00; padding: 15px; border-radius: 6px; font-size: 16px; line-height: 2.2; border: 1px solid rgba(255,255,255,0.1); }
         .math-step-box .step-line { margin-bottom: 10px; display: block; padding: 4px 8px; }
         .math-step-box .active-line { background: #333; color: #fffb00; font-weight: bold; border-radius: 4px; border-left: 4px solid var(--warning); }
-        .camp-tip { font-size: 14px; color: #f1f5f9; background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; border-left: 4px solid var(--primary); margin-bottom: 10px; }
-        .timer-badge { background: var(--danger); color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; display: none; }
-        .screenshot-footer { margin-top: 50px; font-size: 14px; font-weight: 600; color: #ffffff; text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.9); text-align: center; }
+        .math-step-box .fraction-denominator { border-top-color: #00ff00; }
 
+        .block-form { display: flex; flex-direction: column; gap: 12px; margin-top: 15px; }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11, 20, 36, 0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; }
+        .spinner { border: 4px solid rgba(255,255,255,0.1); width: 45px; height: 45px; border-radius: 50%; border-left-color: var(--primary); animation: spin 0.8s linear infinite; }
+        
+        .toggle-login-mode { text-align: center; color: #e2e8f0; font-weight: bold; cursor: pointer; font-size: 14px; margin-top: 25px; transition: color 0.15s; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
+        .toggle-login-mode:hover { color: #a78bfa; }
+        
         table.stats-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; background: rgba(255,255,255,0.95); border-radius: 12px; overflow: hidden; color: #0f172a; }
         table.stats-table th, table.stats-table td { border: 1px solid #cbd5e1; padding: 10px; text-align: center; }
         table.stats-table th { background: #e2e8f0; color: #1e293b; font-weight: bold; }
-        table.stats-table tr.section-title th { background: #2b5797 !important; color: white !important; text-align: left; padding-left: 15px; }
+        table.stats-table tr.section-title th { background: #2b5797; color: white; text-align: left; padding-left: 15px; }
+        .camp-tip { font-size: 14px; color: #f1f5f9; background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; border-left: 4px solid var(--primary); margin-bottom: 10px; }
+        .timer-badge { background: var(--danger); color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; display: none; }
+        
+        .screenshot-footer { margin-top: 50px; font-size: 14px; font-weight: 600; color: #ffffff; text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.9); text-align: center; }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @media print { .non-print, button, .top-right-nav, .top-left-nav { display: none !important; } .step-panel { display: none !important; } #step_stats_panel { display: block !important; } }
     </style>
 </head>
 <body>
 
-<div id="mainContainer" class="container" style="display: none;">
-    <!-- 主選單 -->
+<div id="loadingOverlay" class="loading-overlay" style="display: none;"><div class="spinner"></div><p id="loadingText" style="margin-top:15px;font-weight:bold;">連線中...</p></div>
+
+<div id="topLeftNav" class="top-left-nav">
+    <button class="top-nav-btn" onclick="resetToMainMenu(true)" title="返回主選單">&lt; 返回主選單</button>
+</div>
+
+<div id="topCenterAccount" class="top-center-account"></div>
+
+<div id="topRightNav" class="top-right-nav">
+    <button class="top-nav-btn logout-btn-text" onclick="logoutSession()" title="登出">登出</button>
+</div>
+
+<!-- 登入介面 -->
+<div id="step0_login" class="step-panel active">
+    <div class="login-layout-container">
+        <div class="brand-logo-title"><span>數學練習系統</span></div>
+        
+        <div id="studentLoginBox" class="screenshot-login-card">
+            <div class="form-group"><label>班別</label><select id="loginClass"></select></div>
+            <div class="form-group"><label>學號</label><select id="loginSeat"></select></div>
+            <button onclick="loginStudent()" class="screenshot-btn">登入</button>
+            <button onclick="loginGuest()" style="margin-top:15px; background:rgba(255,255,255,0.75); border:1px solid #94a3b8; color:#0f172a; font-size:14px; padding:10px; border-radius:12px; font-weight:700; cursor:pointer; width:100%; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">🎭 以訪客身份免登入試玩</button>
+            <div class="toggle-login-mode" onclick="toggleLoginMode('TEACHER')">⚙️ 教師管理登入</div>
+        </div>
+
+        <div id="teacherLoginBox" class="screenshot-login-card" style="display: none;">
+            <h2 style="font-size:20px; margin-bottom:25px; color:#fff;">教師數據管理後台</h2>
+            <div class="form-group"><label>管理員帳號</label><select id="teacherSelect"></select></div>
+            <div class="form-group"><label>安全認證密碼</label><input type="password" id="teacherPwd" placeholder="••••••••"></div>
+            <button onclick="loginTeacher()" class="screenshot-btn" style="background:var(--teacher-color); box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);">驗證登入</button>
+            <div class="toggle-login-mode" onclick="toggleLoginMode('STUDENT')">🎒 返回學生模式</div>
+        </div>
+
+        <div class="screenshot-footer">Copyright @ 2026 La Quinson</div>
+    </div>
+</div>
+
+<!-- 主介面 -->
+<div class="container" id="mainContainer" style="display: none;">
     <div id="step1" class="step-panel dashboard-wrapper">
-        <div class="greeting-text" id="welcomeText">請選擇挑戰模式</div>
+        <div class="greeting-text">請選擇挑戰模式</div>
         <div class="dashboard-grid">
             <div class="dash-btn bg-purple id-student-only" onclick="switchSetupConfig('CHALLENGE')">
-                <div><h2>🎮 中學公式挑戰賽</h2></div><div class="dash-desc">跨課題幾何與代數公式求值闖關</div>
+                <div><div class="dash-icon">🎮</div><div class="dash-title">數學挑戰賽</div></div>
+                <div class="dash-desc">進入闖關模式挑戰極限</div>
             </div>
             <div class="dash-btn bg-orange" onclick="switchSetupConfig('STATS')">
-                <div><h2>🏆 學習數據報告</h2></div><div class="dash-desc">查閱羅坤山大數據分析矩陣詳細版</div>
+                <div><div class="dash-icon">🏆</div><div class="dash-title">即時記錄</div></div>
+                <div class="dash-desc">查看全班與個人統計報告</div>
             </div>
             <div class="dash-btn bg-teal id-student-only" onclick="switchSetupConfig('SOLVER')">
-                <div><h2><i>f(x)</i> 數學有問必答</h2></div><div class="dash-desc">自訂多變數求值與步驟引導</div>
+                <div><div class="dash-icon"><i>f(x)</i></div><div class="dash-title">數學有問必答</div></div>
+                <div class="dash-desc">自訂多變數代入與引導</div>
             </div>
-            <div id="reviewModeCard" class="dash-btn bg-blue id-student-only" onclick="switchSetupConfig('REVIEW')">
-                <div><h2 id="reviewTitle">🗂️ 錯題庫 (0)</h2></div><div class="dash-desc">重溫歷程未攻破魔王題型</div>
+            <div id="reviewModeCard" class="dash-btn bg-blue id-student-only disabled" onclick="switchSetupConfig('REVIEW')">
+                <div><div class="dash-icon">🗂️</div><div class="dash-title" id="reviewTitle">錯題庫 (還剩 0 題)</div></div>
+                <div class="dash-desc">重溫歷程未攻破魔王題型</div>
+            </div>
+            <div class="dash-btn bg-purple id-teacher-only" onclick="switchSetupConfig('CHG_PWD')" style="display:none; grid-column: span 2; min-height: 90px; text-align:center; align-items:center;">
+                <div class="dash-title" style="margin:0;">⚙️ 變更管理密碼</div>
             </div>
         </div>
+    </div>
+
+    <!-- 密碼修改面板 -->
+    <div id="step1_chgpwd" class="step-panel">
+        <h2>⚙️ 修改教師密碼</h2>
+        <div class="form-group"><label>原密碼：</label><input type="password" id="oldPwd"></div>
+        <div class="form-group"><label>新密碼：</label><input type="password" id="newPwd"></div>
+        <button onclick="changeTeacherPassword()" class="btn-purple">確認更新密碼</button>
+        <button class="btn-secondary" onclick="resetToMainMenu(false)">取消返回</button>
     </div>
 
     <!-- 闖關模式設定 -->
     <div id="step1_challenge" class="step-panel">
         <h2>🎮 闖關模式設定</h2>
-        <div class="form-group"><label>🧭 選擇公式結構維度：</label><select id="typeSelect"></select></div>
+        <div class="form-group"><label>🧭 數學挑戰結構難度：</label><select id="typeSelect"></select></div>
         <div class="form-group">
-            <label>終點條件選擇：</label>
+            <label>終點條件：</label>
             <div class="radio-group">
                 <label><input type="radio" name="endCondition" value="COUNT" checked onchange="toggleConditionUI()"> 固定題數模式</label>
                 <label><input type="radio" name="endCondition" value="TARGET_SCORE" onchange="toggleConditionUI()"> 特定積分達標模式</label>
@@ -145,20 +267,25 @@
         <div class="form-group" id="targetScoreInputWrapper" style="display: none;"><label>🏆 目標達標分數：</label><input type="number" id="targetScoreInput" value="5" min="1"></div>
         <div class="form-group" id="timeLimitInputWrapper" style="display: none;">
             <label>⏱️ 限制時間選擇：</label>
-            <select id="timeLimitSelect"><option value="180">3 分鐘快速賽</option><option value="300" selected>5 分鐘標準賽</option></select>
+            <select id="timeLimitSelect">
+                <option value="180">3 分鐘快速賽</option>
+                <option value="300" selected>5 分鐘標準賽</option>
+                <option value="420">7 分鐘拉鋸賽</option>
+                <option value="600">10 分鐘大師賽</option>
+            </select>
         </div>
         <button onclick="initChallengeSession()" class="btn-success">🎲 生成關卡，出發！</button>
     </div>
 
-    <!-- 智慧有問必答自訂面板 -->
+    <!-- 有問必答面板 -->
     <div id="step1_solver" class="step-panel">
         <h2>🛠️ 數學有問必答 (自訂代入)</h2>
-        <div class="form-group"><label>✏️ 請輸入代數式或公式（例如 `F = 1.8C + 32` 或 `A = bh / 2`）：</label><input type="text" id="eqInput" placeholder="例如: A = bh / 2"></div>
+        <div class="form-group"><label>✏️ 請輸入代數式或公式（例如：F = 1.8C + 32 或 A = bh / 2）：</label><input type="text" id="eqInput" placeholder="example: A = bh / 2"></div>
         <div class="form-group"><label>🔢 指定各變數的值（多個變數請用逗號隔開）：</label><input type="text" id="xValueInput" placeholder="例如: b=8, h=11"></div>
         <button onclick="handleManualSolverInput()" class="btn-success">開始多變數代入教學引導</button>
     </div>
 
-    <!-- 作答核心卡片舞台 -->
+    <!-- 作答舞台卡片 -->
     <div id="step2" class="step-panel">
         <div class="progress-banner">
             <div class="progress-banner-header">
@@ -175,26 +302,26 @@
         
         <div id="studentAnswerFormContainer">
             <div class="form-group" id="primaryInputWrapper">
-                <label id="inputLabel">請填寫最終求得的數值（若有小數請四捨五入至小數點後第1位）：</label>
-                <input type="text" id="ansInput" placeholder="例如: 25 或 -14">
+                <label id="inputLabel">請填寫最終求得的數值（負數請加負號，若有小數請四捨五入至小數點後第1位）：</label>
+                <input type="text" id="ansInput" placeholder="例如: 25 或 44 或 -14">
             </div>
             <div id="retryInputWrapper" style="display:none; margin-top: 15px; padding-top: 15px; border-top: 2px dashed #cbd5e1;">
                 <label style="color:var(--warning)"><b>✍️ 請在下方全新的輸入框填寫你的補答修正答案：</b></label>
-                <input type="text" id="ansRetryInput" placeholder="請在此輸入修正答案">
+                <input type="text" id="ansRetryInput" placeholder="請在此處輸入修正後的答案">
             </div>
         </div>
         <div id="initialFeedbackArea"></div>
         <button id="submitAnsBtn" onclick="checkFirstAnswer()">提交結果並驗證答案</button>
     </div>
 
-    <!-- 思維拆解逐步引導黑板 -->
+    <!-- 推導破譯黑板 -->
     <div id="step3" class="step-panel">
         <div class="progress-banner">
             <div class="progress-banner-header">
                 <span id="progressTextStage3">進度...</span>
                 <div style="display: flex; gap: 8px; align-items: center;">
                     <span id="globalTimerBoxStage3" class="timer-badge">⏱️ 00:00</span>
-                    <span id="teachingHeaderBadge" style="color:var(--danger);font-weight:bold;">💡 多變數思盤破譯</span>
+                    <span id="teachingHeaderBadge" style="color:var(--danger);font-weight:bold;margin-right: 5px;">💡 多變數思盤破譯</span>
                 </div>
             </div>
             <div class="progress-bar-container"><div id="progressBarFillStage3" class="progress-bar-fill"></div></div>
@@ -209,9 +336,9 @@
                 <h3>🛠️ 逐步動態操作驗證</h3>
                 <div id="stageCampArea" style="display:none;">
                     <div class="block-form">
-                        <div class="camp-tip"><b>⚖️ 第一步：對號入座！</b>將算式主體中的變數，替換為對應的帶括號數字 <b>( )</b>。</div>
+                        <div class="camp-tip"><b>⚖️ 第一步：對號入座！</b>將算式主體中的變數，替換為對應的帶括號數字 <b>( )</b>。<br>💡 若你已算出結果，<b>直接輸入最終答案數字</b>亦可直通完賽！</div>
                         <div id="campLabelContainer"></div>
-                        <input type="text" id="rightCampInput" placeholder="請填寫完整代入結構式">
+                        <input type="text" id="rightCampInput" placeholder="例如: (8)(11)/2 或 1.8(17) + 32">
                         <button onclick="executeCampStage()">確認群組代入結構</button>
                         <div id="teachingWrongArea1"></div>
                     </div>
@@ -219,17 +346,17 @@
                 <div id="stageCombineArea" style="display: none;">
                     <div class="block-form">
                         <div class="camp-tip"><b>統合計算：</b>遵循「先乘除/次方、後加減」原則優先處理各區塊。</div>
-                        <label><strong>第二步：四則與指數運算後，算式可簡化為：</strong></label>
-                        <input type="text" id="rightCombineInput" placeholder="例如: 88/2 或 30.6+32">
+                        <label><strong>第二步：乘除及指數運算後，算式可簡化為：</strong></label>
+                        <input type="text" id="rightCombineInput" placeholder="例如: 88/2 或 30.6 + 32">
                         <button onclick="executeCombineStage()">確認中段計算</button>
                         <div id="teachingWrongArea2"></div>
                     </div>
                 </div>
                 <div id="stageFinalArea" style="display: none;">
                     <div class="block-form">
-                        <div class="camp-tip"><b>大功告成：</b>完成最後合併求出最終數值！</div>
+                        <div class="camp-tip"><b>大功告成：</b>完成最後的整數或小數加減、除法，求出最終數值！</div>
                         <label><strong>最終步：公式的最終結果等於：</strong></label>
-                        <input type="text" id="finalAnsInput" placeholder="例如: 44">
+                        <input type="text" id="finalAnsInput" placeholder="例如: 44 或 -26">
                         <button onclick="executeFinal()" class="btn-success">宣告最終計算結果</button>
                         <div id="teachingWrongArea3"></div>
                     </div>
@@ -240,135 +367,247 @@
         <button id="nextBtn" class="btn-success" onclick="advanceQuestion()" style="display:none;margin-top:20px;">前進下一題 ➡️</button>
     </div>
 
-    <!-- 羅坤山老師跨系統標準詳細數據報告 -->
+    <!-- 學習報告與管理後台 -->
     <div id="step_stats_panel" class="step-panel">
-        <h2 id="reportMainHeading">📊 歷程練習數據報告</h2>
-        
+        <h2 id="reportMainHeading">📊 學生多變數求值數據報告</h2>
         <div id="teacherQueryZone" class="non-print" style="background: rgba(243, 232, 255, 0.8); padding: 15px; border-radius: 16px; border: 2px dashed #8b5cf6; margin-bottom: 20px; display: none;">
-            <p style="margin: 0 0 10px 0; font-weight: bold; color: #6b21a8; font-size: 15px;">🔍 教師跨系統權限調閱模組</p>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                <select id="queryClass" style="width: 130px; padding: 8px; font-size: 15px;"></select>
-                <select id="querySeat" style="width: 100px; padding: 8px; font-size: 15px;"></select>
-                <button onclick="loadTargetStudentDataByTeacher()" class="btn-purple" style="width: auto; padding: 8px 16px; margin: 0;">提取個案</button>
-                <button onclick="loadWholeClassDataForPrint()" class="btn-warning" style="width: auto; padding: 8px 16px; background: #7c2d12; color: #fff; margin: 0;">打包全班分頁報告</button>
+            <p style="margin:0 0 10px 0; font-weight:bold; color:#6b21a8;">🔍 教師跨系統調閱模組</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <select id="queryClass" style="width:120px;"></select>
+                <select id="querySeat" style="width:120px;"></select>
+                <button onclick="loadTargetStudentDataByTeacher()" class="btn-purple" style="width:auto;padding:8px 15px;">提取個案</button>
             </div>
         </div>
-
         <div id="printOutputRenderZone">
             <div class="print-student-page">
-                <div style="background: rgba(0,0,0,0.4); padding: 15px; border-radius: 12px; margin-bottom: 15px;" class="non-print">
-                    <h3 id="printStudentInfo" style="margin:0; color:#fffb00; font-size: 18px;">學生班別：加載中...</h3>
-                    <p id="printDate" style="margin: 5px 0 0 0; font-size: 13px; color: #cbd5e1;">產出日期：-</p>
-                </div>
-                <div id="timeModeResultSummary" style="margin: 15px 0; padding: 12px; background: #fffbeb; border-radius: 8px; font-weight: bold; border-left: 4px solid var(--warning); display: none; color:#000;"></div>
-                <table class="stats-table">
-                    <thead>
-                        <tr>
-                            <th>題型結構</th>
-                            <th>挑戰次數</th>
-                            <th>首答對 (必殺)</th>
-                            <th>補答對 (挽回)</th>
-                            <th>失敗 / 破譯</th>
-                            <th>首發率</th>
-                            <th>綜合率</th>
-                        </tr>
-                    </thead>
-                    <tbody id="statsTableBody"></tbody>
-                </table>
-                <h4 style="color: #fca5a5; margin-top: 20px; font-size: 16px;">📘 目前未消滅錯題庫數量 (計 <span id="statsWrongCount">0</span> 題)</h4>
+                <h3 id="printStudentInfo" style="text-align:left;margin-bottom:10px;">學生班別：載入中...</h3>
+                <p id="printDate" style="font-size:12px;color:#cbd5e1;">產出日期：-</p>
+                <div id="timeModeResultSummary" style="margin: 15px 0; padding: 12px; background: #fffbeb; border-radius: 8px; font-weight: bold; border-left: 4px solid var(--warning); display: none; color: #000;"></div>
+                <table class="stats-table"><thead><tr><th>題型結構</th><th>挑戰次數</th><th>首答對</th><th>補答對</th><th>失敗/破譯</th><th>首發率</th><th>綜合率</th></tr></thead><tbody id="statsTableBody"></tbody></table>
+                <h4 style="color:var(--danger);margin-top:20px;">📘 目前未消滅錯題庫數量 (計 <span id="statsWrongCount">0</span> 題)</h4>
             </div>
         </div>
-        <div class="btn-group non-print">
+        <div class="btn-group non-print" style="display:flex;gap:15px;margin-top:20px;">
             <button onclick="window.print()" class="btn-info">🖨️ 匯出 PDF 學習報告檔案</button>
-            <button class="btn-secondary" onclick="switchSetupConfig('MAIN')">↩️ 返回主選單</button>
+            <button class="btn-secondary" onclick="resetToMainMenu(false)" style="margin-top:0;">↩️ 返回主目錄</button>
         </div>
     </div>
 </div>
 
 <script>
+    const GAS_API_URL = "";
+    let currentRole = "STUDENT", activeTeacherId = "", userRawClass = "", userRawSeat = "";
+    let cacheStorage = { EQ: { wrongBook: [], stats: {} } };
+    
+    let timerInterval = null;
+    let timeLeft = 0;
+
+    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, targetScore: 5, timeLimitSetting: 300, currentIdx: 0, score: 0, selectedType: 'MIX', questionList: [], currentTypeNum: 1, wrongAttemptsThisQuestion: 0, wrongAttemptsInTeaching: 0, hasAddedToWrongBookThisQuestion: false };
+    let eqData = { type: 1, rawStr: "", formulaTitle: "", formulaName: "", targetLetter: "", variablesText: "", targetRightCamp: "", midStepStr: "", ansStr: "" };
+
     const FORMULA_BANK = {
         1: [
-            { name: "幾何：正方形面積 (A = s²)", target: "A", expr: "s^2", vars: ["s"], range: { s: [3, 15] } },
-            { name: "幾何：圓周長簡化版 (C = 6r)", target: "C", expr: "6r", vars: ["r"], range: { r: [2, 12] } },
-            { name: "生活：溫度轉換 (F = 1.8C + 32)", target: "F", expr: "F = 1.8C + 32", vars: ["C"], range: { C: [-10, 35] } }
+            { name: "幾何：正方形面積", target: "A", expr: "s^2", vars: ["s"], range: { s: [3, 15] } },
+            { name: "幾何：圓周長", target: "C", expr: "6r", vars: ["r"], range: { r: [2, 12] } },
+            { name: "物理：歐姆定律求電壓", target: "V", expr: "IR", vars: ["I", "R"], range: { I: [1, 6], R: [2, 15] } },
+            { name: "生活：華氏/攝氏溫度轉換", target: "F", expr: "1.8C + 32", vars: ["C"], range: { C: [-10, 35] } },
+            { name: "理財：定額儲蓄總額", target: "T", expr: "100 + m", vars: ["m"], range: { m: [5, 150] } }
         ],
         2: [
-            { name: "幾何：長方形面積 (A = lw)", target: "A", expr: "lw", vars: ["l", "w"], range: { l: [5, 18], w: [3, 10] } },
-            { name: "物理：歐姆定律 (V = IR)", target: "V", expr: "IR", vars: ["I", "R"], range: { I: [1, 6], R: [2, 15] } },
-            { name: "幾何：三角形面積 (A = bh/2)", target: "A", expr: "bh / 2", vars: ["b", "h"], range: { b: [4, 16], h: [4, 12] } }
+            { name: "幾何：長方形面積", target: "A", expr: "lw", vars: ["l", "w"], range: { l: [5, 18], w: [3, 10] } },
+            { name: "物理：運動學路徑", target: "d", expr: "vt", vars: ["v", "t"], range: { v: [10, 90], t: [2, 6] } },
+            { name: "幾何：三角形面積", target: "A", expr: "bh / 2", vars: ["b", "h"], range: { b: [4, 16], h: [3, 12] } },
+            { name: "物理：牛頓第二定律", target: "F", expr: "ma", vars: ["m", "a"], range: { m: [2, 45], a: [1, 9] } },
+            { name: "科學：物質質量", target: "M", expr: "pV", vars: ["p", "V"], range: { p: [2, 8], V: [4, 25] } }
         ],
         3: [
-            { name: "幾何：梯形面積 (A = (a+b)h/2)", target: "A", expr: "(a + b)h / 2", vars: ["a", "b", "h"], range: { a: [2, 8], b: [9, 16], h: [4, 12] } },
-            { name: "理財：簡單利息結餘 (A = P + Pr)", target: "A", expr: "P + P * r", vars: ["P", "r"], range: { P: [20, 100], r: [1, 4] } }
+            { name: "幾何：梯形面積", target: "A", expr: "(a + b)h / 2", vars: ["a", "b", "h"], range: { a: [2, 8], b: [9, 16], h: [4, 12] } },
+            { name: "幾何：長方體表面積簡化項", target: "S", expr: "lw + lh + wh", vars: ["l", "w", "h"], range: { l: [2, 6], w: [2, 5], h: [3, 8] } },
+            { name: "物理：等加速位移前段", target: "s", expr: "ut + a", vars: ["u", "t", "a"], range: { u: [2, 10], t: [2, 5], a: [-4, 8] } },
+            { name: "理財：簡單利息結餘", target: "A", expr: "P + P * r", vars: ["P", "r"], range: { P: [20, 100], r: [1, 4] } }
         ],
         4: [
-            { name: "幾何：距離平方 (D = (n-b)² + (x-a)²)", target: "D", expr: "(n - b)^2 + (x - a)^2", vars: ["n", "b", "x", "a"], range: { n: [4, 10], b: [-2, 3], x: [5, 11], a: [1, 4] } },
-            { name: "數學：二次函數判別式 (D = b² - 4ac)", target: "D", expr: "b^2 - 4ac", vars: ["b", "a", "c"], range: { b: [3, 8], a: [1, 3], c: [-5, 4] } }
+            { name: "幾何：兩點距離平方", target: "D", expr: "(y - b)^2 + (x - a)^2", vars: ["y", "b", "x", "a"], range: { y: [4, 10], b: [-2, 3], x: [5, 11], a: [1, 4] } },
+            { name: "物理：等加速位移完整版", target: "s", expr: "ut + 2a^2", vars: ["u", "t", "a"], range: { u: [0, 8], t: [2, 5], a: [-3, 4] } },
+            { name: "數學：二次函數判別式", target: "D", expr: "b^2 - 4ac", vars: ["b", "a", "c"], range: { b: [3, 8], a: [1, 3], c: [-5, 4] } },
+            { name: "槓桿：力矩平衡未知項", target: "X", expr: "(Fd - f) / D", vars: ["F", "d", "f", "D"], range: { F: [8, 15], d: [2, 5], f: [2, 6], D: [2, 4] } }
         ]
     };
 
-    let currentRole = "STUDENT", activeTeacherId = "", userRawClass = "", userRawSeat = "";
-    let currentPanelId = "step1"; 
-    let cacheStorage = { EQ: { wrongBook: [], stats: {} } };
-    let timerInterval = null; let timeLeft = 0; let wrongQuestionBank = [];
-    
-    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, targetScore: 5, timeLimitSetting: 300, currentIdx: 0, score: 0, selectedType: 'MIX', questionList: [], currentTypeNum: 1, wrongAttemptsThisQuestion: 0, wrongAttemptsInTeaching: 0, hasAddedToWrongBookThisQuestion: false };
-    let eqData = { type: 1, rawStr: "", formulaTitle: "", formulaName: "", targetLetter: "", variablesText: "", targetRightCamp: "", midStepStr: "0", ansStr: "" };
-
-    document.addEventListener('DOMContentLoaded', function() {
-        try {
-            initGlobalStatsCache();
-            renderTypeSelectOptions();
-            checkActiveSessionOnLoad();
-            setupTeacherDropdowns();
-        } catch(e) { console.error(e); showPanel('step1'); }
-    });
-
-    function checkActiveSessionOnLoad() {
-        let savedRole = localStorage.getItem("Active_User_Role") || "STUDENT";
-        let savedClass = localStorage.getItem("Active_User_Class") || "1A";
-        let savedSeat = localStorage.getItem("Active_User_Seat") || "1";
-
-        currentRole = savedRole;
-        userRawClass = savedClass;
-        userRawSeat = savedSeat;
-
-        let accountDOM = document.getElementById('topCenterAccount');
-        if(accountDOM) {
-            accountDOM.style.display = 'block';
-            accountDOM.innerText = (currentRole === "GUEST") ? `挑戰者: 訪客體驗` : `挑戰者: ${userRawClass}班${String(userRawSeat).padStart(2, '0')}號`;
+    (function initFormOptions(){
+        let cHtml = "", sHtml = "", tHtml = "";
+        for(let g=1;g<=6;g++) ['A','B','C','D'].forEach(l => cHtml+=`<option value="${g}${l}">${g}${l} 班</option>`);
+        for(let i=1;i<=35;i++) sHtml+=`<option value="${i}">${i} 號</option>`;
+        for(let i=1;i<=5;i++) { 
+            tHtml+=`<option value="Teacher_0${i}">💼 0${i}號 管理員</option>`; 
+            try { if(!localStorage.getItem(`Teacher_Pwd_0${i}`)) localStorage.setItem(`Teacher_Pwd_0${i}`,"1007"); } catch(e){}
         }
-
-        if(currentRole === "TEACHER") {
-            if (accountDOM) accountDOM.innerText = `管理員：教師管理後台`;
-            document.getElementById('teacherQueryZone').style.display = 'block';
-            setupLayoutForTeacher();
-        } else {
-            initLocalFallback(userRawClass, userRawSeat);
-            setupLayoutForStudent();
-        }
-    }
-
-    function initGlobalStatsCache() {
+        document.getElementById('loginClass').innerHTML = cHtml; 
+        document.getElementById('loginSeat').innerHTML = sHtml; 
+        document.getElementById('teacherSelect').innerHTML = tHtml;
         cacheStorage.EQ.stats = getInitialStatsObject();
-        cacheStorage.EQ.wrongBook = [];
-    }
+        renderTypeSelectOptions();
+    })();
 
     function getInitialStatsObject() {
         return {
-            1: { name: "雙變數公式求值基本維度模組 (BASIC)", total: 0, firstMatch: 0, retryMatch: 0, failed: 0 },
-            2: { name: "三個未知數結構公式代入 (ADVANCED)", total: 0, firstMatch: 0, retryMatch: 0, failed: 0 },
-            3: { name: "多變數綜合課題求值模組 (MASTER)", total: 0, firstMatch: 0, retryMatch: 0, failed: 0 },
-            4: { name: "進階多變數大挑戰 (含二次方結構)", total: 0, firstMatch: 0, retryMatch: 0, failed: 0 }
+            1: { name: "雙變數公式代入求值", total:0, firstMatch:0, retryMatch:0, failed:0 },
+            2: { name: "三變數公式代入求值", total:0, firstMatch:0, retryMatch:0, failed:0 },
+            3: { name: "多變數綜合公式求值", total:0, firstMatch:0, retryMatch:0, failed:0 },
+            4: { name: "進階多變數大挑戰 (含次方結構)", total:0, firstMatch:0, retryMatch:0, failed:0 }
         };
+    }
+
+    function convertToRichMathHTML(str) {
+        let clean = str.replace(/\^2/g, '²').replace(/\*/g, '&times;');
+        if (clean.includes('/')) {
+            let parts = clean.split('/');
+            let num = parts[0].trim();
+            let den = parts[1].trim();
+            let leftPart = "";
+            if (num.includes('=')) {
+                let eqIdx = num.indexOf('=');
+                leftPart = num.substring(0, eqIdx + 1) + " ";
+                num = num.substring(eqIdx + 1).trim();
+            }
+            return `<div class="math-expr-wrapper">${leftPart}<div class="math-fraction"><div class="fraction-numerator">${num}</div><div class="fraction-denominator">${den}</div></div></div>`;
+        }
+        return clean;
+    }
+
+    function convertToStandardMath(str) {
+        let res = str.replace(/\s+/g, '').replace(/÷/g, '/').replace(/×/g, '*').replace(/\^2/g, '**2');
+        res = res.replace(/(\d+)([a-zA-Z])/g, '$1*$2');
+        res = res.replace(/([a-zA-Z])([a-zA-Z])/g, '$1*$2');
+        res = res.replace(/([a-zA-Z])(\()/g, '$1*$2');
+        res = res.replace(/(\))([a-zA-Z])/g, '$1*$2');
+        res = res.replace(/(\d+)([\(])/g, '$1*$2');
+        res = res.replace(/([ \)])([\(])/g, '$1*$2');
+        return res;
+    }
+
+    function toggleOverlay(s, t="讀取中...") { let o = document.getElementById('loadingOverlay'); if(o) { document.getElementById('loadingText').innerText=t; o.style.display=s?'flex':'none'; } }
+    
+    function toggleLoginMode(m) { 
+        document.getElementById('studentLoginBox').style.display=m==='TEACHER'?'none':'block'; 
+        document.getElementById('teacherLoginBox').style.display=m==='TEACHER'?'block':'none'; 
+    }
+    
+    function showPanel(id) { 
+        document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active')); 
+        document.getElementById(id).classList.add('active'); 
+        
+        let navLeft = document.getElementById('topLeftNav');
+        let navRight = document.getElementById('topRightNav');
+        let accCenter = document.getElementById('topCenterAccount');
+        let box = document.getElementById('mainContainer');
+        
+        if (id === 'step0_login') {
+            navLeft.style.display = 'none'; navRight.style.display = 'none'; accCenter.style.display = 'none';
+            box.style.display = 'none';
+        } else {
+            navLeft.style.display = (id === 'step1') ? 'none' : 'block'; 
+            navRight.style.display = 'block'; 
+            accCenter.style.display = 'block';
+            box.style.display = 'block';
+        }
+    }
+
+    function loginTeacher() {
+        let id = document.getElementById('teacherSelect').value, p = document.getElementById('teacherPwd').value;
+        let correctPwd = "1007";
+        try { correctPwd = localStorage.getItem(`Teacher_Pwd_${id.split('_')[1]}`) || "1007"; } catch(e){}
+        if(p === correctPwd) {
+            currentRole = "TEACHER"; activeTeacherId = id; document.getElementById('teacherPwd').value = "";
+            document.querySelectorAll('.id-student-only').forEach(el=>el.style.display="none"); document.querySelectorAll('.id-teacher-only').forEach(el=>el.style.display="flex");
+            document.getElementById('topCenterAccount').innerText = `管理員: ${id.replace('Teacher_','')}號`;
+            document.getElementById('queryClass').innerHTML = document.getElementById('loginClass').innerHTML;
+            document.getElementById('querySeat').innerHTML = document.getElementById('loginSeat').innerHTML;
+            showPanel('step1');
+        } else { alert("❌ 密碼錯誤！"); }
+    }
+
+    function changeTeacherPassword() {
+        let op = document.getElementById('oldPwd').value, np = document.getElementById('newPwd').value, idx = activeTeacherId.split('_')[1];
+        let currentPwd = "1007"; try { currentPwd = localStorage.getItem(`Teacher_Pwd_${idx}`) || "1007"; } catch(e){}
+        if(op !== currentPwd || !np.trim()) { alert("❌ 驗證失敗！"); return; }
+        try { localStorage.setItem(`Teacher_Pwd_${idx}`, np); } catch(e){}
+        alert("🎉 密碼更新成功！"); resetToMainMenu(false);
+    }
+
+    function loginStudent() {
+        currentRole = "STUDENT"; userRawClass = document.getElementById('loginClass').value; userRawSeat = document.getElementById('loginSeat').value;
+        toggleOverlay(true, "連線雲端資料庫中...");
+        setTimeout(() => {
+            initLocalFallback(userRawClass, userRawSeat);
+            let seatStr = String(userRawSeat).padStart(2, '0');
+            document.getElementById('topCenterAccount').innerText = `挑戰者: ${userRawClass}班${seatStr}號`;
+            toggleOverlay(false); setupLayoutForStudent();
+        }, 400);
+    }
+
+    function loginGuest() {
+        currentRole = "GUEST"; userRawClass = "GUEST"; userRawSeat = "VISITOR";
+        cacheStorage.EQ.wrongBook = []; cacheStorage.EQ.stats = getInitialStatsObject();
+        document.getElementById('topCenterAccount').innerText = `挑戰者: 訪客體驗`;
+        setupLayoutForStudent();
+    }
+
+    function setupLayoutForStudent() {
+        document.querySelectorAll('.id-student-only').forEach(el=>el.style.display="flex"); document.querySelectorAll('.id-teacher-only').forEach(el=>el.style.display="none");
+        updateReviewMenuUI(); showPanel('step1');
+    }
+
+    function initLocalFallback(tC, tS) {
+        try {
+            let local = localStorage.getItem(`MultiVarCache_${tC}-${tS}`);
+            if(local) { let p = JSON.parse(local); if(p.stats?.[1]) { cacheStorage.EQ = p; return; } }
+        } catch(e){}
+        cacheStorage.EQ = { wrongBook: [], stats: getInitialStatsObject() };
+    }
+
+    function updateProgressBarUI() {
+        let pct = 0; let txt = "";
+        if (session.currentMode === 'CHALLENGE') {
+            if (session.endCondition === 'COUNT') {
+                pct = Math.round(((session.currentIdx + 1) / session.totalQuestions) * 100);
+                txt = `闖關進度: ${session.currentIdx + 1} / ${session.totalQuestions} 題`;
+            } else if (session.endCondition === 'TARGET_SCORE') {
+                pct = Math.min(100, Math.max(0, Math.round((session.score / session.targetScore) * 100)));
+                txt = `達標進度 (目標 ${session.targetScore} 分)`;
+            } else {
+                pct = Math.round((timeLeft / session.timeLimitSetting) * 100);
+                txt = `⏳ 限時狂熱挑戰中！加油！`;
+            }
+        } else if (session.currentMode === 'REVIEW') {
+            pct = Math.round(((session.currentIdx + 1) / session.totalQuestions) * 100);
+            txt = `錯題庫溫習進度: ${session.currentIdx + 1} / ${session.totalQuestions} 題`;
+        } else {
+            pct = 100; txt = `解答教學模式引導中`;
+        }
+        document.getElementById('progressText').innerText = txt;
+        document.getElementById('progressTextStage3').innerText = txt;
+        document.getElementById('progressBarFill').style.width = `${pct}%`;
+        document.getElementById('progressBarFillStage3').style.width = `${pct}%`;
+    }
+
+    function cloudSaveData() {
+        if (["TEACHER","GUEST"].includes(currentRole) || !userRawClass || !userRawSeat) return;
+        try { localStorage.setItem(`MultiVarCache_${userRawClass}-${userRawSeat}`, JSON.stringify(cacheStorage.EQ)); } catch(e){}
+    }
+
+    function updateReviewMenuUI() {
+        let c = (cacheStorage.EQ.wrongBook || []).length;
+        document.getElementById('reviewModeCard').classList.toggle('disabled', c===0);
+        document.getElementById('reviewTitle').innerText = `錯題庫 (還剩 ${c} 題)`;
     }
 
     function renderTypeSelectOptions() {
         document.getElementById('typeSelect').innerHTML = `
-            <option value="1">1. 雙變數公式求值 (BASIC)</option>
-            <option value="2">2. 三變數公式求值 (ADVANCED)</option>
-            <option value="3">3. 多變數綜合公式求值 (MASTER)</option>
-            <option value="4">4. 進階多變數大挑戰 (含二次方結構)</option>
+            <option value="1">1. 雙變數公式求值 (代入1~2個變數)</option>
+            <option value="2">2. 三變數公式求值 (代入2個變數)</option>
+            <option value="3">3. 多變數綜合公式求值 (代入3個變數)</option>
+            <option value="4">4. 進階多變數大挑戰 (含負數與二次方)</option>
             <option value="MIX" selected>5. 🔀 跨學科公式混合大亂鬥</option>
         `;
     }
@@ -380,89 +619,13 @@
         document.getElementById('timeLimitInputWrapper').style.display = c === 'TIME_LIMIT' ? 'block' : 'none';
     }
 
-    function showPanel(id) { 
-        document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active')); 
-        document.getElementById(id).classList.add('active'); 
-        currentPanelId = id;
-        
-        let navLeft = document.getElementById('topLeftNav'); 
-        let navRight = document.getElementById('topRightNav');
-        let accCenter = document.getElementById('topCenterAccount'); 
-        let box = document.getElementById('mainContainer');
-        
-        if (navLeft) navLeft.style.display = 'block'; 
-        if (navRight) navRight.style.display = 'block'; 
-        if (accCenter) accCenter.style.display = 'block'; 
-        if (box) box.style.display = 'block';
-    }
-
-    function handleNavigationBack() {
-        if (currentPanelId === 'step1') {
-            stopSessionTimer();
-            window.location.replace("home.html"); 
-        } else {
-            stopSessionTimer();
-            showPanel('step1'); 
-        }
-    }
-
     function switchSetupConfig(mode) {
-        if (mode === 'MAIN') {
-            showPanel('step1');
-            return;
-        }
         session.currentMode = mode;
         if(mode==='CHALLENGE') showPanel('step1_challenge');
         else if(mode==='SOLVER') showPanel('step1_solver');
-        else if(mode==='REVIEW') { 
-            wrongQuestionBank = cacheStorage.EQ.wrongBook || [];
-            if(wrongQuestionBank.length===0) { alert("錯題本中目前沒有尚未消滅的難題喔！"); return; } 
-            initReviewSession(); 
-        }
+        else if(mode==='CHG_PWD') showPanel('step1_chgpwd');
+        else if(mode==='REVIEW') { if((cacheStorage.EQ.wrongBook||[]).length===0) return; initReviewSession(); }
         else if(mode==='STATS') { calculateAndRenderStats(); showPanel('step_stats_panel'); }
-    }
-
-    function syncLocalSave() {
-        if(currentRole === "GUEST") return;
-        localStorage.setItem(`MultiVarCache_${userRawClass}-${userRawSeat}`, JSON.stringify({
-            wrongBook: cacheStorage.EQ.wrongBook,
-            stats: cacheStorage.EQ.stats
-        }));
-    }
-
-    function cloudSaveData() {
-        syncLocalSave();
-    }
-
-    function convertToStandardMath(expr) {
-        let res = expr.replace(/\^2/g, '**2');
-        res = res.replace(/\blw\b/g, 'l*w');
-        res = res.replace(/\bbh\b/g, 'b*h');
-        res = res.replace(/\bPr\b/g, 'P*r');
-        res = res.replace(/\bIR\b/g, 'I*r'); 
-        res = res.replace(/\b([0-9.]+)([a-zA-Z])/g, '$1*$2'); 
-        return res;
-    }
-
-    function convertToRichMathHTML(expr) {
-        let res = expr;
-        res = res.replace(/([a-zA-Z0-9\)]+)\^2/g, '<span style="font-size: 0.8em; vertical-align: super;">$1²</span>');
-        if(res.includes('/')) {
-            let parts = res.split('/');
-            if(parts.length === 2) {
-                let num = parts[0].replace(/[\(\)]/g, '').trim();
-                let den = parts[1].trim();
-                return `
-                    <span class="math-expr-wrapper">
-                        <span class="math-fraction">
-                            <span class="fraction-numerator">${num}</span>
-                            <span class="fraction-denominator">${den}</span>
-                        </span>
-                    </span>
-                `;
-            }
-        }
-        return res;
     }
 
     function startSessionTimer(seconds) {
@@ -471,187 +634,151 @@
         document.getElementById('globalTimerBoxStage3').style.display = 'inline-block';
         timerInterval = setInterval(() => {
             timeLeft--; updateTimerDisplay();
-            if(session.currentMode === 'CHALLENGE' && session.endCondition === 'TIME_LIMIT') updateProgressBarUI();
+            if(session.endCondition === 'TIME_LIMIT') updateProgressBarUI();
             if (timeLeft <= 0) {
-                stopSessionTimer(); alert("⏱️ 時間到！為您呈現大數據整合學習報告！"); finishTimeLimitSession();
+                stopSessionTimer();
+                alert("⏱️ 時間到！即將為您結算本次挑戰分數！");
+                finishTimeLimitSession();
             }
         }, 1000);
     }
 
     function stopSessionTimer() {
         if(timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-        document.getElementById('globalTimerBox').style.display = 'none'; document.getElementById('globalTimerBoxStage3').style.display = 'none';
+        document.getElementById('globalTimerBox').style.display = 'none';
+        document.getElementById('globalTimerBoxStage3').style.display = 'none';
     }
 
     function updateTimerDisplay() {
         let m = Math.floor(timeLeft / 60); let s = timeLeft % 60;
         let str = `⏱️ ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-        document.getElementById('globalTimerBox').innerText = str; document.getElementById('globalTimerBoxStage3').innerText = str;
+        document.getElementById('globalTimerBox').innerText = str;
+        document.getElementById('globalTimerBoxStage3').innerText = str;
     }
 
     function finishTimeLimitSession() {
         stopSessionTimer(); calculateAndRenderStats();
         let summaryBox = document.getElementById('timeModeResultSummary'); summaryBox.style.display = 'block';
-        summaryBox.innerHTML = `🏁 限時衝分賽完賽：成功斬獲了 <span style="font-size:20px;color:var(--danger);">${session.score}</span> 分！`;
+        let minSet = Math.floor(session.timeLimitSetting / 60);
+        summaryBox.innerHTML = `🏁 限時挑戰完賽：你在 ${minSet} 分鐘內成功斬獲了 <span style="font-size:20px;color:var(--danger);">${session.score}</span> 分！`;
+        document.getElementById('reportMainHeading').innerText = "🏆 限時挑戰戰果結算報告";
         showPanel('step_stats_panel');
     }
 
     function initChallengeSession() {
-        session.currentMode = 'CHALLENGE';
-        let selectVal = document.getElementById('typeSelect').value;
-        session.selectedType = selectVal;
-        session.endCondition = document.querySelector('input[name="endCondition"]:checked').value;
-        session.currentIdx = 0;
-        session.score = 0;
-        session.questionList = [];
+        let selectedType = document.getElementById('typeSelect').value;
+        let condition = document.querySelector('input[name="endCondition"]:checked').value;
+        session.currentMode = 'CHALLENGE'; session.selectedType = selectedType; session.endCondition = condition; session.currentIdx = 0; session.score = 0; session.questionList = [];
+        document.getElementById('reportMainHeading').innerText = "📊 學生多變數求值歷程數據報告";
+        document.getElementById('timeModeResultSummary').style.display = 'none';
 
-        if(session.endCondition === 'COUNT') {
-            let count = parseInt(document.getElementById('totalQuestionsInput').value) || 5;
-            session.totalQuestions = count;
-            for(let i=0; i<count; i++) {
-                session.questionList.push(generateQuestion(selectVal));
-            }
-        } else if(session.endCondition === 'TARGET_SCORE') {
-            session.targetScore = parseInt(document.getElementById('targetScoreInput').value) || 5;
-            session.questionList.push(generateQuestion(selectVal));
-        } else if(session.endCondition === 'TIME_LIMIT') {
-            let lim = parseInt(document.getElementById('timeLimitSelect').value) || 300;
-            startSessionTimer(lim);
-            session.questionList.push(generateQuestion(selectVal));
+        if (condition === 'COUNT') {
+            stopSessionTimer(); session.totalQuestions = parseInt(document.getElementById('totalQuestionsInput').value) || 5;
+            for (let i = 0; i < session.totalQuestions; i++) session.questionList.push(generateQuestion(selectedType));
+        } else if (condition === 'TARGET_SCORE') {
+            stopSessionTimer(); session.targetScore = parseInt(document.getElementById('targetScoreInput').value) || 5;
+            session.questionList.push(generateQuestion(selectedType));
+        } else {
+            let sec = parseInt(document.getElementById('timeLimitSelect').value) || 300;
+            session.timeLimitSetting = sec; session.questionList.push(generateQuestion(selectedType)); startSessionTimer(sec);
         }
-        
+        document.getElementById('teachingHeaderBadge').innerText = "💡 多變數思盤破譯";
         loadEquationToStage();
     }
 
     function initReviewSession() {
-        session.currentMode = 'REVIEW';
-        session.currentIdx = 0;
-        session.score = 0;
-        session.questionList = [...cacheStorage.EQ.wrongBook];
-        session.totalQuestions = session.questionList.length;
+        stopSessionTimer(); let wrongList = [...cacheStorage.EQ.wrongBook]; if (wrongList.length === 0) return;
+        session.currentMode = 'REVIEW'; session.currentIdx = 0; session.totalQuestions = wrongList.length; session.questionList = wrongList;
+        document.getElementById('timeModeResultSummary').style.display = 'none';
+        document.getElementById('teachingHeaderBadge').innerText = "💡 多變數思盤破譯";
         loadEquationToStage();
-    }
-
-    function updateProgressBarUI() {
-        let percent = 0;
-        let text = "";
-        
-        if(session.currentMode === 'REVIEW') {
-            percent = ((session.currentIdx) / Math.max(session.totalQuestions, 1)) * 100;
-            text = `溫習進度: 第 ${session.currentIdx + 1} 題 / 共 ${session.totalQuestions} 題`;
-        } else if(session.currentMode === 'SOLVER') {
-            percent = 100;
-            text = `解答引導模式`;
-        } else if(session.endCondition === 'COUNT') {
-            percent = ((session.currentIdx) / Math.max(session.totalQuestions, 1)) * 100;
-            text = `進度: 第 ${session.currentIdx + 1} 題 / 共 ${session.totalQuestions} 題`;
-        } else if(session.endCondition === 'TARGET_SCORE') {
-            percent = Math.min((session.score / Math.max(session.targetScore, 1)) * 100, 100);
-            text = `達標進度: 積分 ${session.score} / 目標 ${session.targetScore}`;
-        } else if(session.endCondition === 'TIME_LIMIT') {
-            let totalTime = parseInt(document.getElementById('timeLimitSelect').value) || 300;
-            percent = ((totalTime - timeLeft) / totalTime) * 100;
-            text = `瘋狂極速賽進行中！目前已得: ${session.score} 分`;
-        }
-        
-        document.getElementById('progressBarFill').style.width = `${percent}%`;
-        document.getElementById('progressText').innerText = text;
-        document.getElementById('progressBarFillStage3').style.width = `${percent}%`;
-        document.getElementById('progressTextStage3').innerText = text;
     }
 
     function generateQuestion(typeCode) {
         let t = typeCode === 'MIX' ? ['1', '2', '3', '4'][Math.floor(Math.random() * 4)] : typeCode;
-        let pool = FORMULA_BANK[t]; let formula = pool[Math.floor(Math.random() * pool.length)];
-        let varAssigns = []; let randVal = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+        let pool = FORMULA_BANK[t];
+        let formula = pool[Math.floor(Math.random() * pool.length)];
+        
+        let varAssigns = [];
+        let randVal = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
         
         formula.vars.forEach(v => {
-            let range = formula.range[v]; let val = randVal(range[0], range[1]);
+            let range = formula.range[v];
+            let val = randVal(range[0], range[1]);
+            if (v === 'D' && val === 0) val = 2;
+            if (v === 'x' && val === formula.range['a'][0]) val += 3;
             varAssigns.push(`${v} = ${val}`);
         });
-
-        let simExpr = formula.expr;
-        formula.vars.forEach(v => {
-            let rStr = varAssigns.find(a => a.startsWith(v)).split('=')[1].trim();
-            simExpr = simExpr.replace(new RegExp(v, 'g'), `(${rStr})`);
-        });
         
-        let calcExpr = convertToStandardMath(simExpr);
-        let rawAnswer = eval(calcExpr);
-        if (rawAnswer % 1 !== 0) rawAnswer = Math.round(rawAnswer * 10) / 10;
-
-        return `${formula.name} | 已知 ${formula.target} = ${formula.expr}。當 ${varAssigns.join(', ')}，${formula.target} = ? | ${rawAnswer} #|#${t}`;
+        return `${formula.name} | 已知 ${formula.target} = ${formula.expr}。當 ${varAssigns.join(', ')}，${formula.target} = ? #|#${t}`;
     }
 
     function parseEquationStructure(str) {
         eqData.rawStr = str;
         try {
-            if (str.includes(' | 已知 ')) {
-                let parts = str.split('|');
-                let displayTitle = parts[0].trim();
-                let mathQuestion = parts[1].trim();
-                let answerPart = parts[2].split('#|#')[0].trim();
-                let typeMarker = str.split('#|#')[1] || "1";
+            let typeMarker = str.split('#|#')[1] || "1";
+            session.currentTypeNum = parseInt(typeMarker);
+            eqData.type = session.currentTypeNum;
 
-                session.currentTypeNum = parseInt(typeMarker);
-                eqData.type = session.currentTypeNum;
-                
-                let formulaMatch = mathQuestion.match(/已知\s*([a-zA-Z])\s*=\s*([^。]+)。/);
-                let targetLetter = formulaMatch[1]; 
-                let formulaPart = formulaMatch[2].trim(); 
-                let dataPart = mathQuestion.match(/當\s*([^，]+)，/)[1].trim(); 
+            let corePart = str.split('#|#')[0].trim(); 
+            let infoSegments = corePart.split('|');
+            let displayTitle = infoSegments[0].trim(); 
+            let mathQuestion = infoSegments[1].trim(); 
 
-                eqData.formulaTitle = displayTitle; eqData.formulaName = formulaPart; eqData.targetLetter = targetLetter; eqData.variablesText = dataPart; eqData.ansStr = answerPart;
+            let formulaMatch = mathQuestion.match(/已知\s*([a-zA-Z])\s*=\s*([^。]+)。/);
+            let targetLetter = formulaMatch[1];  
+            let formulaPart = formulaMatch[2].trim(); 
 
-                let varRegex = /([a-zA-Z])\s*=\s*([-]?\d+(\.\d+)?)/g; let match; let varMap = {}; let varList = [];
-                while ((match = varRegex.exec(dataPart)) !== null) { varMap[match[1]] = match[2]; varList.push(match[1]); }
-                varList.sort((a,b) => b.length - a.length);
+            let dataPart = mathQuestion.match(/當\s*([^，]+)，/)[1].trim(); 
+            
+            eqData.formulaTitle = displayTitle; 
+            eqData.formulaName = formulaPart;
+            eqData.targetLetter = targetLetter;
+            eqData.variablesText = dataPart;
 
-                let substitutedExpr = formulaPart;
-                for (let v of varList) { substitutedExpr = substitutedExpr.replace(new RegExp(v, 'g'), `(${varMap[v]})`); }
-                eqData.targetRightCamp = substitutedExpr;
-
-                let calcExpr = convertToStandardMath(substitutedExpr);
-                let mid = calcExpr.replace(/\((-?\d+(\.\d+)?)\)\*\*2/g, function(m, p1) { return Math.pow(parseFloat(p1), 2); });
-                let multRegex = /(?:-?\d+(\.\d+)?|\(-?\d+(\.\d+)?\))(?:\*(?:-?\d+(\.\d+)?|\(-?\d+(\.\d+)?\)))+/g;
-                mid = mid.replace(multRegex, function(m) {
-                    try { let res = eval(m); return res % 1 !== 0 ? Math.round(res * 10) / 10 : res; } catch(e) { return m; }
-                });
-                eqData.midStepStr = mid.replace(/\+ -/g, '- ');
-                return true;
+            let varRegex = /([a-zA-Z])\s*=\s*([-]?\d+(\.\d+)?)/g;
+            let match;
+            let varMap = {};
+            let varList = [];
+            while ((match = varRegex.exec(dataPart)) !== null) {
+                varMap[match[1]] = match[2];
+                varList.push(match[1]);
             }
 
-            let mainPart = str.split('#|#')[0].trim();
-            let typeMarker = str.split('#|#')[1] || "1";
-            session.currentTypeNum = parseInt(typeMarker); eqData.type = session.currentTypeNum;
-
-            let formulaMatch = mainPart.match(/已知\s*([a-zA-Z])\s*=\s*([^。]+)。/);
-            let targetLetter = formulaMatch[1]; let formulaPart = formulaMatch[2].trim(); 
-            let dataPart = mainPart.match(/當\s*([^，]+)，/)[1].trim(); 
-            
-            eqData.formulaTitle = "自訂教學引導破譯"; eqData.formulaName = formulaPart; eqData.targetLetter = targetLetter; eqData.variablesText = dataPart;
-
-            let varRegex = /([a-zA-Z])\s*=\s*([-]?\d+(\.\d+)?)/g; let match; let varMap = {}; let varList = [];
-            while ((match = varRegex.exec(dataPart)) !== null) { varMap[match[1]] = match[2]; varList.push(match[1]); }
             varList.sort((a,b) => b.length - a.length);
 
             let substitutedExpr = formulaPart;
-            for (let v of varList) { substitutedExpr = substitutedExpr.replace(new RegExp(v, 'g'), `(${varMap[v]})`); }
+            for (let v of varList) {
+                let val = varMap[v];
+                let regex = new RegExp(v, 'g');
+                substitutedExpr = substitutedExpr.replace(regex, `(${val})`);
+            }
             eqData.targetRightCamp = substitutedExpr;
 
-            let calcExpr = convertToStandardMath(substitutedExpr); let finalVal = eval(calcExpr);
-            if (finalVal % 1 !== 0) finalVal = Math.round(finalVal * 10) / 10;
+            let calcExpr = convertToStandardMath(substitutedExpr);
+            let finalVal = eval(calcExpr);
+            
+            if (finalVal % 1 !== 0) {
+                finalVal = Math.round(finalVal * 10) / 10;
+            }
             eqData.ansStr = "" + finalVal;
 
-            let mid = calcExpr.replace(/\((-?\d+(\.\d+)?)\)\*\*2/g, function(m, p1) { return Math.pow(parseFloat(p1), 2); });
+            let mid = calcExpr;
+            mid = mid.replace(/\((-?\d+(\.\d+)?)\)\*\*2/g, (m, p1) => Math.pow(parseFloat(p1), 2));
+            
             let multRegex = /(?:-?\d+(\.\d+)?|\(-?\d+(\.\d+)?\))(?:\*(?:-?\d+(\.\d+)?|\(-?\d+(\.\d+)?\)))+/g;
             mid = mid.replace(multRegex, function(m) {
-                try { let res = eval(m); return res % 1 !== 0 ? Math.round(res * 10) / 10 : res; } catch(e) { return m; }
+                try { 
+                    let res = eval(m); 
+                    return res % 1 !== 0 ? Math.round(res * 10) / 10 : res;
+                } catch(e) { return m; }
             });
-            eqData.midStepStr = mid.replace(/\+ -/g, '- ');
+            
+            eqData.midStepStr = mid.replace(/\+ -/g, '- ').replace(/\* \*/g, '**');
+
             return true;
         } catch(e) {
-            console.error("內核結構異常:", e);
+            console.error(e);
             return false;
         }
     }
@@ -660,45 +787,57 @@
         stopSessionTimer();
         let rawInput = document.getElementById('eqInput').value.trim(); 
         let vars = document.getElementById('xValueInput').value.trim();
-        if(!rawInput || !vars) { alert("請填寫完整的公式與變數代入數值！"); return; }
+        if(!rawInput) { alert("請輸入有效的代數式或公式！"); return; }
         
-        let target = "W", expr = rawInput;
-        if(rawInput.includes("=")) { let parts = rawInput.split("="); target = parts[0].trim(); expr = parts[1].trim(); }
-        
+        let target = "組裝項";
+        let expr = rawInput;
+        if(rawInput.includes("=")) {
+            let parts = rawInput.split("=");
+            target = parts[0].trim();
+            expr = parts[1].trim();
+        }
+
         session.currentMode = 'SOLVER';
         session.totalQuestions = 1; session.currentIdx = 0; 
-        session.wrongAttemptsThisQuestion = 0; session.wrongAttemptsInTeaching = 0;
-        
-        session.questionList = [`已知 ${target} = ${expr}。當 ${vars}，${target} = ? #|#1`];
+        session.questionList = [`自訂結構引導 | 已知 ${target} = ${expr}。當 ${vars}，${target} = ? #|#1`];
         document.getElementById('teachingHeaderBadge').innerText = "🛠️ 解答引導模式";
         loadEquationToStage();
     }
 
     function loadEquationToStage() {
         session.wrongAttemptsThisQuestion = 0; session.wrongAttemptsInTeaching = 0; session.hasAddedToWrongBookThisQuestion = false;
-        document.getElementById('initialFeedbackArea').innerHTML = ''; document.getElementById('ansInput').disabled = false; document.getElementById('ansInput').value = '';
+        document.getElementById('initialFeedbackArea').innerHTML = '';
+        document.getElementById('ansInput').disabled = false; document.getElementById('ansInput').value = '';
         document.getElementById('retryInputWrapper').style.display = 'none'; document.getElementById('ansRetryInput').value = '';
         document.getElementById('teachingWrongArea1').innerHTML = ''; document.getElementById('teachingWrongArea2').innerHTML = ''; document.getElementById('teachingWrongArea3').innerHTML = '';
 
         let expr = session.questionList[session.currentIdx];
-        if(!parseEquationStructure(expr)) { alert("代數結構匹配失敗，安全鎖介入返回。"); resetToMainMenu(false); return; }
+        if(!parseEquationStructure(expr)) { alert("題目解析失敗！請確認數據格式（例：C=17）。"); resetToMainMenu(false); return; }
         if(session.currentMode==='CHALLENGE') { cacheStorage.EQ.stats[session.currentTypeNum].total++; cloudSaveData(); }
         
+        document.getElementById('step2Title').innerText = session.currentMode==='REVIEW'?"👹 魔王錯題重溫挑戰":"請依各變數數值求出最終結果";
         document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`;
-        document.getElementById('displayEq').innerHTML = `
-            <div style="font-size: 24px; color:#cbd5e1; font-weight:bold; margin-bottom:12px;">📊 ${eqData.formulaTitle}</div>
-            <div style="font-size: 28px; margin-top: 10px;">已知 ${convertToRichMathHTML(eqData.targetLetter + " = " + eqData.formulaName)}</div>
-            <div style="font-size: 22px; color: #fffb00; margin-top: 20px; font-weight: bold;">當 ${eqData.variablesText}，求 ${eqData.targetLetter} = ?</div>
+        
+        let displayStr = `
+            <div style="font-size: 28px; letter-spacing: 0.5px; margin-top: 10px;">
+                已知 ${convertToRichMathHTML(eqData.targetLetter + " = " + eqData.formulaName)}
+            </div>
+            <div style="font-size: 22px; color: #cbd5e1; margin-top: 20px; font-weight: normal;">
+                當 ${eqData.variablesText}，求 ${eqData.targetLetter} = ?
+            </div>
         `;
+        document.getElementById('displayEq').innerHTML = displayStr;
         document.getElementById('submitAnsBtn').className = ""; document.getElementById('submitAnsBtn').innerText = "提交結果並驗證答案";
+        
         updateProgressBarUI(); showPanel('step2');
     }
 
     function checkFirstAnswer() {
-        let userAns = (session.wrongAttemptsThisQuestion === 1 && session.currentMode !== 'SOLVER') ? document.getElementById('ansRetryInput').value.replace(/\s+/g,'') : document.getElementById('ansInput').value.replace(/\s+/g,'');
+        let userAns = (session.wrongAttemptsThisQuestion === 1 && session.currentMode !== 'SOLVER') ? 
+            document.getElementById('ansRetryInput').value.replace(/\s+/g,'') : document.getElementById('ansInput').value.replace(/\s+/g,'');
 
         if(userAns === eqData.ansStr) {
-            if(session.currentMode=='CHALLENGE' && session.wrongAttemptsThisQuestion===0) cacheStorage.EQ.stats[session.currentTypeNum].firstMatch++;
+            if(session.currentMode==='CHALLENGE' && session.wrongAttemptsThisQuestion===0) cacheStorage.EQ.stats[session.currentTypeNum].firstMatch++;
             showPanel('step3'); executeDirectSuccess();
         } else {
             session.wrongAttemptsThisQuestion++;
@@ -706,18 +845,17 @@
                 if(!cacheStorage.EQ.wrongBook.includes(session.questionList[session.currentIdx])) cacheStorage.EQ.wrongBook.push(session.questionList[session.currentIdx]);
                 cacheStorage.EQ.stats[session.currentTypeNum].failed++; session.hasAddedToWrongBookThisQuestion=true;
             }
+            
             if(session.currentMode !== 'SOLVER' && session.wrongAttemptsThisQuestion === 1) {
                 document.getElementById('ansInput').disabled = true; document.getElementById('retryInputWrapper').style.display = 'block'; 
                 let area = document.getElementById('initialFeedbackArea'); area.className="feedback warning";
-                area.innerHTML = "❌ 答案不太對哦！<b>首答不扣分</b>。請在下方<b>補答欄位</b>重新修正提交答案！";
+                area.innerHTML = "❌ 計算不太對哦！<b>首答不扣分</b>。請在下方開闢的<b>補答欄位</b>重新核對修正答案！";
                 document.getElementById('submitAnsBtn').innerText = "提交修正補答答案"; document.getElementById('submitAnsBtn').className="btn-warning";
             } else {
                 if(session.currentMode === 'CHALLENGE') session.score--;
                 document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`;
                 updateProgressBarUI(); showPanel('step3'); executeFinalFailure();
             }
-            wrongQuestionBank = cacheStorage.EQ.wrongBook || [];
-            updateReviewMenuUI();
             cloudSaveData();
         }
     }
@@ -730,58 +868,65 @@
         if(session.currentMode==='CHALLENGE') {
             session.score++; document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`; updateProgressBarUI(); 
             if(session.wrongAttemptsThisQuestion===1) { cacheStorage.EQ.stats[session.currentTypeNum].failed--; cacheStorage.EQ.stats[session.currentTypeNum].retryMatch++; }
-            f.innerHTML="🎉 恭喜完全正確！你對公式代入與運算步驟掌握得非常優秀！";
+            f.innerHTML="🎉 恭喜完全正確！你對公式主體代入與運算先後步驟掌握得非常優秀！";
         } else if(session.currentMode==='REVIEW') {
-            cacheStorage.EQ.wrongBook = cacheStorage.EQ.wrongBook.filter(i=>i!==session.questionList[session.currentIdx]);
-            wrongQuestionBank = cacheStorage.EQ.wrongBook;
-            f.innerHTML="🎉 成功擊破錯題！該題已從小本本順利消滅！";
-        } else f.innerHTML="🎉 計算完全正確！概念非常紮實。";
-        updateReviewMenuUI();
+            let expr = session.questionList[session.currentIdx];
+            cacheStorage.EQ.wrongBook = cacheStorage.EQ.wrongBook.filter(i=>i!==expr);
+            f.innerHTML="🎉 成功擊破多變數錯題！該題已從小本本順利消滅！";
+        } else f.innerHTML="🎉 計算完全正確！概念非常精準。";
         cloudSaveData(); setupNextButtonLabel();
     }
 
     function executeFinalFailure() {
         document.getElementById('interactiveStageBox').innerHTML = `已知 ${convertToRichMathHTML(eqData.targetLetter + " = " + eqData.formulaName)} <br> ⚖️ 當 ${eqData.variablesText}`;
         document.getElementById('nextBtn').style.display="none"; document.getElementById('solveBtn').style.display="block"; document.getElementById('teachingZone').style.display="none";
+        
         let f=document.getElementById('feedbackArea'); f.className="feedback error";
-        f.innerHTML = "❌ 補答仍有誤差。請點擊下方開啟引導破譯教學面板。";
+        let debugBtn = (session.currentMode === 'SOLVER') ? `<br><br><button class='btn-warning' style='width:auto;padding:8px 15px;' onclick='alert("💡 本題精確答案為 " + eqData.ansStr)'>🔓 直接顯示答案</button>` : "";
+        f.innerHTML = session.currentMode==='CHALLENGE' ? "❌ 補答依然有些微誤差。<span style='color:red;'>[挑戰失敗] 積分 -1 分！</span>請開啟下方破譯教學。" + debugBtn : "❌ 計算有誤。請點擊下方開啟逐步拆解教學。" + debugBtn;
     }
 
     function checkTeachingWrongCounter(targetAreaId) {
         let area = document.getElementById(targetAreaId);
         if (session.wrongAttemptsInTeaching >= 3) {
-            area.innerHTML = `<div style="margin-top:10px; padding:10px; background:rgba(239,68,68,0.15); border-left:4px solid var(--danger); border-radius:6px; font-weight:bold; color:#fca5a5;">💡 防卡死機制：<button class='btn-warning' style='width:auto;padding:4px 8px;font-size:12px;margin-left:10px;' onclick='alert("本題的標準數值答案為： " + eqData.ansStr)'>🔓 直接秀出答案</button></div>`;
+            area.innerHTML = `<div style="margin-top:10px; padding:10px; background:#fef2f2; border-left:4px solid var(--danger); border-radius:6px; font-weight:bold; color:var(--danger);">💡 如果被正負號或長度卡住了，防卡死密鑰：<button class='btn-warning' style='width:auto;padding:4px 8px;font-size:12px;margin-left:10px;' onclick='alert("💡 最終結果為 " + eqData.ansStr)'>🔓 直接秀出答案</button></div>`;
         } else { area.innerHTML = ""; }
     }
 
     function executeCampStage() {
-        try {
-            let valRaw = document.getElementById('rightCampInput').value.replace(/\s+/g,'');
-            if (valRaw === eqData.ansStr) { alert("🚀 心算直接直通最終結果！完賽！"); executeDirectSuccess(); return; }
-            if(convertToStandardMath(valRaw) === convertToStandardMath(eqData.targetRightCamp) || eval(convertToStandardMath(valRaw)) === eval(convertToStandardMath(eqData.targetRightCamp))) {
-                alert("🎯 變數括號對號入座完全正確！");
-                document.getElementById('interactiveStageBox').innerHTML = `${eqData.targetLetter} = ${convertToRichMathHTML(eqData.targetRightCamp)}`;
-                document.getElementById('stageCampArea').style.display="none"; document.getElementById('stageCombineArea').style.display="block";
-                renderMathSteps(2);
-            } else {
-                session.wrongAttemptsInTeaching++; alert(`❌ 結構不對。提示：請將字母替換為帶括號的數值！`); checkTeachingWrongCounter('teachingWrongArea1'); 
-            }
-        } catch(e) { session.wrongAttemptsInTeaching++; alert("格式辨識錯誤，請重新核對數字！"); }
+        let valRaw = document.getElementById('rightCampInput').value.replace(/\s+/g,'');
+        if (valRaw === eqData.ansStr) { alert("🚀 太優秀了！你心算直通最終數值結果！系統自動為你秒殺本題！"); executeDirectSuccess(); return; }
+
+        let uR = convertToStandardMath(valRaw);
+        let tR = convertToStandardMath(eqData.targetRightCamp);
+        
+        if(uR === tR || eval(uR) === eval(tR)) {
+            alert("🎯 變數括號對號入座完全正確！代入非常精確！");
+            document.getElementById('interactiveStageBox').innerHTML = `${eqData.targetLetter} = ${convertToRichMathHTML(eqData.targetRightCamp)}`;
+            document.getElementById('stageCampArea').style.display="none"; document.getElementById('stageCombineArea').style.display="block";
+            document.getElementById('rightCombineInput').value = ""; renderMathSteps(2);
+        } else {
+            session.wrongAttemptsInTeaching++; alert(`❌ 結構位置不對哦。提示：請將公式右邊的字母替換為帶括號的數值！`);
+            checkTeachingWrongCounter('teachingWrongArea1'); 
+        }
     }
 
     function executeCombineStage() {
-        try {
-            let valRaw = document.getElementById('rightCombineInput').value.replace(/\s+/g,'');
-            if (valRaw === eqData.ansStr) { alert("🚀 中段心算直通判定成功！"); executeDirectSuccess(); return; }
-            if(eval(convertToStandardMath(valRaw)) === eval(convertToStandardMath(eqData.midStepStr))) {
-                alert("🎯 乘除優先運算處理正確！即將進行最終加減。");
-                document.getElementById('interactiveStageBox').innerHTML = `${eqData.targetLetter} = ${convertToRichMathHTML(eqData.midStepStr)}`;
-                document.getElementById('stageCombineArea').style.display="none"; document.getElementById('stageFinalArea').style.display="block";
-                renderMathSteps(3);
-            } else {
-                session.wrongAttemptsInTeaching++; alert("❌ 計算有誤，請先仔細算一下乘除或平方部分。"); checkTeachingWrongCounter('teachingWrongArea2');
-            }
-        } catch(e) { session.wrongAttemptsInTeaching++; alert("算式轉換異常，請重新計算！"); }
+        let valRaw = document.getElementById('rightCombineInput').value.replace(/\s+/g,'');
+        if (valRaw === eqData.ansStr) { alert("🚀 太優秀了！你直接心算出了最終答案！直通判定成功！"); executeDirectSuccess(); return; }
+
+        let uR = convertToStandardMath(valRaw);
+        let tR = convertToStandardMath(eqData.midStepStr);
+
+        if(uR === tR || eval(uR) === eval(tR)) {
+            alert("🎯 乘除與指數部分優先處理正確！即將進行最終合併。");
+            document.getElementById('interactiveStageBox').innerHTML = `${eqData.targetLetter} = ${convertToRichMathHTML(eqData.midStepStr)}`;
+            document.getElementById('stageCombineArea').style.display="none"; document.getElementById('stageFinalArea').style.display="block";
+            document.getElementById('finalAnsInput').value = ""; renderMathSteps(3);
+        } else {
+            session.wrongAttemptsInTeaching++; alert("❌ 中段階段計算有誤，請先仔細算一下乘法、除法或平方的部分。");
+            checkTeachingWrongCounter('teachingWrongArea2');
+        }
     }
 
     function executeFinal() {
@@ -791,224 +936,84 @@
             document.getElementById('stageFinalArea').style.display="none"; document.getElementById('nextBtn').style.display="block";
             setupNextButtonLabel(); renderMathSteps(4);
         } else {
-            session.wrongAttemptsInTeaching++; alert("最終數值不對，請確認最後加減！"); checkTeachingWrongCounter('teachingWrongArea3');
+            session.wrongAttemptsInTeaching++; alert("最終數值不對，請重新做最後的合併與加減！");
+            checkTeachingWrongCounter('teachingWrongArea3');
         }
     }
 
     function setupNextButtonLabel() {
         let n = document.getElementById('nextBtn');
         if(session.currentMode==='CHALLENGE') {
-            n.innerText = (session.endCondition==='TIME_LIMIT') ? "下一道狂熱瘋狂題 ➡️" : ((session.currentIdx < session.questionList.length-1)?"前進下一題 ➡️":"🏁 挑戰結束，查看數據報告");
+            n.innerText = (session.endCondition==='TIME_LIMIT') ? "下一道瘋狂求值題 ➡️" : ((session.currentIdx < session.questionList.length-1)?"前進下一題 ➡️":"🏁 挑戰結束，查看報告");
         }
-        else if(session.currentMode==='REVIEW') n.innerText = (session.currentIdx === session.totalQuestions-1 || cacheStorage.EQ.wrongBook.length===0)?"🏁 結束溫習返回目錄":"下一道魔王關卡 ➡️";
-        else n.innerText="↩️ 講解完畢，返回目錄";
+        else if(session.currentMode==='REVIEW') n.innerText = (session.currentIdx === session.totalQuestions-1 || cacheStorage.EQ.wrongBook.length===0)?"🏁 結束溫習返回主選單":"下一道魔王關卡 ➡️";
+        else n.innerText="↩️ 講解完畢，返回選單";
     }
 
     function advanceQuestion() {
-        if(session.currentMode=='CHALLENGE') {
-            if(session.endCondition=='COUNT') {
-                if(session.currentIdx < session.questionList.length-1) { session.currentIdx++; loadEquationToStage(); } else { switchSetupConfig('STATS'); }
-            } else if(session.endCondition=='TARGET_SCORE') {
-                if(session.score >= session.targetScore) { alert("🏆 達標成功！完美通關！"); switchSetupConfig('STATS'); }
+        if(session.currentMode==='CHALLENGE') {
+            if(session.endCondition==='COUNT') {
+                if(session.currentIdx < session.questionList.length-1) { session.currentIdx++; loadEquationToStage(); } else { calculateAndRenderStats(); showPanel('step_stats_panel'); }
+            } else if(session.endCondition==='TARGET_SCORE') {
+                if(session.score >= session.targetScore) { alert("🏆 積分達標！你已經完全掌握跨學科公式求值的精髓了！"); calculateAndRenderStats(); showPanel('step_stats_panel'); }
                 else { session.currentIdx++; session.questionList.push(generateQuestion(session.selectedType)); loadEquationToStage(); }
             } else { session.currentIdx++; session.questionList.push(generateQuestion(session.selectedType)); loadEquationToStage(); }
-        } else if(session.currentMode=='REVIEW') {
+        } else if(session.currentMode==='REVIEW') {
             let comb = [...cacheStorage.EQ.wrongBook];
-            if(comb.length==0 || session.currentIdx >= wrongQuestionBank.length-1) { alert("🏁 錯題重溫結束！"); resetToMainMenu(false); }
-            else { session.currentIdx++; loadEquationToStage(); }
+            if(comb.length===0 || session.currentIdx >= session.totalQuestions-1) { alert("🏁 錯題重溫結束！"); resetToMainMenu(false); }
+            else { session.currentIdx++; session.totalQuestions=comb.length; session.questionList=comb; loadEquationToStage(); }
         } else resetToMainMenu(false);
     }
 
     function startInteractiveSolving() {
-        document.getElementById('solveBtn').style.display="none"; document.getElementById('teachingZone').style.display="flex";
-        document.getElementById('stageCampArea').style.display="block"; document.getElementById('stageCombineArea').style.display="none"; document.getElementById('stageFinalArea').style.display="none";
-        document.getElementById('campLabelContainer').innerHTML = `<label><strong>第一步：請寫出主體公式在代入數字後的括號結構式：</strong></label>`;
+        document.getElementById('solveBtn').style.display="none";
+        document.getElementById('teachingZone').style.display="flex";
+        document.getElementById('stageCampArea').style.display="block";
+        document.getElementById('stageCombineArea').style.display="none";
+        document.getElementById('stageFinalArea').style.display="none";
+        document.getElementById('rightCampInput').value = "";
+        
+        document.getElementById('campLabelContainer').innerHTML = `<label style='color:#ffffff; text-shadow:1px 1px 2px rgba(0,0,0,0.8);'><strong>第一步：請寫出主體公式在代入數字後的括號算式：</strong></label>`;
         renderMathSteps(1); checkTeachingWrongCounter('teachingWrongArea1');
-    }
-
-    function renderMathSteps(stepNum) {
-        let box = document.getElementById('mathStepBox');
-        let html = "";
-        
-        let s1Class = (stepNum === 1) ? "step-line active-line" : "step-line";
-        let s2Class = (stepNum === 2) ? "step-line active-line" : "step-line";
-        let s3Class = (stepNum === 3) ? "step-line active-line" : "step-line";
-        let s4Class = (stepNum === 4) ? "step-line active-line" : "step-line";
-
-        html += `<span class="${s1Class}">[1] 定立括號結構: ${eqData.targetLetter} = ${eqData.formulaName}</span>`;
-        
-        if (stepNum >= 2) {
-            html += `<span class="${s2Class}">[2] 對號代入變數: ${eqData.targetLetter} = ${eqData.targetRightCamp}</span>`;
-        }
-        if (stepNum >= 3) {
-            html += `<span class="${s3Class}">[3] 先乘除及平方: ${eqData.targetLetter} = ${eqData.midStepStr}</span>`;
-        }
-        if (stepNum >= 4) {
-            html += `<span class="${s4Class}">[4] 最終運算求值: ${eqData.targetLetter} = ${eqData.ansStr} 🎯</span>`;
-        }
-        
-        box.innerHTML = html;
     }
 
     function resetToMainMenu(nc) {
         if(nc && (document.getElementById('step2').classList.contains('active')||document.getElementById('step3').classList.contains('active'))) {
-            if(!confirm("確定要中止離開挑戰嗎？分數將不予記錄。")) return;
+            let msg = "確定要中途退出挑戰嗎？";
+            if(!confirm(msg)) return;
         }
         stopSessionTimer(); document.getElementById('nextBtn').style.display="none"; document.getElementById('teachingZone').style.display="none";
         cloudSaveData(); updateReviewMenuUI(); showPanel('step1');
     }
 
-    function updateReviewMenuUI() {
-        let cnt = (cacheStorage.EQ.wrongBook || []).length;
-        document.getElementById('reviewTitle').innerText = `🗂️ 錯題庫 (${cnt})`;
-        let card = document.getElementById('reviewModeCard');
-        if(cnt === 0) {
-            card.classList.add('disabled');
-        } else {
-            card.classList.remove('disabled');
-        }
+    function renderMathSteps(code) {
+        const box = document.getElementById('mathStepBox');
+        let html = `<div class="step-line ${code===1?'active-line':''}">[主體公式]：${convertToRichMathHTML(eqData.targetLetter + " = " + eqData.formulaName)}<br>[已知條件]：${eqData.variablesText}</div>`;
+        if(code>=2) html+=`<div class="step-line ${code===2?'active-line':''}">[第一步：群組變數代入] <br>&rArr; ${eqData.targetLetter} = ${convertToRichMathHTML(eqData.targetRightCamp)}</div>`;
+        if(code>=3) html+=`<div class="step-line ${code===3?'active-line':''}">[第二步：乘除/次方優先] <br>&rArr; ${eqData.targetLetter} = ${convertToRichMathHTML(eqData.midStepStr)}</div>`;
+        if(code>=4) html+=`<div class='step-line active-line'>[最終精確求值] <br>&rArr; 答案 ${eqData.targetLetter} = ${eqData.ansStr} 🎯</div>`;
+        box.innerHTML = html;
     }
 
     function calculateAndRenderStats() {
         const tb = document.getElementById('statsTableBody'); if(!tb) return; tb.innerHTML='';
         let tr=document.createElement('tr'); tr.className="section-title";
-        tr.innerHTML=`<th colspan="7">⚖️ 羅坤山大數據：代入求值矩陣分析</th>`; tb.appendChild(tr);
+        tr.innerHTML=`<th colspan="7">⚖️ 跨學科公式代求值數據分析</th>`; tb.appendChild(tr);
         
         let sObj = cacheStorage.EQ.stats;
         for(let k in sObj) {
             let r=sObj[k], t=r.total, fRate=t>0?Math.round((r.firstMatch/t)*100)+'%':'0%', cRate=t>0?Math.round(((r.firstMatch+r.retryMatch)/t)*100)+'%':'0%';
-            tb.innerHTML+=`<tr><td style='text-align:left;font-weight:bold;padding-left:15px;'>${r.name}</td><td>${t}</td><td style='color:var(--success); font-weight:bold;'>${r.firstMatch}</td><td style='color:#b45309;'>${r.retryMatch}</td><td style='color:var(--danger);'>${r.failed}</td><td style='background:#f0fdf4; font-weight:bold;'>${fRate}</td><td style='background:#eff6ff; font-weight:bold;'>${cRate}</td></tr>`;
+            tb.innerHTML+=`<tr><td style='text-align:left;font-weight:bold;'>${r.name}</td><td>${t}</td><td style='color:var(--success); font-weight:bold;'>${r.firstMatch}</td><td style='color:#b45309;'>${r.retryMatch}</td><td style='color:var(--danger);'>${r.failed}</td><td style='background:#f0fdf4;'>${fRate}</td><td style='background:#eff6ff;'>${cRate}</td></tr>`;
         }
-        document.getElementById('statsWrongCount').innerText = (cacheStorage.EQ.wrongBook || []).length;
-        document.getElementById('printStudentInfo').innerHTML = `<span class="info-span">學生班別: ${userRawClass}</span> | <span class="info-span">學號座號: ${userRawSeat}</span>`;
+        let sWr=(cacheStorage.EQ.wrongBook||[]).length; document.getElementById('statsWrongCount').innerText=sWr;
+        document.getElementById('printStudentInfo').innerHTML = currentRole==='GUEST'?`<span>臨時訪客多變數練習數據摘要</span>` : `<span>學生班別: ${userRawClass}</span> | 學號: ${userRawSeat}`;
         document.getElementById('printDate').innerText = `產出時間: `+new Date().toLocaleString();
     }
 
-    function initLocalFallback(tC, tS) {
-        try {
-            let local = localStorage.getItem(`MultiVarCache_${tC}-${tS}`);
-            if(local) { 
-                let p = JSON.parse(local); 
-                if(p.stats?.[1]) { cacheStorage.EQ = p; wrongQuestionBank = p.wrongBook || []; return; } 
-            }
-        } catch(e){}
-        cacheStorage.EQ = { wrongBook: [], stats: getInitialStatsObject() };
-        wrongQuestionBank = [];
-    }
-
-    function setupLayoutForStudent() {
-        document.querySelectorAll('.id-student-only').forEach(el=>el.style.display="flex"); document.querySelectorAll('.id-teacher-only').forEach(el=>el.style.display="none");
-        updateReviewMenuUI(); showPanel('step1');
-    }
-
-    function setupLayoutForTeacher() {
-        document.querySelectorAll('.id-student-only').forEach(el=>el.style.display="none");
-        document.querySelectorAll('.id-teacher-only').forEach(el=>el.style.display="block");
-        switchSetupConfig('STATS');
-    }
-
-    function setupTeacherDropdowns() {
-        let clsSel = document.getElementById('queryClass');
-        let seatSel = document.getElementById('querySeat');
-        if(!clsSel || !seatSel) return;
-
-        let classes = ["1A", "1B", "1C", "1D"];
-        clsSel.innerHTML = classes.map(c => `<option value="${c}">${c} 班</option>`).join('');
-
-        let seats = [];
-        for(let i=1; i<=36; i++) { seats.push(i); }
-        seatSel.innerHTML = seats.map(s => `<option value="${s}">${s} 號</option>`).join('');
-    }
-
-    function loadTargetStudentDataByTeacher() {
-        let cClass = document.getElementById('queryClass').value;
-        let cSeat = document.getElementById('querySeat').value;
-        userRawClass = cClass;
-        userRawSeat = cSeat;
-        initLocalFallback(cClass, cSeat);
-        calculateAndRenderStats();
-        alert(`成功調閱 ${cClass}班 ${cSeat}號 學習軌跡矩陣！`);
-    }
-
-    function loadWholeClassDataForPrint() {
-        let cClass = document.getElementById('queryClass').value;
-        let renderZone = document.getElementById('printOutputRenderZone');
-        renderZone.innerHTML = ''; 
-        
-        let foundAny = false;
-        for(let seat=1; seat<=40; seat++) {
-            let key = `MultiVarCache_${cClass}-${seat}`;
-            let dataRaw = localStorage.getItem(key);
-            if(dataRaw) {
-                foundAny = true;
-                let parsed = JSON.parse(dataRaw);
-                let stats = parsed.stats || getInitialStatsObject();
-                let wrongBook = parsed.wrongBook || [];
-                
-                let pageDiv = document.createElement('div');
-                pageDiv.className = "print-student-page";
-                
-                let statsRows = "";
-                for(let k in stats) {
-                    let r = stats[k];
-                    let t = r.total;
-                    let fRate = t>0 ? Math.round((r.firstMatch/t)*100)+'%' : '0%';
-                    let cRate = t>0 ? Math.round(((r.firstMatch+r.retryMatch)/t)*100)+'%' : '0%';
-                    statsRows += `
-                        <tr>
-                            <td style="text-align:left; font-weight:bold; padding-left:15px;">${r.name}</td>
-                            <td>${t}</td>
-                            <td style="color:var(--success); font-weight:bold;">${r.firstMatch}</td>
-                            <td style="color:#b45309;">${r.retryMatch}</td>
-                            <td style="color:var(--danger);">${r.failed}</td>
-                            <td style="background:#f0fdf4; font-weight:bold;">${fRate}</td>
-                            <td style="background:#eff6ff; font-weight:bold;">${cRate}</td>
-                        </tr>
-                    `;
-                }
-
-                pageDiv.innerHTML = `
-                    <div style="border-bottom: 2px solid #000; padding-bottom:10px; margin-bottom: 20px;">
-                        <h2 style="margin:0; text-align:left; color:#000;">🏫 學生個人練習數據報告 - ${cClass}班 ${String(seat).padStart(2, '0')} 號</h2>
-                        <p style="margin:5px 0 0 0; font-size:12px; color:#555;">產出日期：${new Date().toLocaleString()}</p>
-                    </div>
-                    <table class="stats-table">
-                        <thead>
-                            <tr>
-                                <th>題型結構</th>
-                                <th>挑戰次數</th>
-                                <th>首答對</th>
-                                <th>補答對</th>
-                                <th>失敗 / 破譯</th>
-                                <th>首發率</th>
-                                <th>綜合率</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${statsRows}
-                        </tbody>
-                    </table>
-                    <h4 style="margin-top:20px; color:#c00;">📘 目前未消滅錯題庫數量：${wrongBook.length} 題</h4>
-                `;
-                renderZone.appendChild(pageDiv);
-            }
+    function logoutSession() {
+        if(confirm("確定登出系統嗎？")) {
+            stopSessionTimer(); userRawClass=""; userRawSeat=""; toggleLoginMode('STUDENT'); showPanel('step0_login');
         }
-
-        if(!foundAny) {
-            alert(`在瀏覽器快取中未找到 ${cClass} 班任何學生的練習數據！`);
-            calculateAndRenderStats(); 
-        } else {
-            alert(`全班報告打包完成！`);
-        }
-    }
-
-    function logoutSession() { 
-        if(confirm("確定登出求值系統並重置身分嗎？")) { 
-            stopSessionTimer(); 
-            localStorage.clear(); 
-            userRawClass=""; userRawSeat=""; 
-            window.location.replace("index.html"); 
-        } 
     }
 </script>
 </body>
