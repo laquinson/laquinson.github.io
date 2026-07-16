@@ -117,19 +117,21 @@
         .camp-tip { font-size: 14px; color: #f1f5f9; background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; border-left: 4px solid var(--primary); margin-bottom: 10px; }
         .timer-badge { background: var(--danger); color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; display: none; }
         
+        /* 🎨 分數渲染專屬樣式 */
+        .math-expr-wrapper { display: inline-flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px; vertical-align: middle; }
+        .math-fraction { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; vertical-align: middle; padding: 0 4px; font-size: inherit; }
+        .fraction-numerator { text-align: center; padding-bottom: 2px; }
+        .fraction-denominator { text-align: center; padding-top: 2px; border-top: 2px solid white; width: 100%; }
+
         table.stats-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; background: rgba(255,255,255,0.95); border-radius: 12px; overflow: hidden; color: #0f172a; }
         table.stats-table th, table.stats-table td { border: 1px solid #cbd5e1; padding: 10px; text-align: center; }
         table.stats-table th { background: #e2e8f0; color: #1e293b; font-weight: bold; }
         table.stats-table tr.section-title th { background: #2b5797; color: white; text-align: left; padding-left: 15px; }
         
-        .screenshot-footer { margin-top: 50px; font-size: 14px; font-weight: 600; color: #ffffff; text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.9); text-align: center; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @media print { .non-print, button, .top-right-nav, .top-left-nav { display: none !important; } .step-panel { display: none !important; } #step_stats_panel { display: block !important; } }
     </style>
 </head>
 <body>
-
-<div id="loadingOverlay" class="loading-overlay" style="display: none;"><div class="spinner"></div><p id="loadingText" style="margin-top:15px;font-weight:bold;">連線中...</p></div>
 
 <div id="topLeftNav" class="top-left-nav">
     <button class="top-nav-btn" onclick="handleNavigationBack()" title="返回主目錄">&lt; 返回主目錄</button>
@@ -141,7 +143,6 @@
     <button class="top-nav-btn logout-btn-text" onclick="logoutSession()" title="登出">登出</button>
 </div>
 
-<!-- 主介面 -->
 <div class="container" id="mainContainer" style="display: none;">
     <!-- 導航首頁 -->
     <div id="step1" class="step-panel dashboard-wrapper">
@@ -205,7 +206,7 @@
         <h2>🛠️ 方程有問必答 (自訂輸入自動生成天秤)</h2>
         <div class="form-group">
             <label for="eqInput">✏️ 請輸入一元一次方程（例如：`x + 5 = 12` 或 `3x - 4 = 14`）：</label>
-            <input type="text" id="eqInput" placeholder="example: 3x - 4 = 14" title="請輸入一元一次方程">
+            <input type="text" id="eqInput" placeholder="例如: 3x - 4 = 14" title="請輸入一元一次方程">
         </div>
         <button onclick="handleManualSolverInput()" class="btn-success">開始天秤等量公理教學引導</button>
     </div>
@@ -262,35 +263,17 @@
             <div class="teaching-column">
                 <h3>🛠️ 模擬天秤兩邊施加相同操作</h3>
                 
-                <div id="stageCampArea" style="display:none;">
+                <!-- 🌟 動態整合面板：所有步驟都在這裡動態切換，精簡極致 -->
+                <div id="dynamicStepArea" style="display:none;">
                     <div class="block-form">
-                        <div class="camp-tip"><b>天秤原則一：</b>為了孤立未知數，天秤左邊與右邊必須<b>同時加上或減去</b>什麼數字？</div>
-                        <label id="campLabelContainer" for="rightCampInput">請輸入操作（例如：兩邊同時 +4 或兩邊同時 -5）</label>
-                        <input type="text" id="rightCampInput" placeholder="例如: +4 或 -5" title="兩邊同時加減操作">
-                        <button onclick="executeCampStage()">執行天秤同步加減</button>
-                        <div id="teachingWrongArea1"></div>
+                        <div class="camp-tip" id="stepTip"></div>
+                        <label id="stepLabel" for="stepInput"></label>
+                        <input type="text" id="stepInput" placeholder="請輸入操作" title="天秤操作輸入框">
+                        <button onclick="executeCurrentStep()" id="stepBtn" class="btn-success">執行操作</button>
+                        <div id="teachingWrongArea"></div>
                     </div>
                 </div>
-                
-                <div id="stageCombineArea" style="display: none;">
-                    <div class="block-form">
-                        <div class="camp-tip"><b>天秤原則二：</b>目前常數已歸零。為了讓左邊只剩一個 x，天秤兩邊要<b>同時乘以或除以</b>什麼數？</div>
-                        <label for="rightCombineInput"><strong>請輸入操作（例如：兩邊同時 /3 或兩邊同時 *2）：</strong></label>
-                        <input type="text" id="rightCombineInput" placeholder="邀請填寫乘除操作" title="兩邊同時乘除操作">
-                        <button onclick="executeCombineStage()">執行天秤同步乘除</button>
-                        <div id="teachingWrongArea2"></div>
-                    </div>
-                </div>
-                
-                <div id="stageFinalArea" style="display: none;">
-                    <div class="block-form">
-                        <div class="camp-tip"><b>天秤完全合攏：</b>恭喜！此時天秤左邊只剩 x，右邊即為最終的平衡數值。</div>
-                        <label for="finalAnsInput"><strong>最終步：未知數 x 的解為：</strong></label>
-                        <input type="text" id="finalAnsInput" placeholder="填入最終數值" title="未知數最終解數值">
-                        <button onclick="executeFinal()" class="btn-success">宣告最終守恆值</button>
-                        <div id="teachingWrongArea3"></div>
-                    </div>
-                </div>
+
             </div>
             <div class="teaching-column"><h3>📝 天秤動態模擬黑板</h3><div class="math-step-box" id="mathStepBox"></div></div>
         </div>
@@ -299,7 +282,7 @@
 
     <!-- 學習報告與管理後台 -->
     <div id="step_stats_panel" class="step-panel">
-        <h2>📊 學生一元一次方程學習報告</h2>
+        <h2 id="reportMainHeading">📊 學生一元一次方程學習報告</h2>
         <div id="printOutputRenderZone">
             <div class="print-student-page">
                 <h3 id="printStudentInfo" style="text-align:left;margin-bottom:10px;">學生班別：載入中...</h3>
@@ -319,38 +302,62 @@
 <script>
     try { Object.defineProperty(window, 'X-Content-Type-Options', { value: 'nosniff', writable: false }); } catch(e){}
 
-    const GAS_API_URL = "";
-    let currentRole = "STUDENT", activeTeacherId = "", userRawClass = "", userRawSeat = "";
+    let currentRole = "STUDENT", userRawClass = "", userRawSeat = "";
     let cacheStorage = { EQ: { wrongBook: [], stats: {} } };
-    let timerInterval = null; let timeLeft = 0; let wrongQuestionBank = [];
+    let timerInterval = null; let timeLeft = 0;
     
     let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, targetScore: 5, timeLimitSetting: 300, currentIdx: 0, score: 0, selectedType: 'MIX', questionList: [], currentTypeNum: 1, wrongAttemptsThisQuestion: 0, wrongAttemptsInTeaching: 0, hasAddedToWrongBookThisQuestion: false };
-    let eqData = { type: 1, rawStr: "", formulaTitle: "", leftExpr: "", rightExpr: "", opStep1: "", opStep2: "", midLeft: "", midRight: "", ansStr: "" };
+    
+    // 🌟 升級為 Engine 2.0 動態 JSON 解析結構
+    let eqData = { type: 1, title: "", eqStr: "", leftExpr: "", rightExpr: "", ans: 0, steps: [] };
+    let currentTeachStep = 0;
 
     const EQUATION_BANK = {
-        1: { name: "型 I：基本加減型 (x ± a = b)", generate: () => {
+        1: { name: "型 I：基本加減型 (x ± a = b)", generate: (t) => {
             let x = Math.floor(Math.random() * 25) + 1, a = Math.floor(Math.random() * 20) + 1, type = Math.random() > 0.5 ? '+' : '-';
-            return `基本加減型 | x ${type} ${a} = ${type === '+' ? x + a : x - a} | ${x} | ${type==='+'?'-':'+'}${a} | /1`;
+            let b = type === '+' ? x + a : x - a;
+            let op1 = type === '+' ? `-${a}` : `+${a}`;
+            return JSON.stringify({ typeNum: t, title: "基本加減型", eq: `x ${type} ${a} = ${b}`, ans: x, steps: [ {op: op1, left: "x", right: x} ] });
         }},
-        2: { name: "型 II：基本乘法型 (ax = b)", generate: () => {
-            let x = Math.floor(Math.random() * 12) + 1, a = Math.floor(Math.random() * 8) + 2;
-            return `基本乘法型 | ${a}x = ${a * x} | ${x} | +0 | /${a}`;
+        2: { name: "型 II：基本乘除型 (ax=b 或 x/a=b)", generate: (t) => {
+            if (Math.random() > 0.5) {
+                let x = Math.floor(Math.random() * 12) + 1, a = Math.floor(Math.random() * 8) + 2;
+                return JSON.stringify({ typeNum: t, title: "基本乘法型", eq: `${a}x = ${a*x}`, ans: x, steps: [ {op: `/${a}`, left: "x", right: x} ] });
+            } else {
+                let a = Math.floor(Math.random() * 8) + 2, b_val = Math.floor(Math.random() * 12) + 1, x = a * b_val;
+                return JSON.stringify({ typeNum: t, title: "基本除法(分數)型", eq: `x / ${a} = ${b_val}`, ans: x, steps: [ {op: `*${a}`, left: "x", right: x} ] });
+            }
         }},
-        3: { name: "型 III：兩步綜合型 (ax ± b = c)", generate: () => {
+        3: { name: "型 III：兩步綜合型 (ax ± b = c)", generate: (t) => {
             let x = Math.floor(Math.random() * 12) + 1, a = Math.floor(Math.random() * 6) + 2, b = Math.floor(Math.random() * 15) + 1, type = Math.random() > 0.5 ? '+' : '-';
-            return `兩步綜合型 | ${a}x ${type} ${b} = ${type === '+' ? a * x + b : a * x - b} | ${x} | ${type==='+'?'-':'+'}${b} | /${a}`;
+            let c = type === '+' ? a * x + b : a * x - b;
+            let op1 = type === '+' ? `-${b}` : `+${b}`;
+            return JSON.stringify({ typeNum: t, title: "兩步綜合型", eq: `${a}x ${type} ${b} = ${c}`, ans: x, steps: [ {op: op1, left: `${a}x`, right: a*x}, {op: `/${a}`, left: "x", right: x} ] });
         }},
-        4: { name: "型 IV：進階負數整除型 (ax ± b = c，含負解)", generate: () => {
+        4: { name: "型 IV：進階負數型 (含負整數解)", generate: (t) => {
             let x = Math.floor(Math.random() * 15) - 7; if(x===0) x = 5;
             let a = Math.floor(Math.random() * 5) + 2, b = Math.floor(Math.random() * 20) + 1, type = Math.random() > 0.5 ? '+' : '-';
-            return `進階負數型 | ${a}x ${type} ${b} = ${type === '+' ? a * x + b : a * x - b} | ${x} | ${type==='+'?'-':'+'}${b} | /${a}`;
+            let c = type === '+' ? a * x + b : a * x - b;
+            let op1 = type === '+' ? `-${b}` : `+${b}`;
+            return JSON.stringify({ typeNum: t, title: "進階負數型", eq: `${a}x ${type} ${b} = ${c}`, ans: x, steps: [ {op: op1, left: `${a}x`, right: a*x}, {op: `/${a}`, left: "x", right: x} ] });
+        }},
+        5: { name: "型 V：括號分數型 ((ax±b)/c = d)", generate: (t) => {
+            let x = Math.floor(Math.random() * 10) + 1, a = Math.floor(Math.random() * 5) + 2, b = Math.floor(Math.random() * 10) + 1, type = Math.random() > 0.5 ? '+' : '-';
+            let num = type === '+' ? a * x + b : a * x - b;
+            let c = Math.floor(Math.random() * 5) + 2;
+            while (num % c !== 0) { c = Math.floor(Math.random() * 5) + 2; }
+            let d = num / c;
+            let op1 = `*${c}`, op2 = type === '+' ? `-${b}` : `+${b}`, op3 = `/${a}`;
+            return JSON.stringify({
+                typeNum: t, title: "分數包含型", eq: `(${a}x ${type} ${b}) / ${c} = ${d}`, ans: x,
+                steps: [ {op: op1, left: `${a}x ${type} ${b}`, right: num}, {op: op2, left: `${a}x`, right: a*x}, {op: op3, left: "x", right: x} ]
+            });
         }}
     };
 
-    // 🚀 核心優化：將生成函式明確置頂，阻絕提升編譯期 Undefined 死鎖
     function generateEquation(typeCode) {
-        let t = typeCode === 'MIX' ? ['1', '2', '3', '4'][Math.floor(Math.random() * 4)] : typeCode;
-        return EQUATION_BANK[t].generate();
+        let t = typeCode === 'MIX' ? ['1', '2', '3', '4', '5'][Math.floor(Math.random() * 5)] : typeCode;
+        return EQUATION_BANK[t].generate(t);
     }
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -359,6 +366,12 @@
         currentRole = savedRole;
         userRawClass = localStorage.getItem("Active_User_Class") || "GUEST";
         userRawSeat = localStorage.getItem("Active_User_Seat") || "VISITOR";
+
+        // 防禦：清除舊版格式快取以確保 JSON 引擎運作正常
+        if(localStorage.getItem('EqEngineVersion') !== '2.0') {
+            localStorage.removeItem(`EquationsCache_${userRawClass}-${userRawSeat}`);
+            localStorage.setItem('EqEngineVersion', '2.0');
+        }
 
         let badge = document.getElementById('topCenterAccount');
         if (badge) {
@@ -371,7 +384,14 @@
                 cacheStorage.EQ = { wrongBook: [], stats: getInitialStatsObject() };
             }
         }
-        renderTypeSelectOptions();
+        document.getElementById('typeSelect').innerHTML = `
+            <option value="1">1. 型 I：基本加減型 (x ± a = b)</option>
+            <option value="2">2. 型 II：基本乘除型 (ax=b 或 x/a=b)</option>
+            <option value="3">3. 型 III：兩步綜合型 (ax ± b = c)</option>
+            <option value="4">4. 型 IV：進階負數型 (含負整數解)</option>
+            <option value="5">5. 型 V：括號分數型 ((ax±b)/c = d)</option>
+            <option value="MIX" selected>6. 🔀 隨機天秤混合大亂鬥</option>
+        `;
         updateReviewMenuUI();
         showPanel('step1');
     });
@@ -379,9 +399,10 @@
     function getInitialStatsObject() {
         return {
             1: { name: "型 I: 基本加減方程", total:0, firstMatch:0, retryMatch:0, failed:0 },
-            2: { name: "型 II: 基本乘法方程", total:0, firstMatch:0, retryMatch:0, failed:0 },
+            2: { name: "型 II: 基本乘除方程", total:0, firstMatch:0, retryMatch:0, failed:0 },
             3: { name: "型 III: 兩步綜合方程", total:0, firstMatch:0, retryMatch:0, failed:0 },
-            4: { name: "型 IV: 進階負數方程", total:0, firstMatch:0, retryMatch:0, failed:0 }
+            4: { name: "型 IV: 進階負數方程", total:0, firstMatch:0, retryMatch:0, failed:0 },
+            5: { name: "型 V: 括號分數方程", total:0, firstMatch:0, retryMatch:0, failed:0 }
         };
     }
 
@@ -417,28 +438,57 @@
         session.questionList = [];
 
         if (condition === 'COUNT') {
-            stopSessionTimer();
-            session.totalQuestions = total;
-            for (let i = 0; i < total; i++) {
-                session.questionList.push(generateEquation(session.selectedType));
-            }
+            stopSessionTimer(); session.totalQuestions = total;
+            for (let i = 0; i < total; i++) session.questionList.push(generateEquation(session.selectedType));
         } else {
             session.totalQuestions = 999; 
             session.questionList.push(generateEquation(session.selectedType));
             if (condition === 'TIME_LIMIT') {
                 let sec = parseInt(document.getElementById('timeLimitSelect').value) || 300;
-                session.timeLimitSetting = sec;
-                startSessionTimer(sec);
+                session.timeLimitSetting = sec; startSessionTimer(sec);
             }
         }
         loadEquationToStage();
     }
 
     function initReviewSession() {
-        stopSessionTimer(); wrongQuestionBank = [...cacheStorage.EQ.wrongBook]; if (wrongQuestionBank.length === 0) return;
-        session.currentMode = 'REVIEW'; session.currentIdx = 0; session.totalQuestions = wrongQuestionBank.length; session.questionList = wrongQuestionBank;
+        stopSessionTimer(); let wrongList = [...cacheStorage.EQ.wrongBook]; if (wrongList.length === 0) return;
+        session.currentMode = 'REVIEW'; session.currentIdx = 0; session.totalQuestions = wrongList.length; session.questionList = wrongList;
         document.getElementById('timeModeResultSummary').style.display = 'none';
         loadEquationToStage();
+    }
+
+    // 🌟 將分數格式轉換為標準教科書寫法
+    function convertToRichMathHTML(str) {
+        let clean = str.replace(/\^2/g, '²').replace(/\*/g, '&times;');
+        if (clean.includes('/')) {
+            let parts = clean.split('/');
+            let num = parts[0].trim(); let den = parts[1].trim(); 
+            let leftPart = "";
+            if (num.includes('=')) {
+                let eqIdx = num.indexOf('='); leftPart = num.substring(0, eqIdx + 1) + " "; num = num.substring(eqIdx + 1).trim();
+            }
+            if (num.startsWith('(') && num.endsWith(')')) num = num.substring(1, num.length - 1);
+            return `${leftPart}<div class="math-expr-wrapper"><div class="math-fraction"><div class="fraction-numerator">${num}</div><div class="fraction-denominator">${den}</div></div></div>`;
+        }
+        return clean;
+    }
+
+    function parseEquationStructure(str) {
+        eqData.rawStr = str;
+        try {
+            if (!str.startsWith('{')) return false; // 防止舊版非 JSON 格式導致崩潰
+            let parsed = JSON.parse(str);
+            session.currentTypeNum = parsed.typeNum;
+            eqData.type = parsed.typeNum;
+            eqData.title = parsed.title;
+            let sides = parsed.eq.split('=');
+            eqData.leftExpr = sides[0].trim();
+            eqData.rightExpr = sides[1].trim();
+            eqData.ans = parsed.ans;
+            eqData.steps = parsed.steps;
+            return true;
+        } catch(e) { console.error(e); return false; }
     }
 
     function loadEquationToStage() {
@@ -448,48 +498,28 @@
         document.getElementById('initialFeedbackArea').innerHTML = '';
         document.getElementById('ansInput').disabled = false; document.getElementById('ansInput').value = '';
         document.getElementById('retryInputWrapper').style.display = 'none'; document.getElementById('ansRetryInput').value = '';
-        document.getElementById('teachingWrongArea1').innerHTML = ''; document.getElementById('teachingWrongArea2').innerHTML = ''; document.getElementById('teachingWrongArea3').innerHTML = '';
 
         let expr = session.questionList[session.currentIdx];
         if(!parseEquationStructure(expr)) { alert("天秤數據初始化失敗！"); resetToMainMenu(false); return; }
         if(session.currentMode==='CHALLENGE') { cacheStorage.EQ.stats[session.currentTypeNum].total++; cloudSaveData(); }
         
         const step2Title = document.getElementById('step2Title');
-        if(step2Title) {
-            step2Title.innerText = (session.currentMode === 'REVIEW') ? "👹 魔王錯題重溫挑戰" : "請解出未知數的值使天秤維持平衡";
-        }
+        if(step2Title) step2Title.innerText = (session.currentMode === 'REVIEW') ? "👹 魔王錯題重溫挑戰" : "請解出未知數的值使天秤維持平衡";
         
         document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`;
         document.getElementById('displayEq').innerHTML = `
-            <div style="font-size: 20px; color:#cbd5e1; margin-bottom:10px;">📊 題型：${eqData.formulaTitle}</div>
-            <div style="font-size: 32px; color:#fff; letter-spacing:1px;">${eqData.leftExpr} = ${eqData.rightExpr}</div>
+            <div style="font-size: 20px; color:#cbd5e1; margin-bottom:10px;">📊 題型：${eqData.title}</div>
+            <div style="font-size: 32px; color:#fff; letter-spacing:1px; display:flex; align-items:center; justify-content:center; gap:10px;">
+                ${convertToRichMathHTML(eqData.leftExpr)} <span style="margin: 0 10px;">=</span> ${convertToRichMathHTML(eqData.rightExpr)}
+            </div>
         `;
         showPanel('step2');
         updateProgressBarUI();
     }
 
-    function parseEquationStructure(str) {
-        eqData.rawStr = str;
-        try {
-            let typeMarker = str.split('#|#')[1] || "1";
-            session.currentTypeNum = parseInt(typeMarker); eqData.type = session.currentTypeNum;
-            let core = str.split('#|#')[0].trim(); let parts = core.split('|');
-            eqData.formulaTitle = parts[0].trim(); let eqStr = parts[1].trim();
-            eqData.ansStr = parts[2].trim(); eqData.opStep1 = parts[3].trim(); eqData.opStep2 = parts[4].trim();
-
-            let sideParts = eqStr.split('=');
-            eqData.leftExpr = sideParts[0].trim(); eqData.rightExpr = sideParts[1].trim();
-
-            let aMatch = eqData.leftExpr.match(/(-?\d*)x/);
-            let coeff = (aMatch && aMatch[1]) ? (aMatch[1] === '-' ? -1 : (aMatch[1] === '' ? 1 : parseInt(aMatch[1]))) : 1;
-            eqData.midLeft = coeff === 1 ? "x" : `${coeff}x`; eqData.midRight = String(coeff * parseInt(eqData.ansStr));
-            return true;
-        } catch(e) { console.error(e); return false; }
-    }
-
     function checkFirstAnswer() {
         let userAns = (session.wrongAttemptsThisQuestion === 1) ? document.getElementById('ansRetryInput').value.replace(/\s+/g,'') : document.getElementById('ansInput').value.replace(/\s+/g,'');
-        if(userAns === eqData.ansStr) {
+        if(userAns === eqData.ans.toString()) {
             if(session.currentMode==='CHALLENGE' && session.wrongAttemptsThisQuestion===0) cacheStorage.EQ.stats[session.currentTypeNum].firstMatch++;
             showPanel('step3'); executeDirectSuccess();
         } else {
@@ -512,7 +542,7 @@
     }
 
     function executeDirectSuccess() {
-        document.getElementById('interactiveStageBox').innerHTML = `⚖️ 天秤完全水平守恆！未知數解：<span style='color:#fffb00;'>x = ${eqData.ansStr}</span> 🎯`;
+        document.getElementById('interactiveStageBox').innerHTML = `<span style="white-space: nowrap;">⚖️ 破譯守恆成功：x = <span style="color:#00ff00; font-weight:900;">${eqData.ans}</span></span>`;
         document.getElementById('teachingZone').style.display="none"; document.getElementById('solveBtn').style.display="none"; document.getElementById('nextBtn').style.display="block";
         let f = document.getElementById('feedbackArea'); f.className="feedback success";
         if(session.currentMode==='CHALLENGE') {
@@ -527,79 +557,112 @@
     }
 
     function executeFinalFailure() {
-        document.getElementById('interactiveStageBox').innerHTML = `方程式： ${eqData.leftExpr} = ${eqData.rightExpr}`;
+        document.getElementById('interactiveStageBox').innerHTML = `<div style="display:flex; align-items:center; justify-content:center; gap:10px;">${convertToRichMathHTML(eqData.leftExpr)} <span style="margin: 0 10px;">=</span> ${convertToRichMathHTML(eqData.rightExpr)}</div>`;
         document.getElementById('nextBtn').style.display="none"; document.getElementById('solveBtn').style.display="block"; document.getElementById('teachingZone').style.display="none";
         let f=document.getElementById('feedbackArea'); f.className="feedback error";
-        f.innerHTML = "❌ 連續失衡。請點擊下方開啟「天秤等量公理模擬器」逐步動態操作解題. ";
+        f.innerHTML = "❌ 連續失衡。請點擊下方開啟「天秤等量公理模擬器」逐步動態操作解題。";
     }
 
+    // 🌟 升級版動態 JSON 解析與 N 步驟引導引擎
     function startInteractiveSolving() {
         document.getElementById('solveBtn').style.display="none"; document.getElementById('teachingZone').style.display="flex";
-        document.getElementById('stageCampArea').style.display="block"; document.getElementById('stageCombineArea').style.display="none"; document.getElementById('stageFinalArea').style.display="none";
-        document.getElementById('rightCampInput').value = ""; renderMathSteps(1); checkTeachingWrongCounter('teachingWrongArea1');
+        currentTeachStep = 0; renderMathSteps(); loadTeachingStepUI();
     }
 
-    function executeCampStage() {
-        let uOp = document.getElementById('rightCampInput').value.replace(/\s+/g,'');
-        if(uOp === eqData.opStep1 || (eqData.opStep1==="+0" && (uOp==="0" || uOp==="+0"))) {
-            alert("🎯 等量加減成功！");
-            document.getElementById('interactiveStageBox').innerHTML = `⚖️ 同時操作後：${eqData.midLeft} = ${eqData.midRight}`;
-            document.getElementById('stageCampArea').style.display="none"; document.getElementById('stageCombineArea').style.display="block";
-            document.getElementById('rightCombineInput').value = ""; renderMathSteps(2);
-        } else { session.wrongAttemptsInTeaching++; alert("❌ 天秤傾斜！常數未歸零。"); checkTeachingWrongCounter('teachingWrongArea1'); }
+    function loadTeachingStepUI() {
+        document.getElementById('dynamicStepArea').style.display="block";
+        document.getElementById('stepInput').value = ""; document.getElementById('teachingWrongArea').innerHTML = "";
+        
+        if (currentTeachStep < eqData.steps.length) {
+            let stepObj = eqData.steps[currentTeachStep];
+            let opType = stepObj.op.charAt(0);
+            let tip = (opType === '+' || opType === '-') ? `<b>天秤等量：</b>請在兩邊同時加上或減去數字。` : `<b>天秤等量：</b>請在兩邊同時乘以或除以數字。`;
+            
+            document.getElementById('stepTip').innerHTML = tip;
+            document.getElementById('stepLabel').innerHTML = `<strong>請輸入操作 (例如：${stepObj.op})：</strong>`;
+            document.getElementById('stepInput').placeholder = "請輸入 + - * / 及數字";
+            document.getElementById('stepBtn').innerText = "執行天秤操作";
+            document.getElementById('stepBtn').onclick = executeCurrentStep;
+        } else {
+            document.getElementById('stepTip').innerHTML = `<b>天秤完全合攏：</b>恭喜！此時天秤左邊只剩 x，右邊即為最終的平衡數值。`;
+            document.getElementById('stepLabel').innerHTML = `<strong>未知數 x 的解為：</strong>`;
+            document.getElementById('stepInput').placeholder = "填入最終數值";
+            document.getElementById('stepBtn').innerText = "宣告最終守恆值";
+            document.getElementById('stepBtn').onclick = executeFinal;
+        }
     }
 
-    function executeCombineStage() {
-        let uOp = document.getElementById('rightCombineInput').value.replace(/\s+/g,'');
-        if(uOp === eqData.opStep2 || (eqData.opStep2==="/1" && uOp==="/1")) {
-            alert("🎯 等量乘除成功！");
-            
-            // 🎯 核心修改：動態將 /3 轉成教科書寫法 ÷ 3，並顯示未計算的除式
-            let displayOp = eqData.opStep2.replace('/', ' ÷ ').replace('*', ' × ');
-            document.getElementById('interactiveStageBox').innerHTML = `<span style="white-space: nowrap;">⚖️ 準備求值：x = ${eqData.midRight}${displayOp}</span>`;
-            
-            document.getElementById('stageCombineArea').style.display="none"; 
-            document.getElementById('stageFinalArea').style.display="block";
-            document.getElementById('finalAnsInput').value = ""; 
-            renderMathSteps(3);
-        } else { 
-            session.wrongAttemptsInTeaching++; 
-            alert("❌ 失衡！請正確處理未知數前的係數。"); 
-            checkTeachingWrongCounter('teachingWrongArea2'); 
+    function executeCurrentStep() {
+        let uOp = document.getElementById('stepInput').value.replace(/\s+/g,'');
+        let stepObj = eqData.steps[currentTeachStep];
+        
+        if (uOp === eqData.ans.toString()) { alert("🚀 心算秒殺成功！"); executeDirectSuccess(); return; }
+
+        if (uOp === stepObj.op || (stepObj.op === "+0" && (uOp === "0" || uOp === "+0"))) {
+            alert("🎯 天秤操作成功！"); currentTeachStep++;
+            let currentLeft = currentTeachStep > 0 ? eqData.steps[currentTeachStep-1].left : eqData.leftExpr;
+            let currentRight = currentTeachStep > 0 ? eqData.steps[currentTeachStep-1].right : eqData.rightExpr;
+            document.getElementById('interactiveStageBox').innerHTML = `<div style="display:flex; align-items:center; justify-content:center; gap:10px;">⚖️ 同時操作後：${convertToRichMathHTML(currentLeft)} <span style="margin: 0 10px;">=</span> ${currentRight}</div>`;
+            renderMathSteps(); loadTeachingStepUI();
+        } else {
+            session.wrongAttemptsInTeaching++; alert("❌ 操作不正確！");
+            let area = document.getElementById('teachingWrongArea');
+            if (session.wrongAttemptsInTeaching >= 3) {
+                area.innerHTML = `<div style="margin-top:10px; padding:10px; background:#fef2f2; border-left:4px solid var(--danger); border-radius:6px; font-weight:bold; color:var(--danger);">💡 提示秘鑰：本階段需施加 <b>${stepObj.op}</b>，最終解為 <b>${eqData.ans}</b></div>`;
+            }
         }
     }
 
     function executeFinal() {
-        if(document.getElementById('finalAnsInput').value.replace(/\s+/g,'') === eqData.ansStr) {
-            // 🎯 核心優化：加上 white-space: nowrap 確保未知數與數值絕對維持在同一行
-            document.getElementById('interactiveStageBox').innerHTML = `<span style="white-space: nowrap;">⚖️ 破譯守恆成功：x = <span style="color:#00ff00; font-weight:900;">${eqData.ansStr}</span></span>`;
-            document.getElementById('stageFinalArea').style.display="none"; 
-            document.getElementById('nextBtn').style.display="block";
-            setupNextButtonLabel(); 
-            renderMathSteps(4);
+        if(document.getElementById('stepInput').value.replace(/\s+/g,'') === eqData.ans.toString()) {
+            document.getElementById('interactiveStageBox').innerHTML = `<span style="white-space: nowrap;">⚖️ 破譯守恆成功：x = <span style="color:#00ff00; font-weight:900;">${eqData.ans}</span></span>`;
+            document.getElementById('dynamicStepArea').style.display="none"; document.getElementById('nextBtn').style.display="block";
+            setupNextButtonLabel(); currentTeachStep++; renderMathSteps();
         } else { 
-            session.wrongAttemptsInTeaching++; 
-            alert("最終數值不對！"); 
-            checkTeachingWrongCounter('teachingWrongArea3'); 
+            session.wrongAttemptsInTeaching++; alert("最終數值不對！"); 
+            let area = document.getElementById('teachingWrongArea');
+            if (session.wrongAttemptsInTeaching >= 3) {
+                area.innerHTML = `<div style="margin-top:10px; padding:10px; background:#fef2f2; border-left:4px solid var(--danger); border-radius:6px; font-weight:bold; color:var(--danger);">💡 提示：最終解為 <b>${eqData.ans}</b></div>`;
+            }
         }
     }
-    function renderMathSteps(code) {
+
+    function renderMathSteps() {
         const box = document.getElementById('mathStepBox');
-        let displayOp = eqData.opStep2.replace('/', ' ÷ ').replace('*', ' × ');
+        let html = `<div class="step-line ${currentTeachStep===0?'active-line':''}">[初始天秤狀態]：<br><div style="display:flex; align-items:center; gap:5px; margin-top:5px;">${convertToRichMathHTML(eqData.leftExpr)} <span>=</span> ${convertToRichMathHTML(eqData.rightExpr)}</div></div>`;
         
-        let html = `<div class="step-line ${code===1?'active-line':''}">[初始天秤狀態]：${eqData.leftExpr} = ${eqData.rightExpr}</div>`;
-        if(code>=2) html+=`<div class="step-line ${code===2?'active-line':''}">[等量加減化簡] (兩邊同時 ${eqData.opStep1})<br>&rArr; ${eqData.midLeft} = ${eqData.midRight}</div>`;
-        // 🎯 核心修改：黑板同步顯示過渡除式，而非直接跳答案
-        if(code>=3) html+=`<div class="step-line ${code===3?'active-line':''}">[等量乘除孤立] (兩邊同時 ${eqData.opStep2})<br>&rArr; x = ${eqData.midRight}${displayOp}</div>`;
-        if(code>=4) html+=`<div class='step-line active-line'>[天秤最終守恆解] <br>&rArr; 答案 x = ${eqData.ansStr} 🎯</div>`;
+        for (let i = 0; i < eqData.steps.length; i++) {
+            if (currentTeachStep > i) {
+                let step = eqData.steps[i];
+                let displayOp = step.op.replace('/', ' ÷ ').replace('*', ' × ');
+                html += `<div class="step-line ${currentTeachStep===(i+1)?'active-line':''}">[同施加 ${displayOp}] <br><div style="display:flex; align-items:center; gap:5px; margin-top:5px;">&rArr; ${convertToRichMathHTML(step.left)} <span>=</span> ${step.right}</div></div>`;
+            }
+        }
+        
+        if (currentTeachStep > eqData.steps.length) {
+            html += `<div class='step-line active-line'>[天秤最終守恆解] <br>&rArr; <span style="white-space:nowrap;">答案 x = ${eqData.ans} 🎯</span></div>`;
+        }
         box.innerHTML = html;
     }
 
-    function checkTeachingWrongCounter(targetAreaId) {
-        let area = document.getElementById(targetAreaId);
-        if (session.wrongAttemptsInTeaching >= 3) {
-            area.innerHTML = `<div style="margin-top:10px; padding:10px; background:#fef2f2; border-left:4px solid var(--danger); border-radius:6px; font-weight:bold; color:var(--danger);">💡 平衡提示秘鑰：解為 <b>${eqData.ansStr}</b>，第一階段需施加 <b>${eqData.opStep1}</b></div>`;
-        } else { area.innerHTML = ""; }
+    function handleManualSolverInput() {
+        let rawInput = document.getElementById('eqInput').value.trim();
+        if(!rawInput.includes("=")) { alert("請輸入包含 '=' 號的有效方程式！"); return; }
+        let clean = rawInput.replace(/\s+/g,''), sides = clean.split('='), left = sides[0], right = sides[1];
+        let aMatch = left.match(/(-?\d*)x/);
+        let a = (aMatch && aMatch[1]) ? (aMatch[1]==='-'?-1:(aMatch[1]===''?1:parseInt(aMatch[1]))) : 1;
+        let bMatch = left.replace(/(-?\d*)x/, '').match(/([+-]\d+)/), b = bMatch ? parseInt(bMatch[1]) : 0, c = parseInt(right);
+        let x = (c - b) / a;
+        if(x % 1 !== 0) { alert("為保證教學形象化，請輸入整數解方程！"); return; }
+
+        session.currentMode = 'SOLVER'; session.totalQuestions = 1; session.currentIdx = 0;
+        let steps = [];
+        if (b !== 0) steps.push({op: b>=0?`-${b}`:`+${Math.abs(b)}`, left: `${a}x`, right: c-b});
+        if (a !== 1) steps.push({op: `/${a}`, left: "x", right: x});
+        if (steps.length === 0) steps.push({op: "+0", left: "x", right: x});
+
+        session.questionList = [JSON.stringify({ typeNum: 1, title: "自訂天秤引導", eq: `${a}x ${b>=0?'+':'-'} ${Math.abs(b)} = ${c}`.replace(/\s+\+/g, ' +').replace(/\s+-/g, ' -'), ans: x, steps: steps })];
+        loadEquationToStage();
     }
 
     function setupNextButtonLabel() {
@@ -644,26 +707,11 @@
     }
 
     function handleNavigationBack() { stopSessionTimer(); window.location.replace("home.html"); }
-    function renderTypeSelectOptions() { document.getElementById('typeSelect').innerHTML = `<option value="1">1. 型 I：基本加減型 (x ± a = b)</option><option value="2">2. 型 II：基本乘法型 (ax = b)</option><option value="3">3. 型 III：兩步綜合型 (ax ± b = c)</option><option value="4">4. 型 IV：進階負數型 (含負整數解)</option><option value="MIX" selected>5. 🔀 隨機天秤混合大亂鬥</option>`; }
+    function toggleConditionUI() { let c = document.querySelector('input[name="endCondition"]:checked').value; document.getElementById('countInputWrapper').style.display = c === 'COUNT' ? 'block' : 'none'; document.getElementById('targetScoreInputWrapper').style.display = c === 'TARGET_SCORE' ? 'block' : 'none'; document.getElementById('timeLimitInputWrapper').style.display = c === 'TIME_LIMIT' ? 'block' : 'none'; }
     function updateReviewMenuUI() { let c = (cacheStorage.EQ.wrongBook || []).length; document.getElementById('reviewModeCard').classList.toggle('disabled', c===0); document.getElementById('reviewTitle').innerText = `失衡錯題庫 (${c})`; }
     function cloudSaveData() { if (["GUEST"].includes(currentRole) || !userRawClass || !userRawSeat) return; try { localStorage.setItem(`EquationsCache_${userRawClass}-${userRawSeat}`, JSON.stringify(cacheStorage.EQ)); } catch(e){} }
     function initLocalFallback(tC, tS) { try { let local = localStorage.getItem(`EquationsCache_${tC}-${tS}`); if(local) { let p = JSON.parse(local); if(p.stats?.[1]) { cacheStorage.EQ = p; return; } } } catch(e){} cacheStorage.EQ = { wrongBook: [], stats: getInitialStatsObject() }; }
     function logoutSession() { if(confirm("確定登出系統嗎？")) { stopSessionTimer(); localStorage.clear(); window.location.replace("index.html"); } }
-
-    function handleManualSolverInput() {
-        let rawInput = document.getElementById('eqInput').value.trim();
-        if(!rawInput.includes("=")) { alert("請輸入包含 '=' 號的有效方程式！"); return; }
-        let clean = rawInput.replace(/\s+/g,''), sides = clean.split('='), left = sides[0], right = sides[1];
-        let aMatch = left.match(/(-?\d*)x/);
-        let a = (aMatch && aMatch[1]) ? (aMatch[1]==='-'?-1:(aMatch[1]===''?1:parseInt(aMatch[1]))) : 1;
-        let bMatch = left.replace(/(-?\d*)x/, '').match(/([+-]\d+)/), b = bMatch ? parseInt(bMatch[1]) : 0, c = parseInt(right);
-        let x = (c - b) / a;
-        if(x % 1 !== 0) { alert("為保證教學形象化，請輸入整數解方程！"); return; }
-
-        session.currentMode = 'SOLVER'; session.totalQuestions = 1; session.currentIdx = 0;
-        session.questionList = [`自訂天秤引導 | ${a}x ${b>=0?'+':''} ${b} = ${c} | ${x} | ${b>=0?'-':'+'}${Math.abs(b)} | /${a} #|#1`].map(s => s.replace(/\s+\+/g, ' +').replace(/\s+-/g, ' -'));
-        loadEquationToStage();
-    }
 
     function calculateAndRenderStats() {
         const tb = document.getElementById('statsTableBody'); if(!tb) return; tb.innerHTML='';
