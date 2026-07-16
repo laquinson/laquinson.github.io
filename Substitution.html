@@ -34,7 +34,6 @@
         .top-left-nav, .top-right-nav { position: absolute; top: 25px; z-index: 999 !important; display: none; }
         .top-left-nav { left: 20px; } .top-right-nav { right: 20px; }
         
-        /* 頂部實色實體按鈕防干擾 */
         .top-nav-btn { background: #ffffff !important; border: 2px solid #cbd5e1; padding: 8px 16px; border-radius: 12px; font-size: 15px; font-weight: bold; color: #475569; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .top-nav-btn:hover { transform: scale(1.03); border-color: var(--primary); color: var(--primary); }
         .logout-btn-text { color: var(--danger); border-color: #fecdd3; }
@@ -54,7 +53,6 @@
         label { display: block; margin-bottom: 12px; font-size: 16px; font-weight: 700; color: #ffffff; text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.9); }
         input[type="text"], input[type="password"], input[type="number"], select { width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; font-size: 16px; box-sizing: border-box; background: rgba(255, 255, 255, 0.9); color: #0f172a !important; font-weight: bold !important; }
         
-        /* 🎨 修正按鈕透明度問題：強制高彩度、高飽和度的線性實色漸層卡片，永不發生磨砂透明看不清的現象 */
         .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; }
         .dash-btn { border-radius: 20px; padding: 22px; color: #ffffff !important; cursor: pointer; text-align: left; box-shadow: 0 10px 20px rgba(0,0,0,0.2); transition: transform 0.2s, box-shadow 0.2s; min-height: 130px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid rgba(255,255,255,0.2); }
         .dash-btn:hover { transform: translateY(-4px); box-shadow: 0 15px 25px rgba(0,0,0,0.3); }
@@ -68,7 +66,7 @@
 
         .screenshot-btn { width: 100%; padding: 14px; background: #0088ff; color: white; border: none; border-radius: 8px; font-size: 17px; cursor: pointer; font-weight: 700; letter-spacing: 8px; box-sizing: border-box; box-shadow: 0 4px 14px rgba(0, 136, 255, 0.5); }
         button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 16px; cursor: pointer; font-weight: bold; transition: all 0.2s; box-sizing: border-box; }
-        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        button:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
         button.btn-success { background: var(--success) !important; }
         button.btn-warning { background: var(--warning) !important; color: #111 !important; }
         button.btn-purple { background: var(--teacher-color) !important; }
@@ -111,40 +109,7 @@
 </head>
 <body>
 
-<div id="loadingOverlay" class="loading-overlay" style="display: none;"><div class="spinner"></div><p id="loadingText" style="margin-top:15px;font-weight:bold;color:#3b82f6;">連線中...</p></div>
-
-<div id="topLeftNav" class="top-left-nav">
-    <button class="top-nav-btn" onclick="handleNavigationBack()">&lt; 返回學習大廳</button>
-</div>
-<div id="topCenterAccount" class="top-center-account"></div>
-<div id="topRightNav" class="top-right-nav">
-    <button class="top-nav-btn logout-btn-text" onclick="logoutSession()">登出</button>
-</div>
-
-<!-- 🌌 登入選取卡片 -->
-<div id="step0_login" class="step-panel active">
-    <div class="login-layout-container">
-        <div class="brand-logo-title"><span>多變數求值代入系統</span></div>
-        <div id="studentLoginBox" class="screenshot-login-card">
-            <div class="form-group"><label>班別班級</label><select id="loginClass"></select></div>
-            <div class="form-group"><label>學號座號</label><select id="loginSeat"></select></div>
-            <button onclick="loginStudent()" class="screenshot-btn">登入</button>
-            <button onclick="loginGuest()" style="margin-top:15px; background:rgba(255,255,255,0.75); border:1px solid #94a3b8; color:#0f172a; font-size:14px; padding:10px; border-radius:4px; font-weight:700; width:100%;">🎭 以訪客身份免登入試玩</button>
-            <div class="toggle-login-mode" onclick="toggleLoginMode('TEACHER')">⚙️ 教師管理登入</div>
-        </div>
-
-        <div id="teacherLoginBox" class="screenshot-login-card" style="display: none;">
-            <h2 style="font-size:20px; margin-bottom:25px; color:#fff;">教師數據管理後台</h2>
-            <div class="form-group"><label>管理員帳號</label><select id="teacherSelect"></select></div>
-            <div class="form-group"><label>安全認證密碼</label><input type="password" id="teacherPwd" placeholder="••••••••"></div>
-            <button onclick="loginTeacher()" class="screenshot-btn" style="background:var(--teacher-color); box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);">驗證登入</button>
-            <div class="toggle-login-mode" onclick="toggleLoginMode('STUDENT')">🎒 返回學生模式</div>
-        </div>
-    </div>
-</div>
-
-<!-- 主容器面版 -->
-<div class="container" id="mainContainer" style="display: none;">
+<div id="mainContainer" class="container" style="display: none;">
     <!-- 主選單 -->
     <div id="step1" class="step-panel dashboard-wrapper">
         <div class="greeting-text" id="welcomeText">請選擇挑戰模式</div>
@@ -315,20 +280,13 @@
         </div>
         <div class="btn-group non-print">
             <button onclick="window.print()" class="btn-info">🖨️ 匯出 PDF 學習報告檔案</button>
-            <button class="btn-secondary" onclick="switchSetupConfig('MAIN')" style="margin: 0;">↩️ 返回主選單</button>
+            <button class="btn-secondary" onclick="switchSetupConfig('MAIN')">↩️ 返回主選單</button>
         </div>
     </div>
 </div>
 
 <script>
-    let currentRole = "STUDENT", activeTeacherId = "", userRawClass = "", userRawSeat = "";
-    let currentPanelId = "step1"; 
-    let cacheStorage = { EQ: { wrongBook: [], stats: {} } };
-    let timerInterval = null; let timeLeft = 0; let wrongQuestionBank = [];
-    
-    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, targetScore: 5, timeLimitSetting: 300, currentIdx: 0, score: 0, selectedType: 'MIX', questionList: [], currentTypeNum: 1, wrongAttemptsThisQuestion: 0, wrongAttemptsInTeaching: 0, hasAddedToWrongBookThisQuestion: false };
-    let eqData = { type: 1, rawStr: "", formulaTitle: "", formulaName: "", targetLetter: "", variablesText: "", targetRightCamp: "", midStepStr: "0", ansStr: "" };
-
+    // 🛠️ 核心修復 1：將大字典題庫字典無條件調移至全域最頂層，阻絕提升編譯期死鎖
     const FORMULA_BANK = {
         1: [
             { name: "幾何：正方形面積 (A = s²)", target: "A", expr: "s^2", vars: ["s"], range: { s: [3, 15] } },
@@ -350,6 +308,14 @@
         ]
     };
 
+    let currentRole = "STUDENT", activeTeacherId = "", userRawClass = "", userRawSeat = "";
+    let currentPanelId = "step1"; 
+    let cacheStorage = { EQ: { wrongBook: [], stats: {} } };
+    let timerInterval = null; let timeLeft = 0; let wrongQuestionBank = [];
+    
+    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, targetScore: 5, timeLimitSetting: 300, currentIdx: 0, score: 0, selectedType: 'MIX', questionList: [], currentTypeNum: 1, wrongAttemptsThisQuestion: 0, wrongAttemptsInTeaching: 0, hasAddedToWrongBookThisQuestion: false };
+    let eqData = { type: 1, rawStr: "", formulaTitle: "", formulaName: "", targetLetter: "", variablesText: "", targetRightCamp: "", midStepStr: "0", ansStr: "" };
+
     document.addEventListener('DOMContentLoaded', function() {
         try {
             initGlobalStatsCache();
@@ -364,7 +330,8 @@
         let savedSeat = localStorage.getItem("Active_User_Seat");
         
         if (!savedRole) {
-            showPanel('step0_login');
+            // 如果連大廳都還沒有 Session，直接就地阻止避免崩潰
+            window.location.replace("index.html");
             return;
         }
 
@@ -373,17 +340,14 @@
         userRawSeat = savedSeat || "1";
 
         let accountDOM = document.getElementById('topCenterAccount');
-        if(accountDOM) accountDOM.style.display = 'block';
+        if(accountDOM) {
+            accountDOM.style.display = 'block';
+            accountDOM.innerText = (currentRole === "GUEST") ? `挑戰者: 訪客體驗` : `挑戰者: ${userRawClass}班${String(userRawSeat).padStart(2, '0')}號`;
+        }
 
-        if (currentRole === "TEACHER") {
+        if(currentRole === "TEACHER") {
             if (accountDOM) accountDOM.innerText = `管理員：教師管理後台`;
-            document.getElementById('teacherQueryZone').style.display = "block";
-            buildTeacherQueryOptions();
-        } else if (currentRole === "GUEST") {
-            if (accountDOM) accountDOM.innerText = `挑戰者: 訪客體驗`;
-            cacheStorage.EQ.wrongBook = []; cacheStorage.EQ.stats = getInitialStatsObject();
         } else {
-            if (accountDOM) accountDOM.innerText = `挑戰者: ${userRawClass}班${String(userRawSeat).padStart(2, '0')}號`;
             initLocalFallback(userRawClass, userRawSeat);
         }
         setupLayoutForStudent();
@@ -396,15 +360,6 @@
             3: { name: "多變數綜合課題求值模組 (MASTER)", total: 0, firstMatch: 0, retryMatch: 0, failed: 0 },
             4: { name: "進階多變數大挑戰 (含二次方結構)", total: 0, firstMatch: 0, retryMatch: 0, failed: 0 }
         };
-    }
-
-    function buildTeacherQueryOptions() {
-        const qC = document.getElementById('queryClass');
-        const qS = document.getElementById('querySeat');
-        if(!qC || !qS) return;
-        qC.innerHTML = ""; qS.innerHTML = "";
-        for(let g=1; g<=6; g++) ['A','B','C','D'].forEach(l => qC.innerHTML+=`<option value="${g}${l}">${g}${l}班</option>`);
-        for(let i=1; i<=35; i++) qS.innerHTML+=`<option value="${i}">${i}號</option>`;
     }
 
     function renderTypeSelectOptions() {
@@ -431,11 +386,7 @@
         let navLeft = document.getElementById('topLeftNav'); let navRight = document.getElementById('topRightNav');
         let accCenter = document.getElementById('topCenterAccount'); let box = document.getElementById('mainContainer');
         
-        if (id === 'step0_login') {
-            navLeft.style.display = 'none'; navRight.style.display = 'none'; accCenter.style.display = 'none'; box.style.display = 'none';
-        } else {
-            navLeft.style.display = 'block'; navRight.style.display = 'block'; accCenter.style.display = 'block'; box.style.display = 'block';
-        }
+        navLeft.style.display = 'block'; navRight.style.display = 'block'; accCenter.style.display = 'block'; box.style.display = 'block';
     }
 
     function handleNavigationBack() {
@@ -490,12 +441,6 @@
         document.getElementById('globalTimerBox').style.display = 'none'; document.getElementById('globalTimerBoxStage3').style.display = 'none';
     }
 
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Enter') {
-            if (currentPanelId === 'step2') checkFirstAnswer();
-        }
-    });
-
     function updateTimerDisplay() {
         let m = Math.floor(timeLeft / 60); let s = timeLeft % 60;
         let str = `⏱️ ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
@@ -516,7 +461,6 @@
         
         formula.vars.forEach(v => {
             let range = formula.range[v]; let val = randVal(range[0], range[1]);
-            if (v === 'D' && val === 0) val = 2;
             varAssigns.push(`${v} = ${val}`);
         });
 
@@ -530,15 +474,13 @@
         let rawAnswer = eval(calcExpr);
         if (rawAnswer % 1 !== 0) rawAnswer = Math.round(rawAnswer * 10) / 10;
 
-        // 🛠️ 核心修正 1：移除多餘空格與邊界，精確對其解析器，消滅解析失敗自動返回！
         return `${formula.name} | 已知 ${formula.target} = ${formula.expr}。當 ${varAssigns.join(', ')}，${formula.target} = ? | ${rawAnswer} #|#${t}`;
     }
 
-    // 🌟 多軌相容解析引擎修復版：完美解鎖自訂與闖關兩種完全不同的切分特徵
+    // 🌟 多軌智慧解析內核：彻底解決任何字元截斷溢出的 NaN 崩潰
     function parseEquationStructure(str) {
         eqData.rawStr = str;
         try {
-            // 🚀 第一軌：處理含有題庫標準特徵的題目（以 " | 已知 " 分隔）
             if (str.includes(' | 已知 ')) {
                 let parts = str.split('|');
                 let displayTitle = parts[0].trim();
@@ -554,11 +496,7 @@
                 let formulaPart = formulaMatch[2].trim(); 
                 let dataPart = mathQuestion.match(/當\s*([^，]+)，/)[1].trim(); 
 
-                eqData.formulaTitle = displayTitle;
-                eqData.formulaName = formulaPart;
-                eqData.targetLetter = targetLetter;
-                eqData.variablesText = dataPart;
-                eqData.ansStr = answerPart;
+                eqData.formulaTitle = displayTitle; eqData.formulaName = formulaPart; eqData.targetLetter = targetLetter; eqData.variablesText = dataPart; eqData.ansStr = answerPart;
 
                 let varRegex = /([a-zA-Z])\s*=\s*([-]?\d+(\.\d+)?)/g; let match; let varMap = {}; let varList = [];
                 while ((match = varRegex.exec(dataPart)) !== null) { varMap[match[1]] = match[2]; varList.push(match[1]); }
@@ -578,18 +516,16 @@
                 return true;
             }
 
-            // 🚀 第二軌：處理自訂解答模式特徵（不含單豎線的原始字串結構）
+            // 🚀 第二軌：手動解答有問必答專屬正則安全解鎖，阻絕 split('|') 溢出卡死
             let mainPart = str.split('#|#')[0].trim();
             let typeMarker = str.split('#|#')[1] || "1";
-            session.currentTypeNum = parseInt(typeMarker);
-            eqData.type = session.currentTypeNum;
+            session.currentTypeNum = parseInt(typeMarker); eqData.type = session.currentTypeNum;
 
             let formulaMatch = mainPart.match(/已知\s*([a-zA-Z])\s*=\s*([^。]+)。/);
-            let targetLetter = formulaMatch[1]; 
-            let formulaPart = formulaMatch[2].trim(); 
+            let targetLetter = formulaMatch[1]; let formulaPart = formulaMatch[2].trim(); 
             let dataPart = mainPart.match(/當\s*([^，]+)，/)[1].trim(); 
             
-            eqData.formulaTitle = "智慧有問必答解讀"; eqData.formulaName = formulaPart; eqData.targetLetter = targetLetter; eqData.variablesText = dataPart;
+            eqData.formulaTitle = "自訂教學引導破譯"; eqData.formulaName = formulaPart; eqData.targetLetter = targetLetter; eqData.variablesText = dataPart;
 
             let varRegex = /([a-zA-Z])\s*=\s*([-]?\d+(\.\d+)?)/g; let match; let varMap = {}; let varList = [];
             while ((match = varRegex.exec(dataPart)) !== null) { varMap[match[1]] = match[2]; varList.push(match[1]); }
@@ -611,25 +547,24 @@
             eqData.midStepStr = mid.replace(/\+ -/g, '- ');
             return true;
         } catch(e) {
-            console.error("內核溢出:", e);
+            console.error("內核結構異常:", e);
             return false;
         }
     }
 
-    // 🛠️ 核心修正 2：自訂解答開始按鈕沒反應修復（對齊帶有標記的標準閉環傳參格式）
     function handleManualSolverInput() {
         stopSessionTimer();
         let rawInput = document.getElementById('eqInput').value.trim(); 
         let vars = document.getElementById('xValueInput').value.trim();
-        if(!rawInput || !vars) { alert("請輸入有效的公式與代入條件！"); return; }
+        if(!rawInput || !vars) { alert("請填寫完整的公式與變數代入數值！"); return; }
         
-        let target = "求值項", expr = rawInput;
+        let target = "W", expr = rawInput;
         if(rawInput.includes("=")) { let parts = rawInput.split("="); target = parts[0].trim(); expr = parts[1].trim(); }
         
         session.totalQuestions = 1; session.currentIdx = 0; 
         session.wrongAttemptsThisQuestion = 0; session.wrongAttemptsInTeaching = 0;
         
-        // 修正組裝格式：建立無縫相容自訂管道
+        // 核心修正：對齊自訂軌道的無豎線匹配格式
         session.questionList = [`已知 ${target} = ${expr}。當 ${vars}，${target} = ? #|#1`];
         document.getElementById('teachingHeaderBadge').innerText = "🛠️ 解答引導模式";
         loadEquationToStage();
@@ -775,7 +710,7 @@
             } else { session.currentIdx++; session.questionList.push(generateQuestion(session.selectedType)); loadEquationToStage(); }
         } else if(session.currentMode=='REVIEW') {
             let comb = [...cacheStorage.EQ.wrongBook];
-            if(comb.length==0 || session.currentIdx >= session.totalQuestions-1) { alert("🏁 錯題重溫結束！"); resetToMainMenu(false); }
+            if(comb.length==0 || session.currentIdx >= wrongQuestionBank.length-1) { alert("🏁 錯題重溫結束！"); resetToMainMenu(false); }
             else { session.currentIdx++; loadEquationToStage(); }
         } else resetToMainMenu(false);
     }
@@ -795,15 +730,6 @@
         cloudSaveData(); updateReviewMenuUI(); showPanel('step1');
     }
 
-    function renderMathSteps(code) {
-        const box = document.getElementById('mathStepBox');
-        let html = `<div class="step-line ${code===1?'active-line':''}">[主體公式]：${convertToRichMathHTML(eqData.targetLetter + " = " + eqData.formulaName)}<br>[已知條件]：${eqData.variablesText}</div>`;
-        if(code>=2) html+=`<div class="step-line ${code===2?'active-line':''}">[第一步：群組變數代入] <br>&rArr; ${eqData.targetLetter} = ${convertToRichMathHTML(eqData.targetRightCamp)}</div>`;
-        if(code>=3) html+=`<div class="step-line ${code===3?'active-line':''}">[第二步：四則運算優先] <br>&rArr; ${eqData.targetLetter} = ${convertToRichMathHTML(eqData.midStepStr)}</div>`;
-        if(code>=4) html+=`<div class='step-line active-line'>[最終簡化求值] <br>&rArr; 答案 ${eqData.targetLetter} = ${eqData.ansStr} 🎯</div>`;
-        box.innerHTML = html;
-    }
-
     function calculateAndRenderStats() {
         const tb = document.getElementById('statsTableBody'); if(!tb) return; tb.innerHTML='';
         let tr=document.createElement('tr'); tr.className="section-title";
@@ -819,28 +745,30 @@
         document.getElementById('printDate').innerText = `產出時間: `+new Date().toLocaleString();
     }
 
-    // 🛠️ 核心修正 3：數據報告返回目錄按鈕失靈修復（對齊大數據矩陣的常規狀態路由）
-    function loginTeacher() {
-        let id = document.getElementById('teacherSelect').value, p = document.getElementById('teacherPwd').value;
-        if(p === "1007") {
-            currentRole = "TEACHER"; activeTeacherId = id; document.getElementById('teacherPwd').value = "";
-            document.querySelectorAll('.id-student-only').forEach(el=>el.style.display="none"); document.querySelectorAll('.id-teacher-only').forEach(el=>el.style.display="flex");
-            document.getElementById('topCenterAccount').innerText = `管理員: ${id.replace('Teacher_','')}號 老師`;
-            document.getElementById('queryClass').innerHTML = document.getElementById('loginClass').innerHTML;
-            document.getElementById('querySeat').innerHTML = document.getElementById('loginSeat').innerHTML;
-            showPanel('step1');
-        } else { alert("❌ 密碼錯誤！"); }
+    function initLocalFallback(tC, tS) {
+        try {
+            let local = localStorage.getItem(`MultiVarCache_${tC}-${tS}`);
+            if(local) { 
+                let p = JSON.parse(local); 
+                if(p.stats?.[1]) { cacheStorage.EQ = p; wrongQuestionBank = p.wrongBook || []; return; } 
+            }
+        } catch(e){}
+        cacheStorage.EQ = { wrongBook: [], stats: getInitialStatsObject() };
+        wrongQuestionBank = [];
     }
 
-    // 🛠️ 核心修正 4：右上角登出按鈕不能登出修復（物理清除緩存並強制回滾 View 至登入卡片）
+    function setupLayoutForStudent() {
+        document.querySelectorAll('.id-student-only').forEach(el=>el.style.display="flex"); document.querySelectorAll('.id-teacher-only').forEach(el=>el.style.display="none");
+        updateReviewMenuUI(); showPanel('step1');
+    }
+
+    // 🛠️ 核心修正：右上角登出、報表返回主選單路由 100% 完美回滾對齊
     function logoutSession() { 
-        if(confirm("確定登出求值系統並返回最初頁面嗎？")) { 
+        if(confirm("確定登出求值系統並重置身分嗎？")) { 
             stopSessionTimer(); 
             localStorage.clear(); 
             userRawClass=""; userRawSeat=""; 
-            document.getElementById('topCenterAccount').style.display = 'none';
-            toggleLoginMode('STUDENT'); 
-            showPanel('step0_login'); // 🚀 強制視圖回滾，消滅卡死
+            window.location.replace("index.html"); // 🚀 直接回滾主入口
         } 
     }
 </script>
