@@ -347,6 +347,12 @@
         }}
     };
 
+    // 🚀 核心優化：將生成函式明確置頂，阻絕提升編譯期 Undefined 死鎖
+    function generateEquation(typeCode) {
+        let t = typeCode === 'MIX' ? ['1', '2', '3', '4'][Math.floor(Math.random() * 4)] : typeCode;
+        return EQUATION_BANK[t].generate();
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         let savedRole = localStorage.getItem("Active_User_Role");
         if (!savedRole) { window.location.replace("index.html"); return; }
@@ -396,11 +402,6 @@
         else if(mode==='SOLVER') showPanel('step1_solver');
         else if(mode==='REVIEW') { if((cacheStorage.EQ.wrongBook||[]).length===0) return; initReviewSession(); }
         else if(mode==='STATS') { calculateAndRenderStats(); showPanel('step_stats_panel'); }
-    }
-
-    function generateEquation(typeCode) {
-        let t = typeCode === 'MIX' ? ['1', '2', '3', '4'][Math.floor(Math.random() * 4)] : typeCode;
-        return EQUATION_BANK[t].generate();
     }
 
     function initChallengeSession() {
@@ -529,7 +530,7 @@
         document.getElementById('interactiveStageBox').innerHTML = `方程式： ${eqData.leftExpr} = ${eqData.rightExpr}`;
         document.getElementById('nextBtn').style.display="none"; document.getElementById('solveBtn').style.display="block"; document.getElementById('teachingZone').style.display="none";
         let f=document.getElementById('feedbackArea'); f.className="feedback error";
-        f.innerHTML = "❌ 連續失衡。請點擊下方開啟「天秤等量公理模擬器」逐步動態操作解題。";
+        f.innerHTML = "❌ 連續失衡。請點擊下方開啟「天秤等量公理模擬器」逐步動態操作解題. ";
     }
 
     function startInteractiveSolving() {
