@@ -133,14 +133,16 @@
 </head>
 <body>
 
+<div id="loadingOverlay" class="loading-overlay" style="display: none;"><div class="spinner"></div><p id="loadingText" style="margin-top:15px;font-weight:bold;">連線中...</p></div>
+
 <div id="topLeftNav" class="top-left-nav">
-    <button class="top-nav-btn" onclick="handleNavigationBack()" title="返回主目錄">&lt; 返回主目錄</button>
+    <button id="dynamicNavBtn" class="top-nav-btn" onclick="handleTopLeftNav()">&lt; 返回學習大廳</button>
 </div>
 
 <div id="topCenterAccount" class="top-center-account"></div>
 
 <div id="topRightNav" class="top-right-nav">
-    <button class="top-nav-btn logout-btn-text" onclick="logoutSession()" title="登出">登出</button>
+    <button class="top-nav-btn logout-btn-text" onclick="logoutSession()">🚪 登出</button>
 </div>
 
 <div class="container" id="mainContainer" style="display: none;">
@@ -263,7 +265,6 @@
             <div class="teaching-column">
                 <h3>🛠️ 模擬天秤兩邊施加相同操作</h3>
                 
-                <!-- 🌟 動態整合面板：所有步驟都在這裡動態切換，精簡極致 -->
                 <div id="dynamicStepArea" style="display:none;">
                     <div class="block-form">
                         <div class="camp-tip" id="stepTip"></div>
@@ -302,13 +303,12 @@
 <script>
     try { Object.defineProperty(window, 'X-Content-Type-Options', { value: 'nosniff', writable: false }); } catch(e){}
 
-    let currentRole = "STUDENT", userRawClass = "", userRawSeat = "";
+    let currentRole = "STUDENT", activeTeacherId = "", userRawClass = "", userRawSeat = "";
+    let currentPanelId = "step1";
     let cacheStorage = { EQ: { wrongBook: [], stats: {} } };
-    let timerInterval = null; let timeLeft = 0;
+    let timerInterval = null; let timeLeft = 0; let wrongQuestionBank = [];
     
     let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, targetScore: 5, timeLimitSetting: 300, currentIdx: 0, score: 0, selectedType: 'MIX', questionList: [], currentTypeNum: 1, wrongAttemptsThisQuestion: 0, wrongAttemptsInTeaching: 0, hasAddedToWrongBookThisQuestion: false };
-    
-    // 🌟 升級為 Engine 2.0 動態 JSON 解析結構
     let eqData = { type: 1, title: "", eqStr: "", leftExpr: "", rightExpr: "", ans: 0, steps: [] };
     let currentTeachStep = 0;
 
@@ -367,7 +367,6 @@
         userRawClass = localStorage.getItem("Active_User_Class") || "GUEST";
         userRawSeat = localStorage.getItem("Active_User_Seat") || "VISITOR";
 
-        // 防禦：清除舊版格式快取以確保 JSON 引擎運作正常
         if(localStorage.getItem('EqEngineVersion') !== '2.0') {
             localStorage.removeItem(`EquationsCache_${userRawClass}-${userRawSeat}`);
             localStorage.setItem('EqEngineVersion', '2.0');
@@ -412,22 +411,29 @@
         if(target) {
             target.classList.add('active');
             document.getElementById('mainContainer').style.display = 'block';
+            currentPanelId = id;
             
-            // 控制左上角返回鍵
             let navLeft = document.getElementById('topLeftNav');
             if (navLeft) {
                 navLeft.style.display = 'block'; 
-                navLeft.querySelector('button').innerText = (id === 'step1') ? '< 返回主目錄' : '< 返回選單';
+                const navBtn = document.getElementById('dynamicNavBtn');
+                if (navBtn) navBtn.innerText = (id === 'step1') ? "< 返回學習大廳" : "< 返回主目錄";
             }
             
-            // 控制右上角登出鍵 (補回這行即可顯示)
             let navRight = document.getElementById('topRightNav');
-            if (navRight) {
-                navRight.style.display = 'block';
-            }
+            if (navRight) navRight.style.display = 'block';
         }
     }
-    
+
+    function handleTopLeftNav() {
+        if (currentPanelId === 'step1') { 
+            stopSessionTimer(); 
+            window.location.replace("home.html"); 
+        } else {
+            resetToMainMenu(true); 
+        }
+    }
+
     function switchSetupConfig(mode) {
         session.currentMode = mode;
         if(mode==='CHALLENGE') showPanel('step1_challenge');
@@ -469,7 +475,6 @@
         loadEquationToStage();
     }
 
-    // 🌟 將分數格式轉換為標準教科書寫法
     function convertToRichMathHTML(str) {
         let clean = str.replace(/\^2/g, '²').replace(/\*/g, '&times;');
         if (clean.includes('/')) {
@@ -488,7 +493,7 @@
     function parseEquationStructure(str) {
         eqData.rawStr = str;
         try {
-            if (!str.startsWith('{')) return false; // 防止舊版非 JSON 格式導致崩潰
+            if (!str.startsWith('{')) return false; 
             let parsed = JSON.parse(str);
             session.currentTypeNum = parsed.typeNum;
             eqData.type = parsed.typeNum;
@@ -574,7 +579,6 @@
         f.innerHTML = "❌ 連續失衡。請點擊下方開啟「天秤等量公理模擬器」逐步動態操作解題。";
     }
 
-    // 🌟 升級版動態 JSON 解析與 N 步驟引導引擎
     function startInteractiveSolving() {
         document.getElementById('solveBtn').style.display="none"; document.getElementById('teachingZone').style.display="flex";
         currentTeachStep = 0; renderMathSteps(); loadTeachingStepUI();
@@ -717,15 +721,6 @@
         cloudSaveData(); updateReviewMenuUI(); showPanel('step1');
     }
 
-    function handleNavigationBack() { 
-        // 判斷目前是否在大廳 (step1)，是則回遊戲選擇畫面，否則退回模組選單
-        if(document.getElementById('step1').classList.contains('active')) {
-            stopSessionTimer(); 
-            window.location.replace("home.html"); 
-        } else {
-            resetToMainMenu(true); // 帶有防呆確認的退回選單機制
-        }
-    }
     function toggleConditionUI() { let c = document.querySelector('input[name="endCondition"]:checked').value; document.getElementById('countInputWrapper').style.display = c === 'COUNT' ? 'block' : 'none'; document.getElementById('targetScoreInputWrapper').style.display = c === 'TARGET_SCORE' ? 'block' : 'none'; document.getElementById('timeLimitInputWrapper').style.display = c === 'TIME_LIMIT' ? 'block' : 'none'; }
     function updateReviewMenuUI() { let c = (cacheStorage.EQ.wrongBook || []).length; document.getElementById('reviewModeCard').classList.toggle('disabled', c===0); document.getElementById('reviewTitle').innerText = `失衡錯題庫 (${c})`; }
     function cloudSaveData() { if (["GUEST"].includes(currentRole) || !userRawClass || !userRawSeat) return; try { localStorage.setItem(`EquationsCache_${userRawClass}-${userRawSeat}`, JSON.stringify(cacheStorage.EQ)); } catch(e){} }
