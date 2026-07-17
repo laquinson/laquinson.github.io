@@ -378,7 +378,7 @@
                 cacheStorage.EQ = { wrongBook: [], stats: getInitialStatsObject() };
             }
         }
-        renderTypeSelectOptions();
+        renderTypeSelectOptions(); // 補回函式阻絕死鎖
         updateReviewMenuUI();
         showPanel('step1');
     });
@@ -390,6 +390,20 @@
             3: { name: "多變數綜合公式求值", total:0, firstMatch:0, retryMatch:0, failed:0 },
             4: { name: "進階多變數大挑戰 (含次方結構)", total:0, firstMatch:0, retryMatch:0, failed:0 }
         };
+    }
+
+    // 🚀 補回缺漏之介面渲染函式
+    function renderTypeSelectOptions() {
+        const ts = document.getElementById('typeSelect');
+        if(ts) {
+            ts.innerHTML = `
+                <option value="1">1. 雙變數公式求值 (代入1~2個變數)</option>
+                <option value="2">2. 三變數公式求值 (代入2個變數)</option>
+                <option value="3">3. 多變數綜合公式求值 (代入3個變數)</option>
+                <option value="4">4. 進階多變數大挑戰 (含負數與二次方)</option>
+                <option value="MIX" selected>5. 🔀 跨學科公式混合大亂鬥</option>
+            `;
+        }
     }
 
     function showPanel(id) { 
@@ -544,7 +558,7 @@
         if(session.currentMode==='CHALLENGE') { cacheStorage.EQ.stats[session.currentTypeNum].total++; cloudSaveData(); }
         
         const step2Title = document.getElementById('step2Title');
-        if(step2Title) step2Title.innerText = (session.currentMode === 'REVIEW') ? "👹 魔王錯題重溫挑戰" : "請依條件計算求值";
+        if(step2Title) step2Title.innerText = (session.currentMode === 'REVIEW') ? "👹 魔王錯題重溫挑戰" : "請依各變數數值求出最終結果";
         
         document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`;
         document.getElementById('displayEq').innerHTML = `
@@ -566,7 +580,7 @@
                 if(!cacheStorage.EQ.wrongBook.includes(session.questionList[session.currentIdx])) cacheStorage.EQ.wrongBook.push(session.questionList[session.currentIdx]);
                 cacheStorage.EQ.stats[session.currentTypeNum].failed++; session.hasAddedToWrongBookThisQuestion=true;
             }
-            if(session.currentMode !== 'SOLVER' && session.wrongAttemptsThisQuestion === 1) {
+            if(session.wrongAttemptsThisQuestion === 1) {
                 document.getElementById('ansInput').disabled = true; document.getElementById('retryInputWrapper').style.display = 'block'; 
                 let area = document.getElementById('initialFeedbackArea'); area.className="feedback warning";
                 area.innerHTML = "❌ 計算不太對哦！<b>首答不扣分</b>。請在下方開闢的<b>補答欄位</b>重新核對修正答案！";
@@ -575,7 +589,7 @@
                 document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`;
                 updateProgressBarUI(); showPanel('step3'); executeFinalFailure();
             }
-            cloudSaveData(); updateReviewMenuUI();
+            cloudSaveData();
         }
     }
 
@@ -652,18 +666,6 @@
         } else { area.innerHTML = ""; }
     }
 
-    function handleManualSolverInput() {
-        let rawInput = document.getElementById('eqInput').value.trim(); let vars = document.getElementById('xValueInput').value.trim();
-        if(!rawInput) { alert("請輸入有效的代數式或公式！"); return; }
-        let target = "組裝項", expr = rawInput;
-        if(rawInput.includes("=")) { let parts = rawInput.split("="); target = parts[0].trim(); expr = parts[1].trim(); }
-
-        session.currentMode = 'SOLVER'; session.totalQuestions = 1; session.currentIdx = 0; 
-        session.questionList = [`自訂結構引導 | 已知 ${target} = ${expr}。當 ${vars}，${target} = ? #|#1`];
-        document.getElementById('teachingHeaderBadge').innerText = "🛠️ 解答引導模式";
-        loadEquationToStage();
-    }
-
     function setupNextButtonLabel() {
         let n = document.getElementById('nextBtn');
         if(session.currentMode==='CHALLENGE') { n.innerText = (session.endCondition==='TIME_LIMIT') ? "下一道瘋狂求值題 ➡️" : ((session.currentIdx < session.questionList.length-1)?"前進下一題 ➡️":"🏁 挑戰結束，查看報告"); }
@@ -697,12 +699,23 @@
     function stopSessionTimer() { if(timerInterval) { clearInterval(timerInterval); timerInterval = null; } document.getElementById('globalTimerBox').style.display = 'none'; document.getElementById('globalTimerBoxStage3').style.display = 'none'; }
     function updateTimerDisplay() { let m = Math.floor(timeLeft / 60); let s = timeLeft % 60; let str = `⏱️ ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`; document.getElementById('globalTimerBox').innerText = str; document.getElementById('globalTimerBoxStage3').innerText = str; }
 
-    function toggleConditionUI() { let c = document.querySelector('input[name="endCondition"]:checked').value; document.getElementById('countInputWrapper').style.display = c === 'COUNT' ? 'block' : 'none'; document.getElementById('targetScoreInputWrapper').style.display = c === 'TARGET_SCORE' ? 'block' : 'none'; document.getElementById('timeLimitInputWrapper').style.display = c === 'TIME_LIMIT' ? 'block' : 'none'; }
-    function updateReviewMenuUI() { let c = (cacheStorage.EQ.wrongBook || []).length; document.getElementById('reviewModeCard').classList.toggle('disabled', c===0); document.getElementById('reviewTitle').innerText = `錯題庫 (${c})`; }
-    function cloudSaveData() { if (["GUEST"].includes(currentRole) || !userRawClass || !userRawSeat) return; try { localStorage.setItem(`MultiVarCache_${userRawClass}-${userRawSeat}`, JSON.stringify(cacheStorage.EQ)); } catch(e){} }
-    function initLocalFallback(tC, tS) { try { let local = localStorage.getItem(`MultiVarCache_${tC}-${tS}`); if(local) { let p = JSON.parse(local); if(p.stats?.[1]) { cacheStorage.EQ = p; return; } } } catch(e){} cacheStorage.EQ = { wrongBook: [], stats: getInitialStatsObject() }; }
-    function logoutSession() { if(confirm("確定登出系統嗎？")) { stopSessionTimer(); localStorage.clear(); window.location.replace("index.html"); } }
+    function resetToMainMenu(nc) {
+        if(nc && (document.getElementById('step2').classList.contains('active')||document.getElementById('step3').classList.contains('active'))) {
+            if(!confirm("確定要中途退出挑戰嗎？")) return;
+        }
+        stopSessionTimer(); document.getElementById('nextBtn').style.display="none"; document.getElementById('teachingZone').style.display="none";
+        cloudSaveData(); updateReviewMenuUI(); showPanel('step1');
+    }
 
+    function handleNavigationBack() { 
+        if(document.getElementById('step1').classList.contains('active')) {
+            stopSessionTimer(); 
+            window.location.replace("home.html"); 
+        } else {
+            resetToMainMenu(true); 
+        }
+    }
+    function logoutSession() { if(confirm("確定登出系統嗎？")) { stopSessionTimer(); localStorage.clear(); window.location.replace("index.html"); } }
     function calculateAndRenderStats() {
         const tb = document.getElementById('statsTableBody'); if(!tb) return; tb.innerHTML='';
         let tr=document.createElement('tr'); tr.className="section-title"; tr.innerHTML=`<th colspan="7">⚖️ 跨學科公式代求值數據分析</th>`; tb.appendChild(tr);
