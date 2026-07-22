@@ -34,6 +34,12 @@
         .game-icon { font-size: 48px; margin-bottom: 15px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
         .game-title { font-size: 22px; margin: 0 0 10px 0; font-weight: bold; text-align: center; }
         .game-desc { font-size: 14px; opacity: 0.9; margin: 0; line-height: 1.5; text-align: center; color: #cbd5e1; }
+        
+        /* 教師面板表格 */
+        .teacher-table { width: 100%; border-collapse: collapse; text-align: left; background: rgba(0,0,0,0.3); border-radius: 12px; overflow: hidden; margin-top: 15px; }
+        .teacher-table th { padding: 15px; background: rgba(255,255,255,0.15); color: #fff; }
+        .teacher-table td { padding: 15px; color: #e2e8f0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .danger-btn { background:#ef4444; color:white; border:none; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer; }
         @media (max-width: 768px) { .menu-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -49,26 +55,40 @@
     <h1>🪐 數學智能學習大廳</h1>
     <div id="welcomeText" class="welcome-msg">歡迎回來</div>
     
-    <div class="menu-grid">
-        <!-- 模組一：多變數求值 -->
+    <!-- 學生視角：三大模組卡片 -->
+    <div id="studentHall" class="menu-grid">
         <div class="game-card" onclick="goToModule('Substitution.html')">
             <div class="game-icon">📐</div>
             <h2 class="game-title">多變數代數式求值</h2>
             <p class="game-desc">探索跨學科公式代入，啟動隱形括號破譯思維逐步解題！</p>
         </div>
-        
-        <!-- 模組二：天秤一元一次方程 (新對接) -->
         <div class="game-card" onclick="goToModule('Equations.html')">
             <div class="game-icon">⚖️</div>
             <h2 class="game-title">天秤等量公理求值</h2>
             <p class="game-desc">建立一元一次方程守恆思維，在天秤兩盤施加同等操作逐步孤立求未知數！</p>
         </div>
-        
-        <!-- 模組三：多項式化簡 -->
         <div class="game-card" onclick="goToModule('Polynomial.html')" style="grid-column: span 1;">
             <div class="game-icon">🔮</div>
             <h2 class="game-title">多項式化簡與展開</h2>
             <p class="game-desc">啟動田字格魔法陣，輕鬆攻破去括號與同類項合併！</p>
+        </div>
+    </div>
+
+    <!-- 教師視角：數據大屏 -->
+    <div id="teacherDashboard" style="display: none; width: 100%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 15px;">
+            <h2 style="margin: 0;">📊 跨模組學生即時作答數據</h2>
+            <button class="danger-btn" onclick="clearTeacherData()">🗑️ 清空歷史數據</button>
+        </div>
+        <div style="max-height: 400px; overflow-y: auto; margin-top: 15px;">
+            <table class="teacher-table">
+                <thead>
+                    <tr><th>完成時間</th><th>學生身份</th><th>模組單元</th><th>本次挑戰積分</th></tr>
+                </thead>
+                <tbody id="teacherTableBody">
+                    <!-- 動態載入 -->
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -94,14 +114,40 @@
         } else if(role === 'TEACHER') {
             let teacherId = localStorage.getItem("Active_User_TeacherID") || "Teacher_01";
             if(badge) badge.innerText = `管理員: ${teacherId.replace('Teacher_','')}`;
-            if(welcome) welcome.innerText = `👨‍🏫 歡迎回來，管理員教師後台已安全對接`;
+            if(welcome) welcome.innerText = `👨‍🏫 歡迎回來，全域數據管理後台已安全對接`;
+            
+            // UI 切換
+            document.getElementById('studentHall').style.display = 'none';
+            document.getElementById('teacherDashboard').style.display = 'block';
+            loadTeacherDashboardData();
         }
     });
 
-    function goToModule(moduleName) {
-        window.location.replace(moduleName);
+    function loadTeacherDashboardData() {
+        let records = JSON.parse(localStorage.getItem('MathSystem_Student_Records') || '[]');
+        let tbody = document.getElementById('teacherTableBody');
+        if(records.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; font-weight:bold;">目前尚無學生的作答紀錄</td></tr>';
+            return;
+        }
+        tbody.innerHTML = records.map(r => `
+            <tr>
+                <td style="font-size:13px;">${r.timestamp}</td>
+                <td style="font-weight:bold; color:#fff;">${r.class}班 ${r.seat}號</td>
+                <td style="color:#60a5fa; font-weight:bold;">${r.module}</td>
+                <td style="font-weight:bold; color:${r.score > 0 ? '#4ade80' : '#f87171'};">${r.score} 分</td>
+            </tr>
+        `).join('');
     }
 
+    function clearTeacherData() {
+        if(confirm("確定要刪除所有系統紀錄的作答數據嗎？此操作無法還原！")) {
+            localStorage.removeItem('MathSystem_Student_Records');
+            loadTeacherDashboardData();
+        }
+    }
+
+    function goToModule(moduleName) { window.location.replace(moduleName); }
     function logoutSession() { 
         if(confirm("確定登出系統嗎？")) { 
             localStorage.clear(); 
