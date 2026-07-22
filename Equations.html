@@ -117,7 +117,6 @@
         .camp-tip { font-size: 14px; color: #f1f5f9; background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; border-left: 4px solid var(--primary); margin-bottom: 10px; }
         .timer-badge { background: var(--danger); color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; display: none; }
         
-        /* 🎨 分數渲染專屬樣式 */
         .math-expr-wrapper { display: inline-flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px; vertical-align: middle; }
         .math-fraction { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; vertical-align: middle; padding: 0 4px; font-size: inherit; }
         .fraction-numerator { text-align: center; padding-bottom: 2px; }
@@ -146,7 +145,6 @@
 </div>
 
 <div class="container" id="mainContainer" style="display: none;">
-    <!-- 導航首頁 -->
     <div id="step1" class="step-panel dashboard-wrapper">
         <div class="greeting-text">請選擇天秤方程式挑戰模式</div>
         <div class="dashboard-grid">
@@ -169,7 +167,6 @@
         </div>
     </div>
 
-    <!-- 闖關模式設定 -->
     <div id="step1_challenge" class="step-panel">
         <h2>🎮 闖關難度與天秤模式設定</h2>
         <div class="form-group">
@@ -203,7 +200,6 @@
         <button onclick="initChallengeSession()" class="btn-success">⚖️ 架設天秤，出發！</button>
     </div>
 
-    <!-- 有問必答面板 -->
     <div id="step1_solver" class="step-panel">
         <h2>🛠️ 方程有問必答 (自訂輸入自動生成天秤)</h2>
         <div class="form-group">
@@ -213,7 +209,6 @@
         <button onclick="handleManualSolverInput()" class="btn-success">開始天秤等量公理教學引導</button>
     </div>
 
-    <!-- 作答舞台卡片 -->
     <div id="step2" class="step-panel">
         <div class="progress-banner">
             <div class="progress-banner-header">
@@ -244,7 +239,6 @@
         </div>
     </div>
 
-    <!-- 天秤推導教學黑板 -->
     <div id="step3" class="step-panel">
         <div class="progress-banner">
             <div class="progress-banner-header">
@@ -274,14 +268,12 @@
                         <div id="teachingWrongArea"></div>
                     </div>
                 </div>
-
             </div>
             <div class="teaching-column"><h3>📝 天秤動態模擬黑板</h3><div class="math-step-box" id="mathStepBox"></div></div>
         </div>
         <button id="nextBtn" class="btn-success" onclick="advanceQuestion()" style="display:none;margin-top:20px;">前進下一題 ➡️</button>
     </div>
 
-    <!-- 學習報告與管理後台 -->
     <div id="step_stats_panel" class="step-panel">
         <h2 id="reportMainHeading">📊 學生一元一次方程學習報告</h2>
         <div id="printOutputRenderZone">
@@ -727,7 +719,18 @@
     function initLocalFallback(tC, tS) { try { let local = localStorage.getItem(`EquationsCache_${tC}-${tS}`); if(local) { let p = JSON.parse(local); if(p.stats?.[1]) { cacheStorage.EQ = p; return; } } } catch(e){} cacheStorage.EQ = { wrongBook: [], stats: getInitialStatsObject() }; }
     function logoutSession() { if(confirm("確定登出系統嗎？")) { stopSessionTimer(); localStorage.clear(); window.location.replace("index.html"); } }
 
+    function pushTeacherRecord(mod) {
+        if(currentRole !== 'STUDENT') return;
+        try {
+            let r = JSON.parse(localStorage.getItem('MathSystem_Student_Records') || '[]');
+            r.unshift({class: userRawClass, seat: userRawSeat, module: mod, score: session.score, timestamp: new Date().toLocaleString("zh-HK", {hour12:false})});
+            if(r.length>200) r.pop();
+            localStorage.setItem('MathSystem_Student_Records', JSON.stringify(r));
+        } catch(e){}
+    }
+
     function calculateAndRenderStats() {
+        pushTeacherRecord('一元一次方程(天秤)');
         const tb = document.getElementById('statsTableBody'); if(!tb) return; tb.innerHTML='';
         let tr=document.createElement('tr'); tr.className="section-title"; tr.innerHTML=`<th colspan="7">⚖️ 一元一次方程：等量天秤守恆分析</th>`; tb.appendChild(tr);
         let sObj = cacheStorage.EQ.stats;
