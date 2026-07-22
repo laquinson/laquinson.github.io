@@ -16,14 +16,17 @@
         .top-nav-btn:hover { transform: scale(1.03); }
         .logout-btn-text { color: #ef4444; border-color: #fecdd3; }
         .logout-btn-text:hover { background: #fff1f2; }
+        
         .container {
-            margin-top: 80px; width: 100%; max-width: 900px; padding: 40px; border-radius: 24px;
+            margin-top: 80px; width: 100%; max-width: 950px; padding: 40px; border-radius: 24px;
             background: rgba(255, 255, 255, 0.12); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
             border: 1px solid rgba(255, 255, 255, 0.25); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15);
             box-sizing: border-box;
         }
         h1 { text-align: center; text-shadow: 1px 1px 4px rgba(0,0,0,0.6); font-size: 32px; font-weight: 800; margin-top: 0; }
         .welcome-msg { text-align: center; margin-bottom: 40px; font-size: 18px; font-weight: bold; color: #e2e8f0; }
+        
+        /* 學生選單 */
         .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .game-card {
             background: rgba(0,0,0,0.4); padding: 30px 20px; border-radius: 16px; text-align: center; cursor: pointer;
@@ -35,11 +38,36 @@
         .game-title { font-size: 22px; margin: 0 0 10px 0; font-weight: bold; text-align: center; }
         .game-desc { font-size: 14px; opacity: 0.9; margin: 0; line-height: 1.5; text-align: center; color: #cbd5e1; }
         
-        .teacher-table { width: 100%; border-collapse: collapse; text-align: left; background: rgba(0,0,0,0.3); border-radius: 12px; overflow: hidden; margin-top: 15px; }
-        .teacher-table th { padding: 15px; background: rgba(255,255,255,0.15); color: #fff; }
-        .teacher-table td { padding: 15px; color: #e2e8f0; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .danger-btn { background:#ef4444; color:white; border:none; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer; }
-        @media (max-width: 768px) { .menu-grid { grid-template-columns: 1fr; } }
+        /* 教師儀表板控制區 */
+        .teacher-filters {
+            background: rgba(255,255,255,0.15); padding: 15px; border-radius: 16px; 
+            display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.3);
+        }
+        .teacher-filters select, .teacher-filters button {
+            padding: 10px 15px; border-radius: 8px; font-size: 15px; font-weight: bold;
+            border: 1px solid rgba(255,255,255,0.4); outline: none; background: rgba(255,255,255,0.9); color: #0f172a;
+        }
+        .teacher-filters button { background: #8b5cf6; color: #fff; border: none; cursor: pointer; transition: transform 0.2s; }
+        .teacher-filters button:hover { transform: translateY(-2px); background: #7c3aed; }
+        .danger-btn { background:#ef4444 !important; color:white; border:none; padding:10px 15px; border-radius:8px; font-weight:bold; cursor:pointer; }
+        
+        /* 數據卡片 */
+        .stats-cards { display: flex; gap: 15px; margin-bottom: 20px; }
+        .stat-card {
+            flex: 1; background: rgba(0,0,0,0.4); padding: 20px; border-radius: 16px; text-align: center;
+            border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .stat-value { font-size: 32px; font-weight: 900; color: #4ade80; margin: 5px 0; }
+        .stat-label { font-size: 14px; color: #cbd5e1; font-weight: bold; }
+
+        /* 教師面板表格 */
+        .teacher-table { width: 100%; border-collapse: collapse; text-align: left; background: rgba(0,0,0,0.3); border-radius: 12px; overflow: hidden; }
+        .teacher-table th { padding: 15px; background: rgba(255,255,255,0.15); color: #fff; font-size: 15px; }
+        .teacher-table td { padding: 15px; color: #e2e8f0; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 14px; }
+        .teacher-table tr:last-child td { border-bottom: none; }
+        .teacher-table tr:hover { background: rgba(255,255,255,0.05); }
+        
+        @media (max-width: 768px) { .menu-grid { grid-template-columns: 1fr; } .teacher-filters { flex-direction: column; align-items: stretch; } }
     </style>
 </head>
 <body>
@@ -53,6 +81,7 @@
     <h1>🪐 數學智能學習大廳</h1>
     <div id="welcomeText" class="welcome-msg">歡迎回來</div>
     
+    <!-- 學生視角：三大模組卡片 -->
     <div id="studentHall" class="menu-grid">
         <div class="game-card" onclick="goToModule('Substitution.html')">
             <div class="game-icon">📐</div>
@@ -71,17 +100,42 @@
         </div>
     </div>
 
+    <!-- 教師視角：進階數據管理分析 -->
     <div id="teacherDashboard" style="display: none; width: 100%;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 15px;">
-            <h2 style="margin: 0;">📊 跨模組學生即時作答數據</h2>
-            <button class="danger-btn" onclick="clearTeacherData()">🗑️ 清空歷史數據</button>
+        
+        <div class="teacher-filters">
+            <span style="font-weight:bold; font-size:16px;">設定檢視模式：</span>
+            <select id="viewMode" onchange="toggleViewMode()">
+                <option value="INDIVIDUAL">👤 個別學生紀錄查詢</option>
+                <option value="CLASS">🏫 班別整合分析表</option>
+            </select>
+            <select id="filterClass"></select>
+            <select id="filterSeat"></select>
+            <button onclick="queryData()">🔍 生成報告</button>
+            <button class="danger-btn" onclick="clearTeacherData()" style="margin-left: auto;">🗑️ 清空所有數據</button>
         </div>
-        <div style="max-height: 400px; overflow-y: auto; margin-top: 15px;">
+
+        <h2 id="reportTitle" style="text-align: left; margin-top: 0; color: #fffb00;">📊 請點擊「生成報告」進行查詢</h2>
+
+        <div id="statsCardsContainer" class="stats-cards" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-label">總挑戰次數</div>
+                <div class="stat-value" id="statTotalCount">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">平均得分</div>
+                <div class="stat-value" id="statAvgScore" style="color: #38bdf8;">0</div>
+            </div>
+        </div>
+
+        <div style="max-height: 400px; overflow-y: auto;">
             <table class="teacher-table">
-                <thead>
-                    <tr><th>完成時間</th><th>學生身份</th><th>模組單元</th><th>本次挑戰積分</th></tr>
+                <thead id="teacherTableHead">
+                    <tr><th>請選擇條件後進行查詢</th></tr>
                 </thead>
-                <tbody id="teacherTableBody"></tbody>
+                <tbody id="teacherTableBody">
+                    <tr><td style="text-align:center; padding:20px;">等待查詢...</td></tr>
+                </tbody>
             </table>
         </div>
     </div>
@@ -111,37 +165,143 @@
             
             document.getElementById('studentHall').style.display = 'none';
             document.getElementById('teacherDashboard').style.display = 'block';
-            loadTeacherDashboardData();
+            
+            buildTeacherFilters();
+            // 預設載入目前預設選項的資料
+            queryData();
         }
     });
 
-    function loadTeacherDashboardData() {
-        let records = JSON.parse(localStorage.getItem('MathSystem_Student_Records') || '[]');
-        let tbody = document.getElementById('teacherTableBody');
+    // 建立下拉選單選項
+    function buildTeacherFilters() {
+        let cHtml = "", sHtml = "";
+        for(let g=1;g<=6;g++) ['A','B','C','D'].forEach(l => cHtml+=`<option value="${g}${l}">${g}${l} 班</option>`);
+        for(let i=1;i<=35;i++) sHtml+=`<option value="${i}">${i} 號</option>`;
+        document.getElementById('filterClass').innerHTML = cHtml;
+        document.getElementById('filterSeat').innerHTML = sHtml;
+    }
+
+    // 切換查詢模式（隱藏/顯示座號下拉選單）
+    function toggleViewMode() {
+        let mode = document.getElementById('viewMode').value;
+        document.getElementById('filterSeat').style.display = mode === 'INDIVIDUAL' ? 'block' : 'none';
+    }
+
+    // 執行資料過濾與渲染
+    function queryData() {
+        let mode = document.getElementById('viewMode').value;
+        let tClass = document.getElementById('filterClass').value;
+        let tSeat = document.getElementById('filterSeat').value;
+        
+        // 取得全域儲存的紀錄
+        let rawRecords = JSON.parse(localStorage.getItem('MathSystem_Student_Records') || '[]');
+
+        if (mode === 'INDIVIDUAL') {
+            let filtered = rawRecords.filter(r => r.class === tClass && r.seat === String(tSeat));
+            renderIndividualReport(tClass, tSeat, filtered);
+        } else {
+            let filtered = rawRecords.filter(r => r.class === tClass);
+            renderClassReport(tClass, filtered);
+        }
+    }
+
+    // 渲染：個人成績單
+    function renderIndividualReport(tClass, tSeat, records) {
+        document.getElementById('reportTitle').innerText = `👤 學生紀錄：${tClass}班 ${tSeat}號`;
+        
+        let tHead = document.getElementById('teacherTableHead');
+        let tBody = document.getElementById('teacherTableBody');
+        let cards = document.getElementById('statsCardsContainer');
+
+        tHead.innerHTML = `<tr><th>完成時間</th><th>挑戰模組單元</th><th>獲得積分</th></tr>`;
+        
         if(records.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; font-weight:bold;">目前尚無學生的作答紀錄</td></tr>';
+            cards.style.display = "none";
+            tBody.innerHTML = `<tr><td colspan="3" style="text-align:center;">此學生尚未有任何挑戰紀錄</td></tr>`;
             return;
         }
-        tbody.innerHTML = records.map(r => `
-            <tr>
-                <td style="font-size:13px;">${r.timestamp}</td>
-                <td style="font-weight:bold; color:#fff;">${r.class}班 ${r.seat}號</td>
-                <td style="color:#60a5fa; font-weight:bold;">${r.module}</td>
-                <td style="font-weight:bold; color:${r.score > 0 ? '#4ade80' : '#f87171'};">${r.score} 分</td>
-            </tr>
-        `).join('');
+
+        let totalScore = 0;
+        let rowsHtml = "";
+        records.forEach(r => {
+            totalScore += r.score;
+            rowsHtml += `
+                <tr>
+                    <td>${r.timestamp}</td>
+                    <td style="color:#60a5fa; font-weight:bold;">${r.module}</td>
+                    <td style="font-weight:bold; color:${r.score > 0 ? '#4ade80' : '#f87171'};">${r.score} 分</td>
+                </tr>
+            `;
+        });
+
+        document.getElementById('statTotalCount').innerText = records.length;
+        document.getElementById('statAvgScore').innerText = (totalScore / records.length).toFixed(1);
+        cards.style.display = "flex";
+        tBody.innerHTML = rowsHtml;
+    }
+
+    // 渲染：班級整合分析表
+    function renderClassReport(tClass, records) {
+        document.getElementById('reportTitle').innerText = `🏫 班別整合分析：${tClass}班`;
+        document.getElementById('statsCardsContainer').style.display = "none";
+        
+        let tHead = document.getElementById('teacherTableHead');
+        let tBody = document.getElementById('teacherTableBody');
+
+        tHead.innerHTML = `<tr><th>座號</th><th>總挑戰次數</th><th>活躍參與模組</th><th>班級總貢獻分</th><th>平均得分</th></tr>`;
+        
+        if(records.length === 0) {
+            tBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">${tClass}班 尚未有任何學生留下紀錄</td></tr>`;
+            return;
+        }
+
+        // 數據聚合 (Group by Seat)
+        let studentMap = {};
+        records.forEach(r => {
+            if(!studentMap[r.seat]) {
+                studentMap[r.seat] = { count: 0, totalScore: 0, modules: new Set() };
+            }
+            studentMap[r.seat].count++;
+            studentMap[r.seat].totalScore += r.score;
+            studentMap[r.seat].modules.add(r.module);
+        });
+
+        // 轉換為陣列並依照座號排序
+        let aggregatedList = Object.keys(studentMap).map(seat => {
+            return { seat: parseInt(seat), data: studentMap[seat] };
+        }).sort((a, b) => a.seat - b.seat);
+
+        let rowsHtml = "";
+        aggregatedList.forEach(student => {
+            let s = student.data;
+            let avg = (s.totalScore / s.count).toFixed(1);
+            let modsArray = Array.from(s.modules);
+            let modTags = modsArray.map(m => `<span style="background:rgba(56, 189, 248, 0.2); color:#38bdf8; padding:2px 6px; border-radius:4px; margin-right:4px; font-size:12px;">${m}</span>`).join('');
+            
+            rowsHtml += `
+                <tr>
+                    <td style="font-weight:bold; font-size:16px;">${student.seat} 號</td>
+                    <td>${s.count} 次</td>
+                    <td>${modTags}</td>
+                    <td style="color:#4ade80; font-weight:bold;">${s.totalScore} 分</td>
+                    <td style="color:#fcd34d; font-weight:bold;">${avg}</td>
+                </tr>
+            `;
+        });
+
+        tBody.innerHTML = rowsHtml;
     }
 
     function clearTeacherData() {
         if(confirm("確定要刪除所有系統紀錄的作答數據嗎？此操作無法還原！")) {
             localStorage.removeItem('MathSystem_Student_Records');
-            loadTeacherDashboardData();
+            queryData(); // 清空後重新渲染目前視圖
         }
     }
 
     function goToModule(moduleName) { window.location.replace(moduleName); }
     
-    // 【修復】安全登出機制，不再觸發核彈級清除
+    // 安全登出機制
     function logoutSession() { 
         if(confirm("確定登出系統嗎？")) { 
             localStorage.removeItem("Active_User_Role");
