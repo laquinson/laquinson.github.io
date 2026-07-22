@@ -12,7 +12,6 @@
             margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center;
         }
 
-        /* 導航列最高階層防禦 - 確保全局唯一 */
         .top-left-nav, .top-right-nav { position: absolute; top: 25px; z-index: 999 !important; }
         .top-left-nav { left: 20px; } .top-right-nav { right: 20px; }
         .top-nav-btn { background: #fff; border: 2px solid #cbd5e1; padding: 8px 16px; border-radius: 12px; font-size: 15px; font-weight: bold; color: #475569; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
@@ -23,7 +22,6 @@
         .top-center-account { position: absolute; top: 28px; left: 50%; transform: translateX(-50%); font-size: 20px; font-weight: 900; color: #ffffff; text-shadow: 1px 1px 4px rgba(0,0,0,0.6); z-index: 999 !important; font-family: 'Comic Sans MS', sans-serif; white-space: nowrap; display: none; }
         .container { max-width: 900px; width: 100%; margin-top: 60px; }
 
-        /* 磨砂玻璃擬態主面板 */
         .step-panel {
             display: none; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
             background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.25);
@@ -57,7 +55,6 @@
         .interactive-input { width: 240px !important; padding: 8px 12px !important; font-size: 16px !important; display: inline-block; margin-left: 10px; background: #fff !important; border-radius: 6px !important; color: #000 !important; font-weight: bold !important; border: 2px solid #cbd5e1; }
         .step-status-icon { margin-left: 10px; font-size: 16px; font-weight: bold; white-space: nowrap; }
 
-        /* 羅坤山老師系統數據整合高級樣式 */
         table.stats-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; background: rgba(255,255,255,0.95); color: #334155; border-radius: 12px; overflow: hidden; }
         table.stats-table th, table.stats-table td { border: 1px solid #cbd5e1; padding: 10px; text-align: center; }
         table.stats-table th { background: #e2e8f0; color: #1e293b; font-weight: bold; }
@@ -65,7 +62,6 @@
         .info-span { margin-right: 25px; display: inline-block; font-weight: bold; }
         .btn-group { display: flex; gap: 15px; margin-top: 20px; }
 
-        /* 全班整合列印強制斷頁機制 */
         .print-student-page { display: block; }
         @media print {
             body { background: white !important; color: black !important; padding: 0 !important; }
@@ -84,17 +80,14 @@
 <body>
 
 <div id="topCenterAccount" class="top-center-account"></div>
-
 <div id="topLeftNav" class="top-left-nav">
     <button id="dynamicNavBtn" class="top-nav-btn" onclick="handleTopLeftNav()">&lt; 返回學習大廳</button>
 </div>
-
 <div id="topRightNav" class="top-right-nav">
     <button class="top-nav-btn logout-btn-text" onclick="logoutSession()">🚪 登出</button>
 </div>
 
 <div class="container" id="mainContainer">
-    <!-- 主選單目錄 -->
     <div id="step1" class="step-panel active">
         <h2 style="text-align:left; margin-top:0;">請選擇挑戰模式</h2>
         <div class="dashboard-grid">
@@ -113,7 +106,6 @@
         </div>
     </div>
 
-    <!-- 闖關模式設定 -->
     <div id="step1_challenge" class="step-panel">
         <h2>🎮 闖關模式設定</h2>
         <div class="form-group"><label>🧭 題目難度結構：</label><select id="typeSelect"></select></div>
@@ -132,7 +124,6 @@
         <button onclick="initChallengeSession()" class="btn-success">🎲 生成關卡，出發！</button>
     </div>
 
-    <!-- 自訂有問必答計算機 -->
     <div id="step1_solver" class="step-panel">
         <h2>🛠️ 多項式有問必答 (自訂化簡)</h2>
         <div class="form-group">
@@ -142,7 +133,6 @@
         <button onclick="handleManualSolverInput()" class="btn-success">開始多項式化簡引導</button>
     </div>
 
-    <!-- 答題核心舞台 -->
     <div id="step2" class="step-panel">
         <div class="progress-banner">
             <span id="progressText">進度...</span>
@@ -162,36 +152,29 @@
         <button onclick="checkAnswer()">提交結果並驗證答案</button>
     </div>
 
-    <!-- 互動式逐步推導黑板 -->
     <div id="step3" class="step-panel">
         <h2 style="text-align:center;">🔮 多項式智能逐步推導黑板</h2>
         <div style="background: rgba(245, 158, 11, 0.15); border-left: 4px solid #f59e0b; padding: 12px; margin-bottom: 20px; border-radius: 0 8px 8px 0; font-size: 15px; color: #ffe082; font-weight: bold;" id="step3GuideText">
             請根據原式，在下方輸入框中一步一步推出化簡後的正確多項式：
         </div>
-        
         <div style="background:rgba(0,0,0,0.3); padding:20px; border-radius:16px; margin-bottom:20px;">
             <div id="interactiveHorizontalZone"></div>
         </div>
-
         <button id="nextBtn" class="btn-success" onclick="advanceQuestion()" style="display:none; margin-top:20px;">前進下一題 ➡️</button>
     </div>
 
-    <!-- 高級整合歷程練習數據報告（全面整合羅坤山老師跨系統模組） -->
     <div id="step_stats_panel" class="step-panel">
         <h2 class="non-print">📊 歷程練習數據報告</h2>
         
-        <!-- 教師管理跨系統調閱模組 -->
         <div id="teacherQueryZone" class="non-print" style="background: rgba(243, 232, 255, 0.8); padding: 15px; border-radius: 16px; border: 2px dashed #8b5cf6; margin-bottom: 20px; display: none;">
             <p style="margin: 0 0 10px 0; font-weight: bold; color: #6b21a8; font-size: 15px;">🔍 教師跨系統權限調閱模組</p>
             <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                 <select id="queryClass" style="width: 130px; padding: 8px; font-size: 15px;"></select>
                 <select id="querySeat" style="width: 100px; padding: 8px; font-size: 15px;"></select>
                 <button onclick="loadTargetStudentDataByTeacher()" class="btn-purple" style="width: auto; padding: 8px 16px; margin: 0;">提取個案</button>
-                <button onclick="loadWholeClassDataForPrint()" class="btn-warning" style="width: auto; padding: 8px 16px; background: #7c2d12; color: #fff; margin: 0;">打包全班分頁報告</button>
             </div>
         </div>
 
-        <!-- 數據渲染輸出主區塊 -->
         <div id="printOutputRenderZone">
             <div class="print-student-page">
                 <div style="background: rgba(0,0,0,0.4); padding: 15px; border-radius: 12px; margin-bottom: 15px;" class="non-print">
@@ -230,13 +213,12 @@
 <script>
     let currentRole = "STUDENT", userRawClass = "", userRawSeat = "";
     let currentPanelId = "step1"; 
-    let currentEngine = "SIMPLIFY"; // 支援 SIMPLIFY 與 MULTIPLY 雙模組快取
+    let currentEngine = "SIMPLIFY"; 
     let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, timeLimitSetting: 300, score: 0, currentIdx: 0, questionList: [], selectedType: 'MIX', currentTypeNum: 1, wrongAttemptsThisQuestion: 0 };
     let polyData = { rawExpr: "", ansStr: "", type: "ADD", texExpr: "", texAns: "", p1: "", op: "", p2: "", a1:0, b1:0, c1:0, a2:0, b2:0, c2:0, ansA:0, ansB:0, ansC:0, isQuad: true };
     let timerInterval = null; let timeLeft = 0;
     let wrongQuestionBank = [];
 
-    // 🌟 羅坤山老師系統標準大數據快取庫
     let cacheStorage = {
         SIMPLIFY: { wrongBook: [], stats: {} },
         MULTIPLY: { wrongBook: [], stats: {} }
@@ -246,7 +228,6 @@
         try {
             initGlobalStatsCache();
             renderTypeSelectOptions();
-            updateReviewCardUI();
             checkActiveSessionOnLoad();
         } catch(e) { console.error(e); showPanel('step1'); }
     });
@@ -336,25 +317,12 @@
     function switchSetupConfig(configMode) {
         try {
             session.currentMode = configMode;
-            if (configMode === 'CHALLENGE') { 
-                showPanel('step1_challenge'); 
-                toggleConditionUI(); 
-            }
-            else if (configMode === 'MAIN') {
-                showPanel('step1');
-            }
-            else if (configMode === 'SOLVER') {
-                showPanel('step1_solver');
-            }
-            else if (configMode === 'STATS') { 
-                calculateAndRenderStats();
-                showPanel('step_stats_panel'); 
-            }
+            if (configMode === 'CHALLENGE') { showPanel('step1_challenge'); toggleConditionUI(); }
+            else if (configMode === 'MAIN') { showPanel('step1'); }
+            else if (configMode === 'SOLVER') { showPanel('step1_solver'); }
+            else if (configMode === 'STATS') { calculateAndRenderStats(); showPanel('step_stats_panel'); }
             else if (configMode === 'REVIEW') {
-                if (wrongQuestionBank.length === 0) { 
-                    alert("🎉 目前多項式沒有任何錯題記錄！"); 
-                    return; 
-                }
+                if (wrongQuestionBank.length === 0) { alert("🎉 目前多項式沒有任何錯題記錄！"); return; }
                 stopSessionTimer(); session.score = 0; session.currentIdx = 0; session.questionList = [...wrongQuestionBank];
                 session.endCondition = 'COUNT'; session.totalQuestions = session.questionList.length;
                 loadQuestionToStage();
@@ -362,16 +330,23 @@
         } catch(e) { console.error(e); }
     }
 
-    // 🌟 核心對接：羅坤山大數據分析矩陣渲染
+    function pushTeacherRecord(mod) {
+        if(currentRole !== 'STUDENT') return;
+        try {
+            let r = JSON.parse(localStorage.getItem('MathSystem_Student_Records') || '[]');
+            r.unshift({class: userRawClass, seat: userRawSeat, module: mod, score: session.score, timestamp: new Date().toLocaleString("zh-HK", {hour12:false})});
+            if(r.length>200) r.pop();
+            localStorage.setItem('MathSystem_Student_Records', JSON.stringify(r));
+        } catch(e){}
+    }
+
     function calculateAndRenderStats() {
+        pushTeacherRecord('多項式化簡與展開');
         const tb = document.getElementById('statsTableBody');
         if(!tb) return;
         tb.innerHTML = "";
 
-        const modules = [
-            { key: "SIMPLIFY", name: "多項式化簡常規模組" },
-            { key: "MULTIPLY", name: "多項式乘法展開模組" }
-        ];
+        const modules = [{ key: "SIMPLIFY", name: "多項式化簡常規模組" }];
 
         modules.forEach(m => {
             let tr = document.createElement('tr');
@@ -397,59 +372,17 @@
                 </tr>`;
             }
         });
-
         document.getElementById('statsWrongCount').innerText = wrongQuestionBank.length;
         document.getElementById('printStudentInfo').innerHTML = `<span class="info-span">學生班別：${userRawClass} 班</span><span class="info-span">學號：${userRawSeat} 號</span>`;
         document.getElementById('printDate').innerText = `產出時間：` + new Date().toLocaleString();
     }
 
-    // 👨‍🏫 教師查閱單人個案
     function loadTargetStudentDataByTeacher() {
         let tc = document.getElementById('queryClass').value;
         let ts = document.getElementById('querySeat').value;
-        userRawClass = tc;
-        userRawSeat = ts;
+        userRawClass = tc; userRawSeat = ts;
         calculateAndRenderStats();
         alert(`🎉 成功撈取 ${tc}班 ${ts}號 的雲端歷程檔案！已更新數據報表。`);
-    }
-
-    // 👨‍🏫 教師一鍵打包全班列印整合包
-    function loadWholeClassDataForPrint() {
-        let tc = document.getElementById('queryClass').value;
-        if(!confirm(`確定要同步抓取整個 ${tc}班 (1~35號) 的學習紀錄嗎？`)) return;
-        
-        const zone = document.getElementById('printOutputRenderZone');
-        zone.innerHTML = ""; 
-        
-        for(let i=1; i<=35; i++) {
-            let pageDiv = document.createElement('div');
-            pageDiv.className = "print-student-page";
-            
-            let rowsHTML = "";
-            const modules = [{ key: "SIMPLIFY", name: "多項式化簡" }, { key: "MULTIPLY", name: "多項式展開" }];
-            modules.forEach(m => {
-                rowsHTML += `<tr class="section-title"><th colspan="7">🌀 ${tc}班 ${i}號 - ${m.name}</th></tr>`;
-                let sObj = cacheStorage[m.key].stats;
-                for(let k in sObj) {
-                    let r = sObj[k];
-                    rowsHTML += `<tr><td style='text-align:left;padding-left:15px;'>${r.name}</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0%</td><td>0%</td></tr>`;
-                }
-            });
-
-            pageDiv.innerHTML = `
-                <div class="print-only-header" style="display:block; color:#000;">
-                    <h1>🔮 多項式 - 學生學習報告 (全班整合包)</h1>
-                    <h2>學生班別：${tc} 班 &nbsp;&nbsp;&nbsp;&nbsp; 學號：${i} 號</h2>
-                </div>
-                <table class="stats-table">
-                    <thead><tr><th>題型</th><th>挑戰次數</th><th>首答對</th><th>補答對</th><th>失敗</th><th>首發率</th><th>綜合率</th></tr></thead>
-                    <tbody>${rowsHTML}</tbody>
-                </table>
-                <h4 style='color:#ef4444;'>📘 當前未消滅錯題：0 題</h4>
-            `;
-            zone.appendChild(pageDiv);
-        }
-        alert(`🎉 ${tc}班 全班打包成功！下方已轉換為分頁列印排版，您可以直接匯出 PDF。`);
     }
 
     function fmtTerm(coef, variable, isFirst) {
@@ -512,8 +445,7 @@
             let cleanInput = input.replace(/²/g, '^2').replace(/\s+/g, '').replace(/\(/g, '').replace(/\)/g, '');
             
             let p1 = "", p2 = "", op = "+";
-            currentEngine = "SIMPLIFY";
-            session.currentTypeNum = 1;
+            currentEngine = "SIMPLIFY"; session.currentTypeNum = 1;
             
             if (input.replace(/\s+/g, '').includes(')+(') || input.replace(/\s+/g, '').includes(')-(')) {
                 let normInput = input.replace(/\s+/g, '');
@@ -531,20 +463,12 @@
             }
             
             let parseCoefs = (str) => {
-                let a = 0, b = 0, c = 0;
-                let clean = str.replace(/\+/g, '++').replace(/-/g, '+-');
-                let parts = clean.split('+');
+                let a = 0, b = 0, c = 0; let clean = str.replace(/\+/g, '++').replace(/-/g, '+-'); let parts = clean.split('+');
                 parts.forEach(t => {
                     if(!t) return;
-                    if (t.includes('x^2')) {
-                        let co = t.replace('x^2', '');
-                        a += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co));
-                    } else if (t.includes('x') || t.includes('y')) {
-                        let co = t.replace(/[xy]/, '');
-                        b += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co));
-                    } else {
-                        let parsed = parseInt(t); if(!isNaN(parsed)) c += parsed;
-                    }
+                    if (t.includes('x^2')) { let co = t.replace('x^2', ''); a += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co)); }
+                    else if (t.includes('x') || t.includes('y')) { let co = t.replace(/[xy]/, ''); b += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co)); }
+                    else { let parsed = parseInt(t); if(!isNaN(parsed)) c += parsed; }
                 });
                 return [a, b, c];
             };
@@ -565,13 +489,11 @@
             polyData.isQuad = (c1[0] !== 0 || c2[0] !== 0);
 
             session.questionList = [`(${p1})${op}(${p2})|${ansStr}|${p1}|${op}|${p2}|${c1.join(',')}|${c2.join(',')}|${ansA},${ansB},${ansC}|${polyData.isQuad?1:0}|4`]; 
-            session.currentIdx = 0;
-            loadQuestionToStage();
+            session.currentIdx = 0; loadQuestionToStage();
         } catch(e) {
             console.error(e);
             session.questionList = ["(3x+8)+(2x+5)|11x+13|3x+8|+|2x+5|0,3,8|0,2,5|0,5,13|0|4"];
-            session.currentIdx = 0;
-            loadQuestionToStage();
+            session.currentIdx = 0; loadQuestionToStage();
         }
     }
 
@@ -606,11 +528,9 @@
         let map = { x2: 0, x: 0, constant: 0 };
         terms.forEach(t => {
             if (t.includes('x^2')) {
-                let co = t.replace('x^2', '');
-                map.x2 += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co));
+                let co = t.replace('x^2', ''); map.x2 += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co));
             } else if (t.includes('x') || t.includes('y')) {
-                let co = t.replace(/[xy]/, '');
-                map.x += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co));
+                let co = t.replace(/[xy]/, ''); map.x += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co));
             } else {
                 map.constant += parseInt(t);
             }
@@ -627,22 +547,15 @@
         let currentQ = session.questionList[session.currentIdx];
         
         if(UX(studentAns) === UX(polyData.ansStr)) {
-            session.score++;
-            alert("🎯 完全正確！表現優異！");
-            
+            session.score++; alert("🎯 完全正確！表現優異！");
             if(session.currentMode === 'CHALLENGE') {
-                if(session.wrongAttemptsThisQuestion === 0) {
-                    cacheStorage[currentEngine].stats[session.currentTypeNum].firstMatch++;
-                } else {
-                    cacheStorage[currentEngine].stats[session.currentTypeNum].retryMatch++;
-                }
+                if(session.wrongAttemptsThisQuestion === 0) cacheStorage[currentEngine].stats[session.currentTypeNum].firstMatch++;
+                else cacheStorage[currentEngine].stats[session.currentTypeNum].retryMatch++;
             }
-
             if (session.currentMode === 'SOLVER' || session.currentIdx >= (session.totalQuestions - 1)) {
                 showPanel('step1'); 
             } else {
-                session.currentIdx++;
-                loadQuestionToStage();
+                session.currentIdx++; loadQuestionToStage();
             }
         } else {
             session.wrongAttemptsThisQuestion++;
@@ -651,15 +564,12 @@
             if(session.currentMode === 'CHALLENGE' && session.wrongAttemptsThisQuestion === 1) {
                 cacheStorage[currentEngine].stats[session.currentTypeNum].failed++;
             }
-
             if (!wrongQuestionBank.includes(currentQ)) { 
                 wrongQuestionBank.push(currentQ); 
                 localStorage.setItem("Poly_Wrong_Bank", JSON.stringify(wrongQuestionBank)); 
                 cacheStorage.SIMPLIFY.wrongBook = wrongQuestionBank;
             }
-            updateReviewCardUI();
-            showPanel('step3'); 
-            initInteractiveBlackboard();
+            updateReviewCardUI(); showPanel('step3'); initInteractiveBlackboard();
         }
     }
 
@@ -670,9 +580,7 @@
         let rawStep1 = (polyData.op==='+') ? `${polyData.p1}${(!polyData.p2.startsWith('-')?'+':'')+polyData.p2}` : `${polyData.p1}${((-polyData.b2>0?"+":"-")+Math.abs(polyData.b2)+"x").replace(/1x/g,"x")}${((-polyData.c2>0?"+":"-")+Math.abs(polyData.c2)+"y").replace(/1y/g,"y")}`;
         if(rawStep1.endsWith('+0') || rawStep1.endsWith('-0')) rawStep1 = rawStep1.substring(0, rawStep1.length - 2);
         
-        let correctStep1 = UX(rawStep1);
-        let correctStep2 = UX(polyData.ansStr);
-
+        let correctStep1 = UX(rawStep1); let correctStep2 = UX(polyData.ansStr);
         let html = `
             <div class="horizontal-step-line" id="boardLine0">
                 <span><b>原式：</b> ${convertToNativeSup('('+polyData.p1+') '+polyData.op+' ('+polyData.p2+')')}</span>
@@ -700,9 +608,7 @@
 
     function verifyStep1(correctTarget1, correctTarget2) {
         try {
-            let val = document.getElementById('step1Input').value.trim();
-            let parsedUser = UX(val);
-            let opCount = (val.replace(/\s+/g, '').match(/[+-]/g) || []).length;
+            let val = document.getElementById('step1Input').value.trim(); let parsedUser = UX(val); let opCount = (val.replace(/\s+/g, '').match(/[+-]/g) || []).length;
             
             if(parsedUser === correctTarget2 && opCount <= 1) {
                 document.getElementById('statusIcon1').innerText = "🎯 厲害！心算直接命中最終答案！";
@@ -712,11 +618,8 @@
             } else if(parsedUser === correctTarget1) {
                 document.getElementById('statusIcon1').innerText = "🎯 正確！請繼續執行第二步同類項合併。";
                 document.getElementById('boardLine1').style.background = "rgba(16,185,129,0.2)";
-                
                 let el2 = document.getElementById('boardLine2');
-                if(el2) {
-                    el2.style.opacity = "1"; el2.style.pointerEvents = "auto";
-                }
+                if(el2) { el2.style.opacity = "1"; el2.style.pointerEvents = "auto"; }
             } else {
                 document.getElementById('statusIcon1').innerText = "❌ 展開算式不對，請確認正負號與常數！";
             }
@@ -727,10 +630,8 @@
         try {
             let val = document.getElementById('step2Input').value.trim();
             if(UX(val) === correctTarget) {
-                document.getElementById('statusIcon2').innerText = "🎯 完美解鎖！";
-                document.getElementById('boardLine2').style.background = "rgba(16,185,129,0.2)";
-                document.getElementById('step3GuideText').innerText = "🎉 恭喜你完成本題的逐步破譯推導！";
-                document.getElementById('nextBtn').style.display = 'block'; 
+                document.getElementById('statusIcon2').innerText = "🎯 完美解鎖！"; document.getElementById('boardLine2').style.background = "rgba(16,185,129,0.2)";
+                document.getElementById('step3GuideText').innerText = "🎉 恭喜你完成本題的逐步破譯推導！"; document.getElementById('nextBtn').style.display = 'block'; 
             } else {
                 document.getElementById('statusIcon2').innerText = "❌ 合併錯誤，注意同類項係數！";
             }
@@ -756,8 +657,7 @@
     function stopSessionTimer() { if(timerInterval) clearInterval(timerInterval); }
     function logoutSession() { stopSessionTimer(); localStorage.clear(); window.location.replace("index.html"); }
     function updateReviewCardUI() { 
-        let reviewBtn = document.getElementById('reviewModeCard');
-        let currentWrongList = JSON.parse(localStorage.getItem("Poly_Wrong_Bank")) || [];
+        let reviewBtn = document.getElementById('reviewModeCard'); let currentWrongList = JSON.parse(localStorage.getItem("Poly_Wrong_Bank")) || [];
         if(reviewBtn) reviewBtn.classList.toggle('disabled', currentWrongList.length === 0);
         let title = document.getElementById('reviewTitle');
         if(title) title.innerText = `錯題庫 (${currentWrongList.length})`; 
