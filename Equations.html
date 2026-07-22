@@ -717,7 +717,16 @@
     function updateReviewMenuUI() { let c = (cacheStorage.EQ.wrongBook || []).length; document.getElementById('reviewModeCard').classList.toggle('disabled', c===0); document.getElementById('reviewTitle').innerText = `失衡錯題庫 (${c})`; }
     function cloudSaveData() { if (["GUEST"].includes(currentRole) || !userRawClass || !userRawSeat) return; try { localStorage.setItem(`EquationsCache_${userRawClass}-${userRawSeat}`, JSON.stringify(cacheStorage.EQ)); } catch(e){} }
     function initLocalFallback(tC, tS) { try { let local = localStorage.getItem(`EquationsCache_${tC}-${tS}`); if(local) { let p = JSON.parse(local); if(p.stats?.[1]) { cacheStorage.EQ = p; return; } } } catch(e){} cacheStorage.EQ = { wrongBook: [], stats: getInitialStatsObject() }; }
-    function logoutSession() { if(confirm("確定登出系統嗎？")) { stopSessionTimer(); localStorage.clear(); window.location.replace("index.html"); } }
+    function logoutSession() { 
+        if(confirm("確定登出系統嗎？")) { 
+            stopSessionTimer(); 
+            localStorage.removeItem("Active_User_Role");
+            localStorage.removeItem("Active_User_Class");
+            localStorage.removeItem("Active_User_Seat");
+            localStorage.removeItem("Active_User_TeacherID");
+            window.location.replace("index.html"); 
+        } 
+    }
 
     function pushTeacherRecord(mod) {
         if(currentRole !== 'STUDENT') return;
