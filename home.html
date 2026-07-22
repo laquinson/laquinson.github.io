@@ -35,7 +35,6 @@
         .game-title { font-size: 22px; margin: 0 0 10px 0; font-weight: bold; text-align: center; }
         .game-desc { font-size: 14px; opacity: 0.9; margin: 0; line-height: 1.5; text-align: center; color: #cbd5e1; }
         
-        /* 教師面板表格 */
         .teacher-table { width: 100%; border-collapse: collapse; text-align: left; background: rgba(0,0,0,0.3); border-radius: 12px; overflow: hidden; margin-top: 15px; }
         .teacher-table th { padding: 15px; background: rgba(255,255,255,0.15); color: #fff; }
         .teacher-table td { padding: 15px; color: #e2e8f0; border-bottom: 1px solid rgba(255,255,255,0.1); }
@@ -46,7 +45,6 @@
 <body>
 
 <div id="topCenterAccount" class="top-center-account"></div>
-
 <div class="top-right-nav">
     <button class="top-nav-btn logout-btn-text" onclick="logoutSession()">🚪 登出系統</button>
 </div>
@@ -55,7 +53,6 @@
     <h1>🪐 數學智能學習大廳</h1>
     <div id="welcomeText" class="welcome-msg">歡迎回來</div>
     
-    <!-- 學生視角：三大模組卡片 -->
     <div id="studentHall" class="menu-grid">
         <div class="game-card" onclick="goToModule('Substitution.html')">
             <div class="game-icon">📐</div>
@@ -74,7 +71,6 @@
         </div>
     </div>
 
-    <!-- 教師視角：數據大屏 -->
     <div id="teacherDashboard" style="display: none; width: 100%;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 15px;">
             <h2 style="margin: 0;">📊 跨模組學生即時作答數據</h2>
@@ -85,9 +81,7 @@
                 <thead>
                     <tr><th>完成時間</th><th>學生身份</th><th>模組單元</th><th>本次挑戰積分</th></tr>
                 </thead>
-                <tbody id="teacherTableBody">
-                    <!-- 動態載入 -->
-                </tbody>
+                <tbody id="teacherTableBody"></tbody>
             </table>
         </div>
     </div>
@@ -100,7 +94,6 @@
     document.addEventListener('DOMContentLoaded', function() {
         let cls = localStorage.getItem("Active_User_Class");
         let seat = localStorage.getItem("Active_User_Seat");
-        
         let badge = document.getElementById('topCenterAccount');
         let welcome = document.getElementById('welcomeText');
         
@@ -116,7 +109,6 @@
             if(badge) badge.innerText = `管理員: ${teacherId.replace('Teacher_','')}`;
             if(welcome) welcome.innerText = `👨‍🏫 歡迎回來，全域數據管理後台已安全對接`;
             
-            // UI 切換
             document.getElementById('studentHall').style.display = 'none';
             document.getElementById('teacherDashboard').style.display = 'block';
             loadTeacherDashboardData();
@@ -148,9 +140,14 @@
     }
 
     function goToModule(moduleName) { window.location.replace(moduleName); }
+    
+    // 【修復】安全登出機制，不再觸發核彈級清除
     function logoutSession() { 
         if(confirm("確定登出系統嗎？")) { 
-            localStorage.clear(); 
+            localStorage.removeItem("Active_User_Role");
+            localStorage.removeItem("Active_User_Class");
+            localStorage.removeItem("Active_User_Seat");
+            localStorage.removeItem("Active_User_TeacherID");
             window.location.replace("index.html"); 
         } 
     }
