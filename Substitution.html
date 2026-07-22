@@ -305,14 +305,6 @@
     <!-- 學習報告與管理後台 -->
     <div id="step_stats_panel" class="step-panel">
         <h2 id="reportMainHeading">📊 學生多變數求值數據報告</h2>
-        <div id="teacherQueryZone" class="non-print" style="background: rgba(243, 232, 255, 0.8); padding: 15px; border-radius: 16px; border: 2px dashed #8b5cf6; margin-bottom: 20px; display: none;">
-            <p style="margin:0 0 10px 0; font-weight:bold; color:#6b21a8;">🔍 教師跨系統調閱模組</p>
-            <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                <select id="queryClass" style="width:120px;" title="查詢班別"></select>
-                <select id="querySeat" style="width:120px;" title="查詢座號"></select>
-                <button onclick="loadTargetStudentDataByTeacher()" class="btn-purple" style="width:auto;padding:8px 15px;">提取個案</button>
-            </div>
-        </div>
         <div id="printOutputRenderZone">
             <div class="print-student-page">
                 <h3 id="printStudentInfo" style="text-align:left;margin-bottom:10px;">學生班別：載入中...</h3>
@@ -389,10 +381,6 @@
                 badge.innerText = `挑戰者: 訪客體驗`;
                 cacheStorage.EQ.wrongBook = []; cacheStorage.EQ.stats = getInitialStatsObject();
                 setupLayoutForStudent();
-            } else if (currentRole === "TEACHER") {
-                badge.innerText = `管理員: ${activeTeacherId.replace('Teacher_','')}`;
-                initLocalFallback("TEACHER", activeTeacherId);
-                setupLayoutForTeacher();
             }
         }
         renderTypeSelectOptions();
@@ -400,17 +388,10 @@
         showPanel('step1');
     });
 
-    // 🌟 補回缺失之版面佈局引導函式
     function setupLayoutForStudent() {
         document.querySelectorAll('.id-student-only').forEach(el => el.style.display = "flex");
         document.querySelectorAll('.id-teacher-only').forEach(el => el.style.display = "none");
         updateReviewMenuUI();
-    }
-
-    function setupLayoutForTeacher() {
-        document.querySelectorAll('.id-student-only').forEach(el => el.style.display = "none");
-        document.querySelectorAll('.id-teacher-only').forEach(el => el.style.display = "flex");
-        switchSetupConfig('STATS');
     }
 
     function getInitialStatsObject() {
@@ -766,7 +747,18 @@
     function initLocalFallback(tC, tS) { try { let local = localStorage.getItem(`MultiVarCache_${tC}-${tS}`); if(local) { let p = JSON.parse(local); if(p.stats?.[1]) { cacheStorage.EQ = p; return; } } } catch(e){} cacheStorage.EQ = { wrongBook: [], stats: getInitialStatsObject() }; }
     function logoutSession() { if(confirm("確定登出系統嗎？")) { stopSessionTimer(); localStorage.clear(); window.location.replace("index.html"); } }
 
+    function pushTeacherRecord(mod) {
+        if(currentRole !== 'STUDENT') return;
+        try {
+            let r = JSON.parse(localStorage.getItem('MathSystem_Student_Records') || '[]');
+            r.unshift({class: userRawClass, seat: userRawSeat, module: mod, score: session.score, timestamp: new Date().toLocaleString("zh-HK", {hour12:false})});
+            if(r.length>200) r.pop();
+            localStorage.setItem('MathSystem_Student_Records', JSON.stringify(r));
+        } catch(e){}
+    }
+
     function calculateAndRenderStats() {
+        pushTeacherRecord('多變數代數式求值');
         const tb = document.getElementById('statsTableBody'); if(!tb) return; tb.innerHTML='';
         let tr=document.createElement('tr'); tr.className="section-title"; tr.innerHTML=`<th colspan="7">⚖️ 跨學科公式代求值數據分析</th>`; tb.appendChild(tr);
         let sObj = cacheStorage.EQ.stats;
