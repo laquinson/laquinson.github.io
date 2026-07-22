@@ -127,10 +127,14 @@
         table.stats-table th { background: #e2e8f0; color: #1e293b; font-weight: bold; }
         table.stats-table tr.section-title th { background: #2b5797; color: white; text-align: left; padding-left: 15px; }
         
+        .screenshot-footer { margin-top: 50px; font-size: 14px; font-weight: 600; color: #ffffff; text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.9); text-align: center; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @media print { .non-print, button, .top-right-nav, .top-left-nav { display: none !important; } .step-panel { display: none !important; } #step_stats_panel { display: block !important; } }
     </style>
 </head>
 <body>
+
+<div id="loadingOverlay" class="loading-overlay" style="display: none;"><div class="spinner"></div><p id="loadingText" style="margin-top:15px;font-weight:bold;">連線中...</p></div>
 
 <div id="topLeftNav" class="top-left-nav">
     <button id="dynamicNavBtn" class="top-nav-btn" onclick="handleTopLeftNav()">&lt; 返回學習大廳</button>
@@ -139,9 +143,10 @@
 <div id="topCenterAccount" class="top-center-account"></div>
 
 <div id="topRightNav" class="top-right-nav">
-    <button class="top-nav-btn logout-btn-text" onclick="logoutSession()" title="登出">登出</button>
+    <button class="top-nav-btn logout-btn-text" onclick="logoutSession()" title="登出">🚪 登出</button>
 </div>
 
+<!-- 主介面 -->
 <div class="container" id="mainContainer" style="display: none;">
     <div id="step1" class="step-panel dashboard-wrapper">
         <div class="greeting-text">請選擇挑戰模式</div>
@@ -165,6 +170,7 @@
         </div>
     </div>
 
+    <!-- 闖關模式設定 -->
     <div id="step1_challenge" class="step-panel">
         <h2>🎮 闖關模式設定</h2>
         <div class="form-group">
@@ -198,6 +204,7 @@
         <button onclick="initChallengeSession()" class="btn-success">🎲 生成關卡，出發！</button>
     </div>
 
+    <!-- 有問必答面板 -->
     <div id="step1_solver" class="step-panel">
         <h2>🛠️ 數學有問必答 (自訂代入)</h2>
         <div class="form-group">
@@ -211,6 +218,7 @@
         <button onclick="handleManualSolverInput()" class="btn-success">開始多變數代入教學引導</button>
     </div>
 
+    <!-- 作答舞台卡片 -->
     <div id="step2" class="step-panel">
         <div class="progress-banner">
             <div class="progress-banner-header">
@@ -241,6 +249,7 @@
         </div>
     </div>
 
+    <!-- 推導破譯黑板 -->
     <div id="step3" class="step-panel">
         <div class="progress-banner">
             <div class="progress-banner-header">
@@ -293,6 +302,7 @@
         <button id="nextBtn" class="btn-success" onclick="advanceQuestion()" style="display:none;margin-top:20px;">前進下一題 ➡️</button>
     </div>
 
+    <!-- 學習報告與管理後台 -->
     <div id="step_stats_panel" class="step-panel">
         <h2 id="reportMainHeading">📊 學生多變數求值數據報告</h2>
         <div id="teacherQueryZone" class="non-print" style="background: rgba(243, 232, 255, 0.8); padding: 15px; border-radius: 16px; border: 2px dashed #8b5cf6; margin-bottom: 20px; display: none;">
@@ -366,6 +376,7 @@
         currentRole = savedRole;
         userRawClass = localStorage.getItem("Active_User_Class") || "GUEST";
         userRawSeat = localStorage.getItem("Active_User_Seat") || "VISITOR";
+        activeTeacherId = localStorage.getItem("Active_User_TeacherID") || "";
 
         let badge = document.getElementById('topCenterAccount');
         if (badge) {
@@ -373,15 +384,34 @@
             if (currentRole === "STUDENT") {
                 badge.innerText = `挑戰者: ${userRawClass}班${String(userRawSeat).padStart(2, '0')}號`;
                 initLocalFallback(userRawClass, userRawSeat);
-            } else {
+                setupLayoutForStudent();
+            } else if (currentRole === "GUEST") {
                 badge.innerText = `挑戰者: 訪客體驗`;
-                cacheStorage.EQ = { wrongBook: [], stats: getInitialStatsObject() };
+                cacheStorage.EQ.wrongBook = []; cacheStorage.EQ.stats = getInitialStatsObject();
+                setupLayoutForStudent();
+            } else if (currentRole === "TEACHER") {
+                badge.innerText = `管理員: ${activeTeacherId.replace('Teacher_','')}`;
+                initLocalFallback("TEACHER", activeTeacherId);
+                setupLayoutForTeacher();
             }
         }
-        renderTypeSelectOptions(); // 補回函式阻絕死鎖
+        renderTypeSelectOptions();
         updateReviewMenuUI();
         showPanel('step1');
     });
+
+    // 🌟 補回缺失之版面佈局引導函式
+    function setupLayoutForStudent() {
+        document.querySelectorAll('.id-student-only').forEach(el => el.style.display = "flex");
+        document.querySelectorAll('.id-teacher-only').forEach(el => el.style.display = "none");
+        updateReviewMenuUI();
+    }
+
+    function setupLayoutForTeacher() {
+        document.querySelectorAll('.id-student-only').forEach(el => el.style.display = "none");
+        document.querySelectorAll('.id-teacher-only').forEach(el => el.style.display = "flex");
+        switchSetupConfig('STATS');
+    }
 
     function getInitialStatsObject() {
         return {
@@ -392,7 +422,6 @@
         };
     }
 
-    // 🚀 補回缺漏之介面渲染函式
     function renderTypeSelectOptions() {
         const ts = document.getElementById('typeSelect');
         if(ts) {
@@ -699,6 +728,18 @@
     function stopSessionTimer() { if(timerInterval) { clearInterval(timerInterval); timerInterval = null; } document.getElementById('globalTimerBox').style.display = 'none'; document.getElementById('globalTimerBoxStage3').style.display = 'none'; }
     function updateTimerDisplay() { let m = Math.floor(timeLeft / 60); let s = timeLeft % 60; let str = `⏱️ ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`; document.getElementById('globalTimerBox').innerText = str; document.getElementById('globalTimerBoxStage3').innerText = str; }
 
+    function finishTimeLimitSession() {
+        stopSessionTimer(); calculateAndRenderStats();
+        let summaryBox = document.getElementById('timeModeResultSummary'); 
+        if(summaryBox) {
+            summaryBox.style.display = 'block';
+            let minSet = Math.floor(session.timeLimitSetting / 60);
+            summaryBox.innerHTML = `🏁 限時挑戰完賽：你在 ${minSet} 分鐘內成功斬獲了 <span style="font-size:20px;color:var(--danger);">${session.score}</span> 分！`;
+        }
+        document.getElementById('reportMainHeading').innerText = "🏆 限時挑戰戰果結算報告";
+        showPanel('step_stats_panel');
+    }
+
     function resetToMainMenu(nc) {
         if(nc && (document.getElementById('step2').classList.contains('active')||document.getElementById('step3').classList.contains('active'))) {
             if(!confirm("確定要中途退出挑戰嗎？")) return;
@@ -707,15 +748,24 @@
         cloudSaveData(); updateReviewMenuUI(); showPanel('step1');
     }
 
-    function handleNavigationBack() { 
-        if(document.getElementById('step1').classList.contains('active')) {
-            stopSessionTimer(); 
-            window.location.replace("home.html"); 
-        } else {
-            resetToMainMenu(true); 
-        }
+    function handleManualSolverInput() {
+        let rawInput = document.getElementById('eqInput').value.trim(); let vars = document.getElementById('xValueInput').value.trim();
+        if(!rawInput) { alert("請輸入有效的代數式或公式！"); return; }
+        let target = "組裝項", expr = rawInput;
+        if(rawInput.includes("=")) { let parts = rawInput.split("="); target = parts[0].trim(); expr = parts[1].trim(); }
+
+        session.currentMode = 'SOLVER'; session.totalQuestions = 1; session.currentIdx = 0; 
+        session.questionList = [`自訂結構引導 | 已知 ${target} = ${expr}。當 ${vars}，${target} = ? #|#1`];
+        document.getElementById('teachingHeaderBadge').innerText = "🛠️ 解答引導模式";
+        loadEquationToStage();
     }
+
+    function toggleConditionUI() { let c = document.querySelector('input[name="endCondition"]:checked').value; document.getElementById('countInputWrapper').style.display = c === 'COUNT' ? 'block' : 'none'; document.getElementById('targetScoreInputWrapper').style.display = c === 'TARGET_SCORE' ? 'block' : 'none'; document.getElementById('timeLimitInputWrapper').style.display = c === 'TIME_LIMIT' ? 'block' : 'none'; }
+    function updateReviewMenuUI() { let c = (cacheStorage.EQ.wrongBook || []).length; document.getElementById('reviewModeCard').classList.toggle('disabled', c===0); document.getElementById('reviewTitle').innerText = `錯題庫 (${c})`; }
+    function cloudSaveData() { if (["GUEST"].includes(currentRole) || !userRawClass || !userRawSeat) return; try { localStorage.setItem(`MultiVarCache_${userRawClass}-${userRawSeat}`, JSON.stringify(cacheStorage.EQ)); } catch(e){} }
+    function initLocalFallback(tC, tS) { try { let local = localStorage.getItem(`MultiVarCache_${tC}-${tS}`); if(local) { let p = JSON.parse(local); if(p.stats?.[1]) { cacheStorage.EQ = p; return; } } } catch(e){} cacheStorage.EQ = { wrongBook: [], stats: getInitialStatsObject() }; }
     function logoutSession() { if(confirm("確定登出系統嗎？")) { stopSessionTimer(); localStorage.clear(); window.location.replace("index.html"); } }
+
     function calculateAndRenderStats() {
         const tb = document.getElementById('statsTableBody'); if(!tb) return; tb.innerHTML='';
         let tr=document.createElement('tr'); tr.className="section-title"; tr.innerHTML=`<th colspan="7">⚖️ 跨學科公式代求值數據分析</th>`; tb.appendChild(tr);
