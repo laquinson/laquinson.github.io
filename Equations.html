@@ -167,9 +167,17 @@
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwIK7Mqd4WEDpbuZR-PDt4pq-8EkZ74POUDDe9WgxZA_5QqPvIBdGdD2jVFjsVOZRIj/exec";
 
     let currentRole = "STUDENT", activeTeacherId = "", userRawClass = "", userRawSeat = "";
-    let currentPanelId = "step1"; let cacheStorage = { EQ: { wrongBook: [], stats: {} } };
-    let timerInterval = null; let timeLeft = 0; let wrongQuestionBank = [];
+    let currentPanelId = "step1"; 
+    // 【防當機修正 3】直接賦予完整的計分板物件，防止點擊闖關時閃退
+    let cacheStorage = { EQ: { wrongBook: [], stats: {
+        1: { name: "型 I: 基本加減方程", total:0, firstMatch:0, retryMatch:0, failed:0 },
+        2: { name: "型 II: 基本乘除方程", total:0, firstMatch:0, retryMatch:0, failed:0 },
+        3: { name: "型 III: 兩步綜合方程", total:0, firstMatch:0, retryMatch:0, failed:0 },
+        4: { name: "型 IV: 進階負數方程", total:0, firstMatch:0, retryMatch:0, failed:0 },
+        5: { name: "型 V: 括號分數方程", total:0, firstMatch:0, retryMatch:0, failed:0 }
+    } } };
     
+    let timerInterval = null; let timeLeft = 0; let wrongQuestionBank = [];
     let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, targetScore: 5, timeLimitSetting: 300, currentIdx: 0, score: 0, selectedType: 'MIX', questionList: [], currentTypeNum: 1, wrongAttemptsThisQuestion: 0, wrongAttemptsInTeaching: 0, hasAddedToWrongBookThisQuestion: false };
     let eqData = { type: 1, title: "", eqStr: "", leftExpr: "", rightExpr: "", ans: 0, steps: [] }; let currentTeachStep = 0;
 
@@ -197,7 +205,6 @@
                 initLocalFallback(userRawClass, userRawSeat);
             } else {
                 badge.innerText = `挑戰者: 訪客體驗`;
-                cacheStorage.EQ = { wrongBook: [], stats: getInitialStatsObject() };
             }
         }
         document.getElementById('typeSelect').innerHTML = `<option value="1">1. 型 I：基本加減型</option><option value="2">2. 型 II：基本乘除型</option><option value="3">3. 型 III：兩步綜合型</option><option value="4">4. 型 IV：進階負數型</option><option value="5">5. 型 V：括號分數型</option><option value="MIX" selected>6. 🔀 隨機天秤混合大亂鬥</option>`;
@@ -212,8 +219,6 @@
             let res = await fetch(`${GAS_API_URL}?type=GET_CACHE&cacheKey=${cacheKey}`);
             if(res.ok) { let data = await res.json(); if(data && data.cacheData) { cacheStorage.EQ = JSON.parse(data.cacheData); localStorage.setItem(cacheKey, data.cacheData); } }
         } catch(e) {}
-
-        if(!cacheStorage.EQ || !cacheStorage.EQ.stats) cacheStorage.EQ = { wrongBook: [], stats: getInitialStatsObject() }; 
         updateReviewMenuUI();
     }
 
@@ -226,8 +231,6 @@
             fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params }).catch(e=>console.log(e));
         } catch(e){} 
     }
-
-    function getInitialStatsObject() { return { 1: { name: "型 I: 基本加減方程", total:0, firstMatch:0, retryMatch:0, failed:0 }, 2: { name: "型 II: 基本乘除方程", total:0, firstMatch:0, retryMatch:0, failed:0 }, 3: { name: "型 III: 兩步綜合方程", total:0, firstMatch:0, retryMatch:0, failed:0 }, 4: { name: "型 IV: 進階負數方程", total:0, firstMatch:0, retryMatch:0, failed:0 }, 5: { name: "型 V: 括號分數方程", total:0, firstMatch:0, retryMatch:0, failed:0 } }; }
 
     function showPanel(id) { 
         document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active')); const target = document.getElementById(id);
@@ -282,6 +285,7 @@
         cloudSaveData(); updateReviewMenuUI(); setupNextButtonLabel();
     }
 
+    // 【防卡死修正 4】移除了第二步挑戰失敗時一開始就彈出的直接顯示答案鍵
     function executeFinalFailure() { document.getElementById('interactiveStageBox').innerHTML = `<div style="display:flex; align-items:center; justify-content:center; gap:10px;">${convertToRichMathHTML(eqData.leftExpr)} <span style="margin: 0 10px;">=</span> ${convertToRichMathHTML(eqData.rightExpr)}</div>`; document.getElementById('nextBtn').style.display="none"; document.getElementById('solveBtn').style.display="block"; document.getElementById('teachingZone').style.display="none"; let f=document.getElementById('feedbackArea'); f.className="feedback error"; f.innerHTML = "❌ 連續失衡。請點擊下方開啟「天秤等量公理模擬器」逐步動態操作解題。"; }
 
     function startInteractiveSolving() { document.getElementById('solveBtn').style.display="none"; document.getElementById('teachingZone').style.display="flex"; currentTeachStep = 0; renderMathSteps(); loadTeachingStepUI(); }
