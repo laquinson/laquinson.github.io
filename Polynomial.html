@@ -59,12 +59,8 @@
 <body>
 
 <div id="topCenterAccount" class="top-center-account"></div>
-<div id="topLeftNav" class="top-left-nav">
-    <button id="dynamicNavBtn" class="top-nav-btn" onclick="handleTopLeftNav()">&lt; 返回學習大廳</button>
-</div>
-<div id="topRightNav" class="top-right-nav">
-    <button class="top-nav-btn logout-btn-text" onclick="logoutSession()">🚪 登出</button>
-</div>
+<div id="topLeftNav" class="top-left-nav"><button id="dynamicNavBtn" class="top-nav-btn" onclick="handleTopLeftNav()">&lt; 返回學習大廳</button></div>
+<div id="topRightNav" class="top-right-nav"><button class="top-nav-btn logout-btn-text" onclick="logoutSession()">🚪 登出</button></div>
 
 <div class="container" id="mainContainer">
     <div id="step1" class="step-panel active">
@@ -207,6 +203,7 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         try {
+            initGlobalStatsCache();
             renderTypeSelectOptions();
             checkActiveSessionOnLoad();
         } catch(e) { console.error(e); showPanel('step1'); }
@@ -541,15 +538,17 @@
 
     UX = function(str) {
         let clean = str.replace(/\s+/g, '').replace(/²/g, '^2').replace(/¹/g, '').replace(/\+x/g, '+1x').replace(/--/g, '+').replace(/-x/g, '-1x').replace(/^x/, '1x').replace(/\+y/g, '+1y').replace(/-y/g, '-1y').replace(/^y/, '1y');
-        let terms = clean.match(/([+-]?\d*[a-zA-Z]\^?\d*|[+-]?\d+)/g) || []; let map = { x2: 0, x: 0, constant: 0 };
+        let terms = clean.match(/([+-]?\d*[a-zA-Z]\^?\d*|[+-]?\d+)/g) || []; let map = { x2: 0, x: 0, y: 0, constant: 0 };
         terms.forEach(t => {
             if (t.includes('x^2')) { let co = t.replace('x^2', ''); map.x2 += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co)); } 
-            else if (t.includes('x') || t.includes('y')) { let co = t.replace(/[xy]/, ''); map.x += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co)); } 
+            else if (t.includes('x')) { let co = t.replace('x', ''); map.x += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co)); } 
+            else if (t.includes('y')) { let co = t.replace('y', ''); map.y += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co)); } 
             else { map.constant += parseInt(t); }
         });
         let res = "";
         if (map.x2 !== 0) res += map.x2 + "x2";
         if (map.x !== 0) res += (map.x > 0 && res !== "" ? "+" : "") + map.x + "x";
+        if (map.y !== 0) res += (map.y > 0 && res !== "" ? "+" : "") + map.y + "y";
         if (map.constant !== 0) res += (map.constant > 0 && res !== "" ? "+" : "") + map.constant;
         return res === "" ? "0" : res;
     }
@@ -587,12 +586,19 @@
         }
     }
 
+    // 【防崩潰修正 2】嚴密防禦減法時的去括號轉換，解決黑板無字崩潰問題
     function initInteractiveBlackboard() {
         document.getElementById('nextBtn').style.display = 'none';
         document.getElementById('step3GuideText').innerText = "請根據原式，在下方輸入框中一步一步推出化簡後的正確多項式：";
         
-        let rawStep1 = (polyData.op==='+') ? `${polyData.p1}${(!polyData.p2.startsWith('-')?'+':'')+polyData.p2}` : `${polyData.p1}${((-polyData.b2>0?"+":"-")+Math.abs(polyData.b2)+"x").replace(/1x/g,"x")}${((-polyData.c2>0?"+":"-")+Math.abs(polyData.c2)+"y").replace(/1y/g,"y")}`;
-        if(rawStep1.endsWith('+0') || rawStep1.endsWith('-0')) rawStep1 = rawStep1.substring(0, rawStep1.length - 2);
+        let p2Neg = polyData.p2;
+        if (polyData.op === '-') {
+            if (!p2Neg.startsWith('-')) p2Neg = '+' + p2Neg;
+            p2Neg = p2Neg.replace(/\+/g, 'TEMP_PLUS').replace(/-/g, '+').replace(/TEMP_PLUS/g, '-');
+        } else {
+            if (!p2Neg.startsWith('-') && !p2Neg.startsWith('+')) p2Neg = '+' + p2Neg;
+        }
+        let rawStep1 = polyData.p1 + p2Neg;
         
         let correctStep1 = UX(rawStep1); let correctStep2 = UX(polyData.ansStr);
         let html = `
