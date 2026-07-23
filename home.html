@@ -81,7 +81,6 @@
     <h1>🪐 數學智能學習大廳</h1>
     <div id="welcomeText" class="welcome-msg">歡迎回來</div>
     
-    <!-- 學生視角：三大模組卡片 -->
     <div id="studentHall" class="menu-grid">
         <div class="game-card" onclick="goToModule('Substitution.html')">
             <div class="game-icon">📐</div>
@@ -100,7 +99,6 @@
         </div>
     </div>
 
-    <!-- 教師視角：進階數據管理分析 -->
     <div id="teacherDashboard" style="display: none; width: 100%;">
         
         <div class="teacher-filters">
@@ -142,6 +140,8 @@
 </div>
 
 <script>
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwIK7Mqd4WEDpbuZR-PDt4pq-8EkZ74POUDDe9WgxZA_5QqPvIBdGdD2jVFjsVOZRIj/exec";
+
     let role = localStorage.getItem("Active_User_Role");
     if (!role) { window.location.replace("index.html"); }
 
@@ -167,12 +167,26 @@
             document.getElementById('teacherDashboard').style.display = 'block';
             
             buildTeacherFilters();
-            // 預設載入目前預設選項的資料
-            queryData();
+            syncTeacherDataFromCloud(); // 向 Google Drive 請求最新資料
         }
     });
 
-    // 建立下拉選單選項
+    async function syncTeacherDataFromCloud() {
+        document.getElementById('reportTitle').innerText = "⏳ 正在從 Google Drive 雲端同步最新數據...";
+        try {
+            let res = await fetch(`${GAS_API_URL}?type=GET_RECORDS`);
+            if (res.ok) {
+                let data = await res.json();
+                if (data && data.records) {
+                    localStorage.setItem('MathSystem_Student_Records', JSON.stringify(data.records));
+                }
+            }
+        } catch (e) {
+            console.log("GAS 不支援 GET 或 CORS 攔截，使用本地緩存資料。");
+        }
+        queryData();
+    }
+
     function buildTeacherFilters() {
         let cHtml = "", sHtml = "";
         for(let g=1;g<=6;g++) ['A','B','C','D'].forEach(l => cHtml+=`<option value="${g}${l}">${g}${l} 班</option>`);
@@ -181,19 +195,16 @@
         document.getElementById('filterSeat').innerHTML = sHtml;
     }
 
-    // 切換查詢模式（隱藏/顯示座號下拉選單）
     function toggleViewMode() {
         let mode = document.getElementById('viewMode').value;
         document.getElementById('filterSeat').style.display = mode === 'INDIVIDUAL' ? 'block' : 'none';
     }
 
-    // 執行資料過濾與渲染
     function queryData() {
         let mode = document.getElementById('viewMode').value;
         let tClass = document.getElementById('filterClass').value;
         let tSeat = document.getElementById('filterSeat').value;
         
-        // 取得全域儲存的紀錄
         let rawRecords = JSON.parse(localStorage.getItem('MathSystem_Student_Records') || '[]');
 
         if (mode === 'INDIVIDUAL') {
@@ -205,10 +216,8 @@
         }
     }
 
-    // 渲染：個人成績單
     function renderIndividualReport(tClass, tSeat, records) {
         document.getElementById('reportTitle').innerText = `👤 學生紀錄：${tClass}班 ${tSeat}號`;
-        
         let tHead = document.getElementById('teacherTableHead');
         let tBody = document.getElementById('teacherTableBody');
         let cards = document.getElementById('statsCardsContainer');
@@ -225,13 +234,7 @@
         let rowsHtml = "";
         records.forEach(r => {
             totalScore += r.score;
-            rowsHtml += `
-                <tr>
-                    <td>${r.timestamp}</td>
-                    <td style="color:#60a5fa; font-weight:bold;">${r.module}</td>
-                    <td style="font-weight:bold; color:${r.score > 0 ? '#4ade80' : '#f87171'};">${r.score} 分</td>
-                </tr>
-            `;
+            rowsHtml += `<tr><td>${r.timestamp}</td><td style="color:#60a5fa; font-weight:bold;">${r.module}</td><td style="font-weight:bold; color:${r.score > 0 ? '#4ade80' : '#f87171'};">${r.score} 分</td></tr>`;
         });
 
         document.getElementById('statTotalCount').innerText = records.length;
@@ -240,7 +243,6 @@
         tBody.innerHTML = rowsHtml;
     }
 
-    // 渲染：班級整合分析表
     function renderClassReport(tClass, records) {
         document.getElementById('reportTitle').innerText = `🏫 班別整合分析：${tClass}班`;
         document.getElementById('statsCardsContainer').style.display = "none";
@@ -255,53 +257,35 @@
             return;
         }
 
-        // 數據聚合 (Group by Seat)
         let studentMap = {};
         records.forEach(r => {
-            if(!studentMap[r.seat]) {
-                studentMap[r.seat] = { count: 0, totalScore: 0, modules: new Set() };
-            }
+            if(!studentMap[r.seat]) studentMap[r.seat] = { count: 0, totalScore: 0, modules: new Set() };
             studentMap[r.seat].count++;
             studentMap[r.seat].totalScore += r.score;
             studentMap[r.seat].modules.add(r.module);
         });
 
-        // 轉換為陣列並依照座號排序
-        let aggregatedList = Object.keys(studentMap).map(seat => {
-            return { seat: parseInt(seat), data: studentMap[seat] };
-        }).sort((a, b) => a.seat - b.seat);
-
+        let aggregatedList = Object.keys(studentMap).map(seat => { return { seat: parseInt(seat), data: studentMap[seat] }; }).sort((a, b) => a.seat - b.seat);
         let rowsHtml = "";
         aggregatedList.forEach(student => {
             let s = student.data;
             let avg = (s.totalScore / s.count).toFixed(1);
             let modsArray = Array.from(s.modules);
             let modTags = modsArray.map(m => `<span style="background:rgba(56, 189, 248, 0.2); color:#38bdf8; padding:2px 6px; border-radius:4px; margin-right:4px; font-size:12px;">${m}</span>`).join('');
-            
-            rowsHtml += `
-                <tr>
-                    <td style="font-weight:bold; font-size:16px;">${student.seat} 號</td>
-                    <td>${s.count} 次</td>
-                    <td>${modTags}</td>
-                    <td style="color:#4ade80; font-weight:bold;">${s.totalScore} 分</td>
-                    <td style="color:#fcd34d; font-weight:bold;">${avg}</td>
-                </tr>
-            `;
+            rowsHtml += `<tr><td style="font-weight:bold; font-size:16px;">${student.seat} 號</td><td>${s.count} 次</td><td>${modTags}</td><td style="color:#4ade80; font-weight:bold;">${s.totalScore} 分</td><td style="color:#fcd34d; font-weight:bold;">${avg}</td></tr>`;
         });
-
         tBody.innerHTML = rowsHtml;
     }
 
     function clearTeacherData() {
         if(confirm("確定要刪除所有系統紀錄的作答數據嗎？此操作無法還原！")) {
             localStorage.removeItem('MathSystem_Student_Records');
-            queryData(); // 清空後重新渲染目前視圖
+            queryData(); 
         }
     }
 
     function goToModule(moduleName) { window.location.replace(moduleName); }
     
-    // 安全登出機制
     function logoutSession() { 
         if(confirm("確定登出系統嗎？")) { 
             localStorage.removeItem("Active_User_Role");
