@@ -168,7 +168,8 @@
 
     let currentRole = "STUDENT", activeTeacherId = "", userRawClass = "", userRawSeat = "";
     let currentPanelId = "step1"; 
-    // 【防當機修正 3】直接賦予完整的計分板物件，防止點擊闖關時閃退
+    
+    // 【防當機修正 1】賦予完整預設物件
     let cacheStorage = { EQ: { wrongBook: [], stats: {
         1: { name: "型 I: 基本加減方程", total:0, firstMatch:0, retryMatch:0, failed:0 },
         2: { name: "型 II: 基本乘除方程", total:0, firstMatch:0, retryMatch:0, failed:0 },
@@ -217,7 +218,16 @@
         
         try {
             let res = await fetch(`${GAS_API_URL}?type=GET_CACHE&cacheKey=${cacheKey}`);
-            if(res.ok) { let data = await res.json(); if(data && data.cacheData) { cacheStorage.EQ = JSON.parse(data.cacheData); localStorage.setItem(cacheKey, data.cacheData); } }
+            if(res.ok) { 
+                let data = await res.json(); 
+                if(data && data.cacheData) { 
+                    let parsedData = JSON.parse(data.cacheData);
+                    if(parsedData.stats && parsedData.stats[1]) {
+                        cacheStorage.EQ = parsedData;
+                        localStorage.setItem(cacheKey, data.cacheData); 
+                    }
+                } 
+            }
         } catch(e) {}
         updateReviewMenuUI();
     }
@@ -228,7 +238,7 @@
             let cacheKey = `EquationsCache_${userRawClass}-${userRawSeat}`; let cacheStr = JSON.stringify(cacheStorage.EQ);
             localStorage.setItem(cacheKey, cacheStr); 
             let params = new URLSearchParams(); params.append('type', 'SAVE_CACHE'); params.append('cacheKey', cacheKey); params.append('cacheData', cacheStr);
-            fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params }).catch(e=>console.log(e));
+            fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() }).catch(e=>{});
         } catch(e){} 
     }
 
@@ -257,7 +267,12 @@
         document.getElementById('mainContainer').style.display = 'block'; session.wrongAttemptsThisQuestion = 0; session.wrongAttemptsInTeaching = 0; session.hasAddedToWrongBookThisQuestion = false;
         document.getElementById('initialFeedbackArea').innerHTML = ''; document.getElementById('ansInput').disabled = false; document.getElementById('ansInput').value = ''; document.getElementById('retryInputWrapper').style.display = 'none'; document.getElementById('ansRetryInput').value = '';
         let expr = session.questionList[session.currentIdx]; if(!parseEquationStructure(expr)) { alert("天秤數據初始化失敗！"); resetToMainMenu(false); return; }
-        if(session.currentMode==='CHALLENGE') { cacheStorage.EQ.stats[session.currentTypeNum].total++; cloudSaveData(); }
+        
+        if(session.currentMode==='CHALLENGE' && cacheStorage.EQ.stats[session.currentTypeNum]) { 
+            cacheStorage.EQ.stats[session.currentTypeNum].total++; 
+            cloudSaveData(); 
+        }
+        
         const step2Title = document.getElementById('step2Title'); if(step2Title) step2Title.innerText = (session.currentMode === 'REVIEW') ? "👹 魔王錯題重溫挑戰" : "請解出未知數的值使天秤維持平衡";
         document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`; document.getElementById('displayEq').innerHTML = `<div style="font-size: 20px; color:#cbd5e1; margin-bottom:10px;">📊 題型：${eqData.title}</div><div style="font-size: 32px; color:#fff; letter-spacing:1px; display:flex; align-items:center; justify-content:center; gap:10px;">${convertToRichMathHTML(eqData.leftExpr)} <span style="margin: 0 10px;">=</span> ${convertToRichMathHTML(eqData.rightExpr)}</div>`;
         showPanel('step2'); updateProgressBarUI();
@@ -285,7 +300,6 @@
         cloudSaveData(); updateReviewMenuUI(); setupNextButtonLabel();
     }
 
-    // 【防卡死修正 4】移除了第二步挑戰失敗時一開始就彈出的直接顯示答案鍵
     function executeFinalFailure() { document.getElementById('interactiveStageBox').innerHTML = `<div style="display:flex; align-items:center; justify-content:center; gap:10px;">${convertToRichMathHTML(eqData.leftExpr)} <span style="margin: 0 10px;">=</span> ${convertToRichMathHTML(eqData.rightExpr)}</div>`; document.getElementById('nextBtn').style.display="none"; document.getElementById('solveBtn').style.display="block"; document.getElementById('teachingZone').style.display="none"; let f=document.getElementById('feedbackArea'); f.className="feedback error"; f.innerHTML = "❌ 連續失衡。請點擊下方開啟「天秤等量公理模擬器」逐步動態操作解題。"; }
 
     function startInteractiveSolving() { document.getElementById('solveBtn').style.display="none"; document.getElementById('teachingZone').style.display="flex"; currentTeachStep = 0; renderMathSteps(); loadTeachingStepUI(); }
@@ -331,6 +345,7 @@
     function startSessionTimer(seconds) { stopSessionTimer(); timeLeft = seconds; updateTimerDisplay(); document.getElementById('globalTimerBox').style.display = 'inline-block'; document.getElementById('globalTimerBoxStage3').style.display = 'inline-block'; timerInterval = setInterval(() => { timeLeft--; updateTimerDisplay(); if(session.endCondition==='TIME_LIMIT') updateProgressBarUI(); if (timeLeft <= 0) { stopSessionTimer(); alert("⏱️ 時間到！進行數據結算！"); finishTimeLimitSession(); } }, 1000); }
     function stopSessionTimer() { if(timerInterval) { clearInterval(timerInterval); timerInterval = null; } document.getElementById('globalTimerBox').style.display = 'none'; document.getElementById('globalTimerBoxStage3').style.display = 'none'; }
     function updateTimerDisplay() { let m = Math.floor(timeLeft / 60); let s = timeLeft % 60; let str = `⏱️ ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`; document.getElementById('globalTimerBox').innerText = str; document.getElementById('globalTimerBoxStage3').innerText = str; }
+    function finishTimeLimitSession() { stopSessionTimer(); calculateAndRenderStats(); let summaryBox = document.getElementById('timeModeResultSummary'); if(summaryBox) { summaryBox.style.display = 'block'; let minSet = Math.floor(session.timeLimitSetting / 60); summaryBox.innerHTML = `🏁 限時挑戰完賽：你在 ${minSet} 分鐘內成功斬獲了 <span style="font-size:20px;color:var(--danger);">${session.score}</span> 分！`; } document.getElementById('reportMainHeading').innerText = "🏆 限時挑戰戰果結算報告"; showPanel('step_stats_panel'); }
     function resetToMainMenu(nc) { if(nc && (document.getElementById('step2').classList.contains('active')||document.getElementById('step3').classList.contains('active'))) { if(!confirm("確定要中途退出挑戰嗎？")) return; } stopSessionTimer(); document.getElementById('nextBtn').style.display="none"; document.getElementById('teachingZone').style.display="none"; cloudSaveData(); updateReviewMenuUI(); showPanel('step1'); }
     function toggleConditionUI() { let c = document.querySelector('input[name="endCondition"]:checked').value; document.getElementById('countInputWrapper').style.display = c === 'COUNT' ? 'block' : 'none'; document.getElementById('targetScoreInputWrapper').style.display = c === 'TARGET_SCORE' ? 'block' : 'none'; document.getElementById('timeLimitInputWrapper').style.display = c === 'TIME_LIMIT' ? 'block' : 'none'; }
     function updateReviewMenuUI() { let c = (cacheStorage.EQ.wrongBook || []).length; document.getElementById('reviewModeCard').classList.toggle('disabled', c===0); document.getElementById('reviewTitle').innerText = `失衡錯題庫 (${c})`; }
@@ -343,7 +358,7 @@
             let r = JSON.parse(localStorage.getItem('MathSystem_Student_Records') || '[]'); r.unshift(record); if(r.length>200) r.pop(); localStorage.setItem('MathSystem_Student_Records', JSON.stringify(r));
             
             let params = new URLSearchParams(); params.append('type', 'RECORD'); params.append('class', record.class); params.append('seat', record.seat); params.append('module', record.module); params.append('score', record.score); params.append('timestamp', record.timestamp);
-            fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params }).catch(e=>console.log(e));
+            fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() }).catch(e=>{});
         } catch(e){}
     }
 
