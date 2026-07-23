@@ -5,63 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>中一多項式加減系統 - 挑戰選單</title>
     <style>
-        body {
-            background: url('https://i.imgur.com/f118Qxn.jpeg') no-repeat center center fixed;
-            background-size: cover; min-height: 100vh; color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center;
-        }
-
+        body { background: url('https://i.imgur.com/f118Qxn.jpeg') no-repeat center center fixed; background-size: cover; min-height: 100vh; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .top-left-nav, .top-right-nav { position: absolute; top: 25px; z-index: 999 !important; }
         .top-left-nav { left: 20px; } .top-right-nav { right: 20px; }
         .top-nav-btn { background: #fff; border: 2px solid #cbd5e1; padding: 8px 16px; border-radius: 12px; font-size: 15px; font-weight: bold; color: #475569; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .top-nav-btn:hover { transform: scale(1.03); border-color: #3b82f6; color: #3b82f6; }
         .logout-btn-text { color: #ef4444; border-color: #fecdd3; }
         .logout-btn-text:hover { background: #fff1f2; }
-
         .top-center-account { position: absolute; top: 28px; left: 50%; transform: translateX(-50%); font-size: 20px; font-weight: 900; color: #ffffff; text-shadow: 1px 1px 4px rgba(0,0,0,0.6); z-index: 999 !important; font-family: 'Comic Sans MS', sans-serif; white-space: nowrap; display: none; }
         .container { max-width: 900px; width: 100%; margin-top: 60px; }
-
-        .step-panel {
-            display: none; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-            background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.25);
-            border-radius: 24px; padding: 30px; margin-bottom: 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15); box-sizing: border-box; z-index: 10; position: relative;
-        }
+        .step-panel { display: none; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 24px; padding: 30px; margin-bottom: 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15); box-sizing: border-box; z-index: 10; position: relative; }
         .step-panel.active { display: block; }
-
         .form-group { margin-bottom: 20px; width: 100%; }
         label { display: block; margin-bottom: 10px; font-weight: bold; font-size: 16px; }
-        
         input[type="text"], input[type="number"], select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.9); font-size: 16px; box-sizing: border-box; color: #000 !important; font-weight: bold !important; }
-        
         button { width: 100%; padding: 14px; background: #3b82f6; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.2s; margin-top: 10px; }
         button:hover { transform: translateY(-2px); opacity: 0.9; }
         .btn-success { background: #10b981; } .btn-secondary { background: #64748b; } .btn-warning { background: #f59e0b; color: #111; } .btn-info { background: #06b6d4; } .btn-purple { background: #8b5cf6; }
-        
         .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .dash-btn { border-radius: 20px; padding: 20px; color: white; cursor: pointer; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transition: transform 0.2s; min-height: 120px; display: flex; flex-direction: column; justify-content: space-between; }
         .dash-btn:hover { transform: translateY(-4px); }
-        
         .bg-purple { background: linear-gradient(135deg, #7c3aed, #a855f7); } 
         .bg-orange { background: linear-gradient(135deg, #f59e0b, #fcd34d); } 
         .bg-teal   { background: linear-gradient(135deg, #0d9488, #2dd4bf); } 
         .bg-blue   { background: linear-gradient(135deg, #0284c7, #38bdf8); }
         .dash-title { font-size: 20px; font-weight: 800; margin: 5px 0; }
-        
         .math-native-expr { font-size: 1.6em; color: #fffb00; font-weight: bold; letter-spacing: 1px; }
-        
         .horizontal-step-line { font-size: 1.2em; margin: 14px 0; padding: 10px 14px; border-left: 4px solid #00ffc4; background: rgba(0,0,0,0.25); border-radius: 0 8px 8px 0; line-height: 1.6; display: flex; justify-content: space-between; align-items: center; }
         .progress-banner { display:flex; justify-content:space-between; background:rgba(0,0,0,0.3); padding:10px 20px; border-radius:12px; margin-bottom:20px; align-items:center; }
         .interactive-input { width: 240px !important; padding: 8px 12px !important; font-size: 16px !important; display: inline-block; margin-left: 10px; background: #fff !important; border-radius: 6px !important; color: #000 !important; font-weight: bold !important; border: 2px solid #cbd5e1; }
         .step-status-icon { margin-left: 10px; font-size: 16px; font-weight: bold; white-space: nowrap; }
-
         table.stats-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; background: rgba(255,255,255,0.95); color: #334155; border-radius: 12px; overflow: hidden; }
         table.stats-table th, table.stats-table td { border: 1px solid #cbd5e1; padding: 10px; text-align: center; }
         table.stats-table th { background: #e2e8f0; color: #1e293b; font-weight: bold; }
         table.stats-table tr.section-title th { background: #2b5797 !important; color: white !important; text-align: left; padding-left: 15px; font-size: 15px; }
         .info-span { margin-right: 25px; display: inline-block; font-weight: bold; }
         .btn-group { display: flex; gap: 15px; margin-top: 20px; }
-
         .print-student-page { display: block; }
         @media print {
             body { background: white !important; color: black !important; padding: 0 !important; }
@@ -211,6 +190,8 @@
 </div>
 
 <script>
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwIK7Mqd4WEDpbuZR-PDt4pq-8EkZ74POUDDe9WgxZA_5QqPvIBdGdD2jVFjsVOZRIj/exec";
+
     let currentRole = "STUDENT", userRawClass = "", userRawSeat = "";
     let currentPanelId = "step1"; 
     let currentEngine = "SIMPLIFY"; 
@@ -231,28 +212,50 @@
         } catch(e) { console.error(e); showPanel('step1'); }
     });
 
-    // 【新增】永久綁定個人資料庫機制
-    function initLocalFallback(tC, tS) {
+    async function initLocalFallback(tC, tS) {
+        let cacheKey = `PolyCache_${tC}-${tS}`;
         try {
-            let local = localStorage.getItem(`PolyCache_${tC}-${tS}`);
+            let local = localStorage.getItem(cacheKey);
             if(local) {
                 let p = JSON.parse(local);
                 if(p.SIMPLIFY && p.SIMPLIFY.stats) {
                     cacheStorage = p;
                     wrongQuestionBank = cacheStorage.SIMPLIFY.wrongBook || [];
-                    return;
                 }
             }
         } catch(e) {}
-        initGlobalStatsCache();
-        wrongQuestionBank = [];
+        
+        try {
+            let res = await fetch(`${GAS_API_URL}?type=GET_CACHE&cacheKey=${cacheKey}`);
+            if(res.ok) {
+                let data = await res.json();
+                if(data && data.cacheData) {
+                    cacheStorage = JSON.parse(data.cacheData);
+                    localStorage.setItem(cacheKey, data.cacheData);
+                    wrongQuestionBank = cacheStorage.SIMPLIFY.wrongBook || [];
+                    updateReviewCardUI();
+                }
+            }
+        } catch(e) {}
+
+        if(!cacheStorage.SIMPLIFY || !cacheStorage.SIMPLIFY.stats) {
+            initGlobalStatsCache();
+            wrongQuestionBank = [];
+        }
     }
 
-    // 【新增】永久儲存個人數據至雲端
     function cloudSaveData() {
         if (["GUEST", "TEACHER"].includes(currentRole) || !userRawClass || !userRawSeat) return;
         try {
-            localStorage.setItem(`PolyCache_${userRawClass}-${userRawSeat}`, JSON.stringify(cacheStorage));
+            let cacheKey = `PolyCache_${userRawClass}-${userRawSeat}`;
+            let cacheStr = JSON.stringify(cacheStorage);
+            localStorage.setItem(cacheKey, cacheStr);
+            
+            let params = new URLSearchParams();
+            params.append('type', 'SAVE_CACHE');
+            params.append('cacheKey', cacheKey);
+            params.append('cacheData', cacheStr);
+            fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params }).catch(e=>console.log(e));
         } catch(e){}
     }
 
@@ -273,9 +276,7 @@
         let savedClass = localStorage.getItem("Active_User_Class") || "1A";
         let savedSeat = localStorage.getItem("Active_User_Seat") || "1";
         
-        currentRole = savedRole;
-        userRawClass = savedClass;
-        userRawSeat = savedSeat;
+        currentRole = savedRole; userRawClass = savedClass; userRawSeat = savedSeat;
 
         let accountDOM = document.getElementById('topCenterAccount');
         if (accountDOM) accountDOM.style.display = 'block';
@@ -286,7 +287,6 @@
             buildTeacherQueryOptions();
         } else {
             if (accountDOM) accountDOM.innerText = `挑戰者: ${userRawClass}班${String(userRawSeat).padStart(2, '0')}號`;
-            // 【修復】呼叫個人的資料還原
             initLocalFallback(userRawClass, userRawSeat);
             updateReviewCardUI();
         }
@@ -294,8 +294,7 @@
     }
 
     function buildTeacherQueryOptions() {
-        const qC = document.getElementById('queryClass');
-        const qS = document.getElementById('querySeat');
+        const qC = document.getElementById('queryClass'); const qS = document.getElementById('querySeat');
         if(!qC || !qS) return;
         qC.innerHTML = ""; qS.innerHTML = "";
         for(let g=1; g<=6; g++) ['A','B','C','D'].forEach(l => qC.innerHTML+=`<option value="${g}${l}">${g}${l}班</option>`);
@@ -354,10 +353,20 @@
     function pushTeacherRecord(mod) {
         if(currentRole !== 'STUDENT') return;
         try {
+            let record = { class: userRawClass, seat: userRawSeat, module: mod, score: session.score, timestamp: new Date().toLocaleString("zh-HK", {hour12:false}) };
             let r = JSON.parse(localStorage.getItem('MathSystem_Student_Records') || '[]');
-            r.unshift({class: userRawClass, seat: userRawSeat, module: mod, score: session.score, timestamp: new Date().toLocaleString("zh-HK", {hour12:false})});
+            r.unshift(record);
             if(r.length>200) r.pop();
             localStorage.setItem('MathSystem_Student_Records', JSON.stringify(r));
+
+            let params = new URLSearchParams();
+            params.append('type', 'RECORD');
+            params.append('class', record.class);
+            params.append('seat', record.seat);
+            params.append('module', record.module);
+            params.append('score', record.score);
+            params.append('timestamp', record.timestamp);
+            fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params }).catch(e=>console.log(e));
         } catch(e){}
     }
 
@@ -377,17 +386,14 @@
 
             let sObj = cacheStorage[m.key].stats;
             for(let k in sObj) {
-                let r = sObj[k];
-                let t = r.total;
+                let r = sObj[k]; let t = r.total;
                 let fRate = t > 0 ? Math.round((r.firstMatch / t) * 100) + '%' : '0%';
                 let cRate = t > 0 ? Math.round(((r.firstMatch + r.retryMatch) / t) * 100) + '%' : '0%';
                 
                 tb.innerHTML += `<tr>
                     <td style='text-align:left; font-weight:bold; padding-left:15px;'>${r.name}</td>
-                    <td>${t}</td>
-                    <td style='color:#10b981; font-weight:bold;'>${r.firstMatch}</td>
-                    <td style='color:#f59e0b;'>${r.retryMatch}</td>
-                    <td style='color:#ef4444;'>${r.failed}</td>
+                    <td>${t}</td><td style='color:#10b981; font-weight:bold;'>${r.firstMatch}</td>
+                    <td style='color:#f59e0b;'>${r.retryMatch}</td><td style='color:#ef4444;'>${r.failed}</td>
                     <td style='background:#f0fdf4; font-weight:bold; color:#10b981;'>${fRate}</td>
                     <td style='background:#eff6ff; font-weight:bold; color:#3b82f6;'>${cRate}</td>
                 </tr>`;
@@ -399,18 +405,17 @@
     }
 
     function loadTargetStudentDataByTeacher() {
-        let tc = document.getElementById('queryClass').value;
-        let ts = document.getElementById('querySeat').value;
+        let tc = document.getElementById('queryClass').value; let ts = document.getElementById('querySeat').value;
         userRawClass = tc; userRawSeat = ts;
-        initLocalFallback(userRawClass, userRawSeat);
-        calculateAndRenderStats();
-        alert(`🎉 成功撈取 ${tc}班 ${ts}號 的雲端歷程檔案！已更新數據報表。`);
+        initLocalFallback(userRawClass, userRawSeat).then(() => {
+            calculateAndRenderStats();
+            alert(`🎉 成功撈取 ${tc}班 ${ts}號 的雲端歷程檔案！已更新數據報表。`);
+        });
     }
 
     function fmtTerm(coef, variable, isFirst) {
         if (coef === 0) return "";
-        let sign = coef > 0 ? (isFirst ? "" : "+") : "-";
-        let absCoef = Math.abs(coef);
+        let sign = coef > 0 ? (isFirst ? "" : "+") : "-"; let absCoef = Math.abs(coef);
         let coefStr = (absCoef === 1 && variable !== "") ? "" : absCoef;
         return sign + coefStr + variable;
     }
@@ -466,12 +471,9 @@
             let input = document.getElementById('polyInput').value.trim() || "3x + 8 + 2x + 5";
             let cleanInput = input.replace(/²/g, '^2').replace(/\s+/g, '').replace(/\(/g, '').replace(/\)/g, '');
             
-            let p1 = "", p2 = "", op = "+";
-            currentEngine = "SIMPLIFY"; session.currentTypeNum = 1;
-            
+            let p1 = "", p2 = "", op = "+"; currentEngine = "SIMPLIFY"; session.currentTypeNum = 1;
             if (input.replace(/\s+/g, '').includes(')+(') || input.replace(/\s+/g, '').includes(')-(')) {
-                let normInput = input.replace(/\s+/g, '');
-                op = normInput.includes(')-(') ? '-' : '+';
+                let normInput = input.replace(/\s+/g, ''); op = normInput.includes(')-(') ? '-' : '+';
                 let parts = normInput.split(op === '+' ? ')+(' : ')-(');
                 p1 = parts[0].replace('(', ''); p2 = parts[1] ? parts[1].replace(')', '') : "0";
             } else {
@@ -491,8 +493,7 @@
                     if (t.includes('x^2')) { let co = t.replace('x^2', ''); a += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co)); }
                     else if (t.includes('x') || t.includes('y')) { let co = t.replace(/[xy]/, ''); b += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co)); }
                     else { let parsed = parseInt(t); if(!isNaN(parsed)) c += parsed; }
-                });
-                return [a, b, c];
+                }); return [a, b, c];
             };
 
             let c1 = parseCoefs(p1); let c2 = parseCoefs(p2);
@@ -505,16 +506,13 @@
             if(ansB !== 0) ansStr += fmtTerm(ansB, "x", ansA === 0);
             if(ansC !== 0 || ansStr === "") ansStr += fmtTerm(ansC, "", ansA === 0 && ansB === 0);
             
-            polyData.a1 = c1[0]; polyData.b1 = c1[1]; polyData.c1 = c1[2];
-            polyData.a2 = c2[0]; polyData.b2 = c2[1]; polyData.c2 = c2[2];
-            polyData.ansA = ansA; polyData.ansB = ansB; polyData.ansC = ansC;
-            polyData.isQuad = (c1[0] !== 0 || c2[0] !== 0);
+            polyData.a1 = c1[0]; polyData.b1 = c1[1]; polyData.c1 = c1[2]; polyData.a2 = c2[0]; polyData.b2 = c2[1]; polyData.c2 = c2[2];
+            polyData.ansA = ansA; polyData.ansB = ansB; polyData.ansC = ansC; polyData.isQuad = (c1[0] !== 0 || c2[0] !== 0);
 
             session.questionList = [`(${p1})${op}(${p2})|${ansStr}|${p1}|${op}|${p2}|${c1.join(',')}|${c2.join(',')}|${ansA},${ansB},${ansC}|${polyData.isQuad?1:0}|4`]; 
             session.currentIdx = 0; loadQuestionToStage();
         } catch(e) {
-            session.questionList = ["(3x+8)+(2x+5)|11x+13|3x+8|+|2x+5|0,3,8|0,2,5|0,5,13|0|4"];
-            session.currentIdx = 0; loadQuestionToStage();
+            session.questionList = ["(3x+8)+(2x+5)|11x+13|3x+8|+|2x+5|0,3,8|0,2,5|0,5,13|0|4"]; session.currentIdx = 0; loadQuestionToStage();
         }
     }
 
@@ -534,28 +532,20 @@
 
             if(session.currentMode === 'CHALLENGE') {
                 cacheStorage[currentEngine].stats[session.currentTypeNum].total++;
-                cloudSaveData(); // 存檔
+                cloudSaveData();
             }
             
-            setTimeout(() => {
-                document.getElementById('displayPoly').innerHTML = convertToNativeSup(polyData.texExpr);
-                showPanel('step2');
-            }, 0);
+            setTimeout(() => { document.getElementById('displayPoly').innerHTML = convertToNativeSup(polyData.texExpr); showPanel('step2'); }, 0);
         } catch(e) { console.error(e); showPanel('step2'); }
     }
 
     UX = function(str) {
         let clean = str.replace(/\s+/g, '').replace(/²/g, '^2').replace(/¹/g, '').replace(/\+x/g, '+1x').replace(/--/g, '+').replace(/-x/g, '-1x').replace(/^x/, '1x').replace(/\+y/g, '+1y').replace(/-y/g, '-1y').replace(/^y/, '1y');
-        let terms = clean.match(/([+-]?\d*[a-zA-Z]\^?\d*|[+-]?\d+)/g) || [];
-        let map = { x2: 0, x: 0, constant: 0 };
+        let terms = clean.match(/([+-]?\d*[a-zA-Z]\^?\d*|[+-]?\d+)/g) || []; let map = { x2: 0, x: 0, constant: 0 };
         terms.forEach(t => {
-            if (t.includes('x^2')) {
-                let co = t.replace('x^2', ''); map.x2 += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co));
-            } else if (t.includes('x') || t.includes('y')) {
-                let co = t.replace(/[xy]/, ''); map.x += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co));
-            } else {
-                map.constant += parseInt(t);
-            }
+            if (t.includes('x^2')) { let co = t.replace('x^2', ''); map.x2 += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co)); } 
+            else if (t.includes('x') || t.includes('y')) { let co = t.replace(/[xy]/, ''); map.x += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co)); } 
+            else { map.constant += parseInt(t); }
         });
         let res = "";
         if (map.x2 !== 0) res += map.x2 + "x2";
@@ -578,25 +568,21 @@
                 cacheStorage.SIMPLIFY.wrongBook = wrongQuestionBank;
                 alert("🎉 成功擊破錯題！該題已從錯題庫消除。");
             }
-            cloudSaveData(); // 存檔
+            cloudSaveData(); 
 
             if (session.currentMode === 'SOLVER' || session.currentIdx >= (session.totalQuestions - 1)) {
                 showPanel('step1'); 
-            } else {
-                session.currentIdx++; loadQuestionToStage();
-            }
+            } else { session.currentIdx++; loadQuestionToStage(); }
         } else {
             session.wrongAttemptsThisQuestion++;
             alert("❌ 答案不太對喔！讓我們在黑板中一步一步推導出正確解答。");
             
-            if(session.currentMode === 'CHALLENGE' && session.wrongAttemptsThisQuestion === 1) {
-                cacheStorage[currentEngine].stats[session.currentTypeNum].failed++;
-            }
+            if(session.currentMode === 'CHALLENGE' && session.wrongAttemptsThisQuestion === 1) cacheStorage[currentEngine].stats[session.currentTypeNum].failed++;
             if (!wrongQuestionBank.includes(currentQ)) { 
                 wrongQuestionBank.push(currentQ); 
                 cacheStorage.SIMPLIFY.wrongBook = wrongQuestionBank;
             }
-            cloudSaveData(); // 存檔
+            cloudSaveData();
             updateReviewCardUI(); showPanel('step3'); initInteractiveBlackboard();
         }
     }
@@ -610,25 +596,14 @@
         
         let correctStep1 = UX(rawStep1); let correctStep2 = UX(polyData.ansStr);
         let html = `
-            <div class="horizontal-step-line" id="boardLine0">
-                <span><b>原式：</b> ${convertToNativeSup('('+polyData.p1+') '+polyData.op+' ('+polyData.p2+')')}</span>
-                <span class="step-status-icon">ℹ️</span>
-            </div>
+            <div class="horizontal-step-line" id="boardLine0"><span><b>原式：</b> ${convertToNativeSup('('+polyData.p1+') '+polyData.op+' ('+polyData.p2+')')}</span><span class="step-status-icon">ℹ️</span></div>
             <div class="horizontal-step-line" id="boardLine1">
                 <span><b>第一步 (去括號展開)：</b></span>
-                <div>
-                    <input type="text" class="interactive-input" id="step1Input" placeholder="請輸入去括號後的算式" autocomplete="off">
-                    <button onclick="verifyStep1('${correctStep1}', '${correctStep2}')" style="width:auto; padding:6px 14px; margin:0 0 0 5px; font-size:14px;">驗證</button>
-                    <span id="statusIcon1" class="step-status-icon">❓</span>
-                </div>
+                <div><input type="text" class="interactive-input" id="step1Input" placeholder="請輸入去括號後的算式" autocomplete="off"><button onclick="verifyStep1('${correctStep1}', '${correctStep2}')" style="width:auto; padding:6px 14px; margin:0 0 0 5px; font-size:14px;">驗證</button><span id="statusIcon1" class="step-status-icon">❓</span></div>
             </div>
             <div class="horizontal-step-line" id="boardLine2" style="opacity: 0.4; pointer-events: none;">
                 <span><b>第二步 (同類項合併)：</b></span>
-                <div>
-                    <input type="text" class="interactive-input" id="step2Input" placeholder="請輸入合併項最終答案" autocomplete="off">
-                    <button onclick="verifyStep2('${correctStep2}')" style="width:auto; padding:6px 14px; margin:0 0 0 5px; font-size:14px;">驗證</button>
-                    <span id="statusIcon2" class="step-status-icon">❓</span>
-                </div>
+                <div><input type="text" class="interactive-input" id="step2Input" placeholder="請輸入合併項最終答案" autocomplete="off"><button onclick="verifyStep2('${correctStep2}')" style="width:auto; padding:6px 14px; margin:0 0 0 5px; font-size:14px;">驗證</button><span id="statusIcon2" class="step-status-icon">❓</span></div>
             </div>
         `;
         document.getElementById('interactiveHorizontalZone').innerHTML = html;
@@ -637,21 +612,14 @@
     function verifyStep1(correctTarget1, correctTarget2) {
         try {
             let val = document.getElementById('step1Input').value.trim(); let parsedUser = UX(val); let opCount = (val.replace(/\s+/g, '').match(/[+-]/g) || []).length;
-            
             if(parsedUser === correctTarget2 && opCount <= 1) {
-                document.getElementById('statusIcon1').innerText = "🎯 厲害！心算直接命中最終答案！";
-                document.getElementById('boardLine1').style.background = "rgba(16,185,129,0.2)";
-                document.getElementById('step3GuideText').innerText = "🎉 恭喜你成功破譯本題！";
-                document.getElementById('nextBtn').style.display = 'block'; 
+                document.getElementById('statusIcon1').innerText = "🎯 厲害！心算直接命中最終答案！"; document.getElementById('boardLine1').style.background = "rgba(16,185,129,0.2)";
+                document.getElementById('step3GuideText').innerText = "🎉 恭喜你成功破譯本題！"; document.getElementById('nextBtn').style.display = 'block'; 
             } else if(parsedUser === correctTarget1) {
-                document.getElementById('statusIcon1').innerText = "🎯 正確！請繼續執行第二步同類項合併。";
-                document.getElementById('boardLine1').style.background = "rgba(16,185,129,0.2)";
-                let el2 = document.getElementById('boardLine2');
-                if(el2) { el2.style.opacity = "1"; el2.style.pointerEvents = "auto"; }
-            } else {
-                document.getElementById('statusIcon1').innerText = "❌ 展開算式不對，請確認正負號與常數！";
-            }
-        } catch(e) { console.error(e); }
+                document.getElementById('statusIcon1').innerText = "🎯 正確！請繼續執行第二步同類項合併。"; document.getElementById('boardLine1').style.background = "rgba(16,185,129,0.2)";
+                let el2 = document.getElementById('boardLine2'); if(el2) { el2.style.opacity = "1"; el2.style.pointerEvents = "auto"; }
+            } else { document.getElementById('statusIcon1').innerText = "❌ 展開算式不對，請確認正負號與常數！"; }
+        } catch(e) {}
     }
 
     function verifyStep2(correctTarget) {
@@ -660,19 +628,13 @@
             if(UX(val) === correctTarget) {
                 document.getElementById('statusIcon2').innerText = "🎯 完美解鎖！"; document.getElementById('boardLine2').style.background = "rgba(16,185,129,0.2)";
                 document.getElementById('step3GuideText').innerText = "🎉 恭喜你完成本題的逐步破譯推導！"; document.getElementById('nextBtn').style.display = 'block'; 
-            } else {
-                document.getElementById('statusIcon2').innerText = "❌ 合併錯誤，注意同類項係數！";
-            }
-        } catch(e) { console.error(e); }
+            } else { document.getElementById('statusIcon2').innerText = "❌ 合併錯誤，注意同類項係數！"; }
+        } catch(e) {}
     }
 
     function advanceQuestion() {
         stopSessionTimer();
-        if (session.currentMode === 'SOLVER' || session.currentIdx >= (session.totalQuestions - 1)) {
-            showPanel('step1'); 
-        } else {
-            session.currentIdx++; loadQuestionToStage();
-        }
+        if (session.currentMode === 'SOLVER' || session.currentIdx >= (session.totalQuestions - 1)) { showPanel('step1'); } else { session.currentIdx++; loadQuestionToStage(); }
     }
 
     function startSessionTimer(sec) {
@@ -684,14 +646,10 @@
     }
     function stopSessionTimer() { if(timerInterval) clearInterval(timerInterval); }
     
-    // 【修復】安全登出機制
     function logoutSession() { 
         if(confirm("確定登出系統嗎？")) { 
             stopSessionTimer();
-            localStorage.removeItem("Active_User_Role");
-            localStorage.removeItem("Active_User_Class");
-            localStorage.removeItem("Active_User_Seat");
-            localStorage.removeItem("Active_User_TeacherID");
+            localStorage.removeItem("Active_User_Role"); localStorage.removeItem("Active_User_Class"); localStorage.removeItem("Active_User_Seat"); localStorage.removeItem("Active_User_TeacherID");
             window.location.replace("index.html"); 
         } 
     }
